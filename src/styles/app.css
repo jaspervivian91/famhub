@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body {
+    @apply bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+  }
+}
+
+/* ── Grandparent Mode Design Tokens ──────────────────────────────── */
+:root {
+  --gp-text-size: 20px;
+  --gp-heading-size: 28px;
+  --gp-bg: #fffdf7;
+  --gp-text: #1a1a1a;
+  --gp-accent-bg: #ffd700;
+  --gp-accent-text: #1a365d;
+  --gp-border-color: #e0d8c8;
+  --gp-touch-target: 56px;
+}
+
+/* ── Grandparent Mode Body Styles ────────────────────────────────── */
+.gp-body {
+  background-color: var(--gp-bg);
+  color: var(--gp-text);
+  font-size: var(--gp-text-size);
+  line-height: 1.6;
+}
+
+/* ── Reduced Motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .gp-mode *,
+  .gp-body * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── Grandparent Mode: no animations by default ──────────────────── */
+.gp-mode {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Only allow fade transitions on confirmation messages */
+.gp-mode .gp-confirmation {
+  transition: opacity 0.5s ease-in-out !important;
+}
+
+/* ── Grandparent Mode: Interactive Elements ──────────────────────── */
+.gp-response-btn:hover {
+  filter: brightness(0.95);
+}
+
+.gp-response-btn:focus-visible {
+  outline: 3px solid #1a365d;
+  outline-offset: 3px;
+}
+
+.gp-family-btn:hover {
+  background-color: #fffbeb !important;
+}
+
+.gp-family-btn:focus-visible {
+  outline: 3px solid #1a365d;
+  outline-offset: 3px;
+}
+
+.gp-back-link:hover {
+  text-decoration-thickness: 3px;
+}
+
+.gp-back-link:focus-visible {
+  outline: 3px solid #1a365d;
+  outline-offset: 3px;
+  border-radius: 16px;
+}
+
+/* ── Accessible focus styles for all interactive elements ────────── */
+.gp-mode button:focus-visible,
+.gp-mode a:focus-visible {
+  outline: 3px solid #1a365d;
+  outline-offset: 2px;
+}
+
+/* ── Ensure text contrast ────────────────────────────────────────── */
+.gp-mode {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
