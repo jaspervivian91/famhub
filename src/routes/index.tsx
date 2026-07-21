@@ -300,14 +300,20 @@ function LandingPage() {
             </span>
           </div>
           <div className="flex items-center gap-6">
-            <a
-              href="#"
+            <Link
+              to="/privacy"
               className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
             >
               Privacy
-            </a>
+            </Link>
+            <Link
+              to="/terms"
+              className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              Terms
+            </Link>
             <a
-              href="#"
+              href="mailto:hello@familyhub.app"
               className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
             >
               Contact
