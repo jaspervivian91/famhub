@@ -1,5 +1,29 @@
 // Family Hub shared types
 
+export interface Account {
+  id: string;
+  email: string;
+  password_hash: string;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+}
+
+export interface Session {
+  id: string;
+  account_id: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface AccountPublic {
+  id: string;
+  email: string;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+}
+
 export interface FamilyGroup {
   id: string;
   name: string;
@@ -16,6 +40,7 @@ export interface FamilyMember {
   avatar_url: string | null;
   timezone: string;
   created_at: string;
+  account_id?: string | null;
   preferences?: MemberPreferences;
 }
 

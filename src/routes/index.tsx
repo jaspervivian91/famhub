@@ -12,6 +12,7 @@ import {
   getPairScores,
   getConversationStarters,
 } from "~/lib/api";
+import { getMe, signOut } from "~/lib/auth-api";
 import { getMyDigest } from "~/lib/api-digest";
 import type { Digest, Nudge, PairScore, ConversationStarter } from "~/lib/types";
 import type { DigestContent } from "~/lib/digest-engine";
@@ -21,6 +22,8 @@ import {
   getCurrentMemberName,
   setCurrentIdentity,
   clearCurrentIdentity,
+  clearAllIdentity,
+  setCachedAccount,
 } from "~/lib/client-store";
 import { NudgeCard, ConversationStarterPanel } from "~/components/NudgeCard";
 import { ConnectionHealth } from "~/components/ConnectionHealth";
@@ -49,6 +52,7 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
   const [state, setState] = useState<"loading" | "no-group" | "dashboard">(
     "loading",
   );
@@ -68,8 +72,34 @@ function Dashboard() {
   const [starterLoading, setStarterLoading] = useState(false);
 
   useEffect(() => {
-    loadDashboard();
+    checkAuth();
   }, []);
+
+  async function checkAuth() {
+    try {
+      const account = await getMe();
+      if (!account) {
+        navigate({ to: "/sign-in" });
+        return;
+      }
+      // Cache auth info for fast subsequent renders
+      setCachedAccount(account.id, account.email, account.display_name);
+      setAuthChecked(true);
+      loadDashboard();
+    } catch {
+      navigate({ to: "/sign-in" });
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+    } catch {
+      // Ignore errors — clear local state regardless
+    }
+    clearAllIdentity();
+    navigate({ to: "/sign-in" });
+  }
 
   async function loadDashboard() {
     const memberId = getCurrentMemberId();
@@ -352,12 +382,20 @@ function Dashboard() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleLeaveGroup}
-          className="rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:bg-stone-100 hover:text-stone-600"
-        >
-          Leave
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSignOut}
+            className="rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+          >
+            Sign out
+          </button>
+          <button
+            onClick={handleLeaveGroup}
+            className="rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+          >
+            Leave
+          </button>
+        </div>
       </div>
 
       {/* DB not connected banner */}
