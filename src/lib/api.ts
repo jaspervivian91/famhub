@@ -55,7 +55,7 @@ async function safeQuery<T>(
 // ---------------------------------------------------------------------------
 
 export const createFamilyGroup = createServerFn({ method: "POST" })
-  .validator((d: { name: string }) => d)
+  .validator((d: { name: string; accountId?: string }) => d)
   .handler(async ({ data }): Promise<FamilyGroup> => {
     if (!hasDatabaseURL()) {
       throw new Error(
@@ -77,6 +77,7 @@ export const joinFamilyGroup = createServerFn({ method: "POST" })
       displayName: string;
       relationship: string;
       timezone?: string;
+      accountId?: string;
     }) => d,
   )
   .handler(
@@ -101,10 +102,12 @@ export const joinFamilyGroup = createServerFn({ method: "POST" })
 
       const group = coerceRow(groups[0] as unknown as FamilyGroup);
 
+      const accountId = data.accountId ?? null;
+
       const members = await db`
-        insert into family_members (group_id, display_name, relationship, timezone)
-        values (${group.id}, ${data.displayName}, ${data.relationship}, ${data.timezone ?? "UTC"})
-        returning id, group_id, display_name, relationship, avatar_url, timezone, created_at
+        insert into family_members (group_id, display_name, relationship, timezone, account_id)
+        values (${group.id}, ${data.displayName}, ${data.relationship}, ${data.timezone ?? "UTC"}, ${accountId})
+        returning id, group_id, display_name, relationship, avatar_url, timezone, created_at, account_id
       `;
       const member = coerceRow(members[0] as unknown as FamilyMember);
 
