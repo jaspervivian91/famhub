@@ -21,7 +21,7 @@ function SignInPage() {
     try {
       await signIn({ data: { email: email.trim(), password } });
       // Redirect to dashboard
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
