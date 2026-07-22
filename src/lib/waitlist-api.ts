@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { sql, hasDatabaseURL } from "~/db";
+import { sendWaitlistConfirmation, hasResendKey } from "~/lib/email";
 
 function isValidEmail(email: string): boolean {
   // Basic email validation regex
@@ -29,6 +30,14 @@ export const joinWaitlist = createServerFn({ method: "POST" })
         values (${email})
         on conflict (email) do nothing
       `;
+
+      // Send confirmation email (fire-and-forget — don't block the response)
+      if (hasResendKey()) {
+        sendWaitlistConfirmation(email).catch(() => {
+          // Email failure is non-critical — waitlist entry is saved
+        });
+      }
+
       return { success: true, message: "You're on the list! We'll let you know when Family Hub launches." };
     } catch {
       // If there's a DB error, it might already be a duplicate — treat as success
