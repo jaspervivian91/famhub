@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { signUp } from "~/lib/auth-api";
+import { Logo } from "~/components/Logo";
 
 export const Route = createFileRoute("/sign-up")({
   component: SignUpPage,
@@ -37,13 +38,13 @@ function SignUpPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-6 py-12">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-6 py-12 bg-fh-bg">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-100 text-3xl">
-          🏠
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-tide/20">
+          <Logo variant="icon" size="lg" />
         </div>
-        <h1 className="text-3xl font-bold text-teal-900">Create your account</h1>
-        <p className="mt-2 text-stone-500">
+        <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Create your account</h1>
+        <p className="mt-2 text-fh-muted">
           Start connecting with your family — privately.
         </p>
       </div>
@@ -56,11 +57,11 @@ function SignUpPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="w-full rounded-xl border border-teal-200 bg-white p-6 shadow-sm"
+        className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
       >
         <label
           htmlFor="display-name"
-          className="mb-1 block text-sm font-medium text-stone-600"
+          className="mb-1 block text-sm font-medium text-fh-body"
         >
           Display name
         </label>
@@ -70,14 +71,14 @@ function SignUpPage() {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Your name"
-          className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 placeholder-stone-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
           required
           autoFocus
         />
 
         <label
           htmlFor="email"
-          className="mb-1 mt-4 block text-sm font-medium text-stone-600"
+          className="mb-1 mt-4 block text-sm font-medium text-fh-body"
         >
           Email
         </label>
@@ -87,13 +88,13 @@ function SignUpPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 placeholder-stone-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
           required
         />
 
         <label
           htmlFor="password"
-          className="mb-1 mt-4 block text-sm font-medium text-stone-600"
+          className="mb-1 mt-4 block text-sm font-medium text-fh-body"
         >
           Password
         </label>
@@ -104,22 +105,22 @@ function SignUpPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 8 characters"
           minLength={8}
-          className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 placeholder-stone-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
           required
         />
 
         <button
           type="submit"
           disabled={busy}
-          className="mt-6 w-full rounded-lg bg-teal-600 px-4 py-3 font-semibold text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300 disabled:opacity-50"
+          className="mt-6 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
         >
           {busy ? "Creating account…" : "Create Account"}
         </button>
       </form>
 
-      <p className="text-center text-sm text-stone-400">
+      <p className="text-center text-sm text-fh-muted">
         Already have an account?{" "}
-        <a href="/sign-in" className="text-teal-600 underline">
+        <a href="/sign-in" className="text-fh-tide underline">
           Sign in
         </a>
       </p>

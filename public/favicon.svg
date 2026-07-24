@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Simplified heart-roof house for favicon clarity -->
+  <path
+    d="M50 8
+       L 15 40
+       C 5 48, 5 60, 15 66
+       C 25 72, 35 66, 50 56
+       C 65 66, 75 72, 85 66
+       C 95 60, 95 48, 85 40
+       L 50 8Z"
+    fill="#C4714A"
+  />
+  <rect
+    x="28" y="52"
+    width="44" height="42"
+    rx="8"
+    fill="#FFFDF7"
+    stroke="#C4714A"
+    stroke-width="3"
+  />
+  <circle cx="50" cy="73" r="9" fill="#E5B454" />
+</svg>
