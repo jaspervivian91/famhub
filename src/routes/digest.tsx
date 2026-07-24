@@ -10,6 +10,7 @@ import {
   getMyDigest,
   generateMyDigest,
   updateDigestPreference,
+  sendDigestByEmail,
 } from "~/lib/api-digest";
 import type { Digest } from "~/lib/types";
 import type {
@@ -32,6 +33,8 @@ function DigestPage() {
   const [error, setError] = useState("");
   const [emailPref, setEmailPref] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const memberId = typeof window !== "undefined" ? getCurrentMemberId() : null;
   const groupId = typeof window !== "undefined" ? getCurrentGroupId() : null;
@@ -110,6 +113,25 @@ function DigestPage() {
     } catch {
       // Best effort
     }
+  }
+
+  async function handleSendDigestEmail() {
+    if (!memberId || !groupId) return;
+    setSendingEmail(true);
+    setEmailSent(false);
+    try {
+      const result = await sendDigestByEmail({
+        data: { groupId, memberId },
+      });
+      if (result.success) {
+        setEmailSent(true);
+      } else {
+        setError(result.error ?? "Could not send email");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not send email");
+    }
+    setSendingEmail(false);
   }
 
   const isGrandparent = uiMode === "grandparent";
@@ -194,6 +216,9 @@ function DigestPage() {
       onToggleEmail={handleToggleEmail}
       onGenerate={handleGenerate}
       generating={generating}
+      onSendEmail={handleSendDigestEmail}
+      sendingEmail={sendingEmail}
+      emailSent={emailSent}
     />
   );
 }
@@ -208,12 +233,18 @@ function StandardDigest({
   onToggleEmail,
   onGenerate,
   generating,
+  onSendEmail,
+  sendingEmail,
+  emailSent,
 }: {
   content: DigestContent;
   emailPref: boolean;
   onToggleEmail: () => void;
   onGenerate: () => void;
   generating: boolean;
+  onSendEmail: () => void;
+  sendingEmail: boolean;
+  emailSent: boolean;
 }) {
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
@@ -303,7 +334,7 @@ function StandardDigest({
           </section>
         )}
 
-        {/* Digest delivery notification stub */}
+        {/* Digest delivery section */}
         <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-stone-700">
             <span>📬</span> Digest Delivery
@@ -334,9 +365,20 @@ function StandardDigest({
               />
             </button>
           </div>
-          <div className="mt-4 rounded-lg bg-teal-50 p-3 text-sm text-teal-800">
-            <span className="font-medium">📬 Digest delivered</span> — your
-            weekly summary has been prepared. Email sending is stubbed for now.
+          <div className="mt-4">
+            {emailSent ? (
+              <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+                <span className="font-medium">✅ Email sent!</span> — check your inbox for your digest.
+              </div>
+            ) : (
+              <button
+                onClick={onSendEmail}
+                disabled={sendingEmail}
+                className="w-full rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+              >
+                {sendingEmail ? "Sending…" : "📬 Email me this digest"}
+              </button>
+            )}
           </div>
         </section>
       </div>

@@ -21,6 +21,7 @@ import {
   MOCK_MEMBERS,
 } from "~/lib/digest-engine";
 import { getAllGroupInteractions, getFamilyGroup } from "~/lib/api";
+import { sendDigestEmail } from "~/lib/email";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -267,5 +268,87 @@ export const updateDigestPreference = createServerFn({ method: "POST" })
         return { success: true };
       },
       { success: true },
+    );
+  });
+
+/**
+ * Email the current member's most recent digest to them.
+ */
+export const sendDigestByEmail = createServerFn({ method: "POST" })
+  .validator((d: { groupId: string; memberId: string }) => d)
+  .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
+    return safeQuery(
+      async (db) => {
+        // 1. Get the member and their account
+        const memberRows = await db`
+          select id, display_name, account_id
+          from family_members
+          where id = ${data.memberId}
+          limit 1
+        `;
+        if (memberRows.length === 0) {
+          return { success: false, error: "Member not found" };
+        }
+
+        const member = memberRows[0] as {
+          id: string;
+          display_name: string;
+          account_id: string | null;
+        };
+
+        if (!member.account_id) {
+          return { success: false, error: "No account linked to this member" };
+        }
+
+        const accountRows = await db`
+          select id, email, display_name
+          from accounts
+          where id = ${member.account_id}
+          limit 1
+        `;
+        if (accountRows.length === 0) {
+          return { success: false, error: "Account not found" };
+        }
+
+        const account = accountRows[0] as {
+          id: string;
+          email: string;
+          display_name: string;
+        };
+
+        // 2. Get the most recent digest for this member
+        const digestRows = await db`
+          select id, group_id, member_id, content, sent_at, opened_at
+          from digests
+          where group_id = ${data.groupId}
+            and member_id = ${data.memberId}
+          order by (content->>'generatedAt')::timestamptz desc nulls last
+          limit 1
+        `;
+        if (digestRows.length === 0) {
+          return { success: false, error: "No digest found. Generate one first." };
+        }
+
+        const digest = coerceRow(digestRows[0] as unknown as Digest);
+
+        // 3. Send the email
+        const result = await sendDigestEmail(
+          digest,
+          account.email,
+          account.display_name || member.display_name,
+        );
+
+        // 4. Mark digest as sent
+        if (result.success) {
+          await db`
+            update digests
+            set sent_at = now()
+            where id = ${digest.id} and sent_at is null
+          `;
+        }
+
+        return result;
+      },
+      { success: false, error: "Database not available" },
     );
   });
