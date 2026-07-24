@@ -15,6 +15,8 @@ import {
   categorizeScore,
 } from "~/lib/relationship-engine";
 import { generateConversationStarters } from "~/lib/conversation-starters";
+import { sendNudgeEmail } from "~/lib/email";
+import { getAccountById } from "~/lib/auth";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -416,7 +418,7 @@ export const generateNudge = createServerFn({ method: "POST" })
       async (db) => {
         // 1. Get all members
         const memberRows = await db`
-          select id, display_name, relationship
+          select id, display_name, relationship, account_id
           from family_members
           where group_id = ${data.groupId}
           order by created_at
@@ -425,6 +427,7 @@ export const generateNudge = createServerFn({ method: "POST" })
           id: string;
           display_name: string;
           relationship: string;
+          account_id: string | null;
         }>;
         if (members.length < 2) return null;
 
@@ -527,7 +530,24 @@ export const generateNudge = createServerFn({ method: "POST" })
                     nudge_type, message_text, status, created_at, acknowledged_at
         `;
 
-        return coerceRow(rows[0] as unknown as Nudge);
+        const nudge = coerceRow(rows[0] as unknown as Nudge);
+
+        // 10. Fire-and-forget email notification to the target member
+        const targetMember = members.find((m) => m.id === toId);
+        if (targetMember?.account_id) {
+          try {
+            const account = await getAccountById(targetMember.account_id);
+            if (account?.email) {
+              sendNudgeEmail(nudge, account.email, toName).catch(() => {
+                // Best effort — email failures must not affect the nudge response
+              });
+            }
+          } catch {
+            // Best effort
+          }
+        }
+
+        return nudge;
       },
 
       // Fallback: return a mock nudge so the UI works without a DB
@@ -658,6 +678,96 @@ export const getConversationStarters = createServerFn({ method: "POST" })
       daysSinceLastContact: data.daysSinceLastContact,
       memberName: data.memberName,
     });
+  });
+
+
+// ---------------------------------------------------------------------------
+// Email nudge to member (manual trigger from dashboard)
+// ---------------------------------------------------------------------------
+
+export const sendNudgeByEmail = createServerFn({ method: "POST" })
+  .validator((d: { nudgeId: string; memberId: string }) => d)
+  .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
+    return safeQuery(
+      async (db) => {
+        // 1. Get the nudge
+        const nudgeRows = await db`
+          select n.id, n.group_id, n.from_member_id, n.to_member_id,
+                 n.nudge_type, n.message_text, n.status, n.created_at, n.acknowledged_at,
+                 fm.display_name as to_name
+          from nudges n
+          join family_members fm on fm.id = n.to_member_id
+          where n.id = ${data.nudgeId}
+          limit 1
+        `;
+        if (nudgeRows.length === 0) {
+          return { success: false, error: "Nudge not found" };
+        }
+
+        const row = nudgeRows[0] as Record<string, unknown>;
+        const nudge = coerceRow({
+          id: row.id,
+          group_id: row.group_id,
+          from_member_id: row.from_member_id,
+          to_member_id: row.to_member_id,
+          nudge_type: row.nudge_type,
+          message_text: row.message_text,
+          status: row.status,
+          created_at: row.created_at,
+          acknowledged_at: row.acknowledged_at,
+        } as unknown as Nudge);
+
+        const toName = (row.to_name as string) ?? "there";
+
+        // 2. Get the member and their account email
+        const memberRows = await db`
+          select id, display_name, account_id
+          from family_members
+          where id = ${data.memberId}
+          limit 1
+        `;
+        if (memberRows.length === 0) {
+          return { success: false, error: "Member not found" };
+        }
+
+        const member = memberRows[0] as {
+          id: string;
+          display_name: string;
+          account_id: string | null;
+        };
+
+        if (!member.account_id) {
+          return { success: false, error: "No account linked to this member" };
+        }
+
+        // 3. Look up account email
+        const accountRows = await db`
+          select id, email, display_name
+          from accounts
+          where id = ${member.account_id}
+          limit 1
+        `;
+        if (accountRows.length === 0) {
+          return { success: false, error: "Account not found" };
+        }
+
+        const account = accountRows[0] as {
+          id: string;
+          email: string;
+          display_name: string;
+        };
+
+        // 4. Send the email (fire-and-forget, but we await here since the fn is already async)
+        const result = await sendNudgeEmail(
+          nudge,
+          account.email,
+          account.display_name || member.display_name,
+        );
+
+        return result;
+      },
+      { success: false, error: "Database not available" },
+    );
   });
 
 // ---------------------------------------------------------------------------

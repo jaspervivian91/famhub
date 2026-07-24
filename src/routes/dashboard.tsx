@@ -11,6 +11,7 @@ import {
   joinFamilyGroup,
   getPairScores,
   getConversationStarters,
+  sendNudgeByEmail,
 } from "~/lib/api";
 import { getMe, signOut } from "~/lib/auth-api";
 import { getMyDigest } from "~/lib/api-digest";
@@ -70,6 +71,12 @@ function Dashboard() {
   const [starterNudge, setStarterNudge] = useState<Nudge | null>(null);
   const [starters, setStarters] = useState<ConversationStarter[]>([]);
   const [starterLoading, setStarterLoading] = useState(false);
+  const [sendingEmailNudgeId, setSendingEmailNudgeId] = useState<
+    string | null
+  >(null);
+  const [emailedNudgeIds, setEmailedNudgeIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     checkAuth();
@@ -219,6 +226,24 @@ function Dashboard() {
     } finally {
       setStarterLoading(false);
     }
+  }
+
+  async function handleEmailNudge(nudgeId: string) {
+    const memberId = getCurrentMemberId();
+    if (!memberId) return;
+
+    setSendingEmailNudgeId(nudgeId);
+    try {
+      const result = await sendNudgeByEmail({
+        data: { nudgeId, memberId },
+      });
+      if (result.success) {
+        setEmailedNudgeIds((prev) => new Set(prev).add(nudgeId));
+      }
+    } catch {
+      // Best effort
+    }
+    setSendingEmailNudgeId(null);
   }
 
   function handleLeaveGroup() {
@@ -524,16 +549,34 @@ function Dashboard() {
                   (nudge as Record<string, unknown>).to_name as string;
 
                 return (
-                  <NudgeCard
-                    key={nudge.id}
-                    nudge={nudge}
-                    score={matchingScore}
-                    fromName={fromName}
-                    toName={toName}
-                    onAcknowledge={handleAcknowledgeNudge}
-                    onDismiss={handleDismissNudge}
-                    onGenerateStarters={handleGenerateStarters}
-                  />
+                  <li key={nudge.id} className="space-y-0">
+                    <NudgeCard
+                      nudge={nudge}
+                      score={matchingScore}
+                      fromName={fromName}
+                      toName={toName}
+                      onAcknowledge={handleAcknowledgeNudge}
+                      onDismiss={handleDismissNudge}
+                      onGenerateStarters={handleGenerateStarters}
+                    />
+                    <div className="flex justify-end px-1 pt-1">
+                      {emailedNudgeIds.has(nudge.id) ? (
+                        <span className="text-xs text-emerald-600">
+                          ✅ Emailed!
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleEmailNudge(nudge.id)}
+                          disabled={sendingEmailNudgeId === nudge.id}
+                          className="text-xs text-stone-400 hover:text-amber-600 disabled:opacity-50"
+                        >
+                          {sendingEmailNudgeId === nudge.id
+                            ? "Sending…"
+                            : "🔔 Email me"}
+                        </button>
+                      )}
+                    </div>
+                  </li>
                 );
               })}
             </ul>
