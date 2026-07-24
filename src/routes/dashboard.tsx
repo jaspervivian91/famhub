@@ -28,6 +28,7 @@ import {
 } from "~/lib/client-store";
 import { NudgeCard, ConversationStarterPanel } from "~/components/NudgeCard";
 import { ConnectionHealth } from "~/components/ConnectionHealth";
+import { Logo } from "~/components/Logo";
 
 // Loader: fetch group if identity is stored
 const getDashboardData = createServerFn({ method: "GET" })
@@ -257,11 +258,11 @@ function Dashboard() {
     return (
       <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-8 px-6 py-12">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-3xl">
-            🏠
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-hearth/40">
+            <Logo variant="icon" size="lg" />
           </div>
-          <h1 className="text-3xl font-bold text-amber-900">Family Hub</h1>
-          <p className="mt-2 text-stone-500">
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Family Hub</h1>
+          <p className="mt-2 text-fh-muted">
             Stay close to the people who matter — without social media.
           </p>
         </div>
@@ -274,14 +275,14 @@ function Dashboard() {
 
         <form
           onSubmit={handleCreate}
-          className="w-full rounded-xl border border-amber-200 bg-white p-6 shadow-sm"
+          className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
         >
-          <h2 className="mb-4 text-lg font-semibold text-amber-800">
+          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
             Create your family hub
           </h2>
           <label
             htmlFor="create-name"
-            className="mb-1 block text-sm font-medium text-stone-600"
+            className="mb-1 block text-sm font-medium text-fh-body"
           >
             Family name
           </label>
@@ -291,34 +292,34 @@ function Dashboard() {
             value={createName}
             onChange={(e) => setCreateName(e.target.value)}
             placeholder="e.g. The Johnsons"
-            className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 placeholder-stone-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-ember focus:outline-none focus:ring-2 focus:ring-fh-hearth/50"
             required
           />
           <button
             type="submit"
             disabled={busy}
-            className="mt-4 w-full rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+            className="mt-4 w-full rounded-lg bg-fh-ember px-4 py-3 font-semibold text-white hover:bg-fh-ember/90 focus:outline-none focus:ring-2 focus:ring-fh-hearth disabled:opacity-50"
           >
             {busy ? "Creating…" : "Create Family Hub"}
           </button>
         </form>
 
         <div className="flex w-full items-center gap-3">
-          <div className="h-px flex-1 bg-stone-200" />
-          <span className="text-sm text-stone-400">or join existing</span>
-          <div className="h-px flex-1 bg-stone-200" />
+          <div className="h-px flex-1 bg-fh-border" />
+          <span className="text-sm text-fh-muted">or join existing</span>
+          <div className="h-px flex-1 bg-fh-border" />
         </div>
 
         <form
           onSubmit={handleJoin}
-          className="w-full rounded-xl border border-teal-200 bg-white p-6 shadow-sm"
+          className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
         >
-          <h2 className="mb-4 text-lg font-semibold text-teal-800">
+          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
             Join a family hub
           </h2>
           <label
             htmlFor="join-code"
-            className="mb-1 block text-sm font-medium text-stone-600"
+            className="mb-1 block text-sm font-medium text-fh-body"
           >
             Invite code
           </label>
@@ -329,12 +330,12 @@ function Dashboard() {
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="ABC123DE"
             maxLength={8}
-            className="w-full rounded-lg border border-stone-300 px-4 py-3 font-mono text-stone-900 placeholder-stone-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+            className="w-full rounded-lg border border-fh-border px-4 py-3 font-mono text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
             required
           />
           <label
             htmlFor="join-name"
-            className="mb-1 mt-3 block text-sm font-medium text-stone-600"
+            className="mb-1 mt-3 block text-sm font-medium text-fh-body"
           >
             Your display name
           </label>
@@ -344,12 +345,12 @@ function Dashboard() {
             value={joinName}
             onChange={(e) => setJoinName(e.target.value)}
             placeholder="e.g. Grandma Sue"
-            className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 placeholder-stone-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
             required
           />
           <label
             htmlFor="join-relationship"
-            className="mb-1 mt-3 block text-sm font-medium text-stone-600"
+            className="mb-1 mt-3 block text-sm font-medium text-fh-body"
           >
             Relationship
           </label>
@@ -357,7 +358,7 @@ function Dashboard() {
             id="join-relationship"
             value={joinRelationship}
             onChange={(e) => setJoinRelationship(e.target.value)}
-            className="w-full rounded-lg border border-stone-300 px-4 py-3 text-stone-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
           >
             <option value="grandparent">Grandparent</option>
             <option value="parent">Parent</option>
@@ -369,7 +370,7 @@ function Dashboard() {
           <button
             type="submit"
             disabled={busy}
-            className="mt-4 w-full rounded-lg bg-teal-600 px-4 py-3 font-semibold text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300 disabled:opacity-50"
+            className="mt-4 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
           >
             {busy ? "Joining…" : "Join Family Hub"}
           </button>
@@ -382,7 +383,7 @@ function Dashboard() {
   if (state === "loading") {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <p className="text-stone-400">Loading your family hub…</p>
+        <p className="text-fh-muted">Loading your family hub…</p>
       </main>
     );
   }
@@ -395,14 +396,14 @@ function Dashboard() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-xl">
-            🏠
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fh-hearth/40">
+            <Logo variant="icon" size="sm" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-amber-900">
+            <h1 className="font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               {group?.name ?? "Family Hub"}
             </h1>
-            <p className="text-sm text-stone-500">
+            <p className="text-sm text-fh-muted">
               Welcome, {member?.display_name ?? getCurrentMemberName()}
             </p>
           </div>
@@ -410,13 +411,13 @@ function Dashboard() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleSignOut}
-            className="rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+            className="rounded-lg px-3 py-1.5 text-sm text-fh-muted hover:bg-fh-surface hover:text-fh-body"
           >
             Sign out
           </button>
           <button
             onClick={handleLeaveGroup}
-            className="rounded-lg px-3 py-1.5 text-sm text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+            className="rounded-lg px-3 py-1.5 text-sm text-fh-muted hover:bg-fh-surface hover:text-fh-body"
           >
             Leave
           </button>
@@ -425,13 +426,13 @@ function Dashboard() {
 
       {/* DB not connected banner */}
       {!group && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="mb-6 rounded-lg border border-fh-gold/30 bg-fh-gold/10 p-4 text-sm text-fh-heading">
           ⚠️ Database not connected yet. Once{" "}
-          <code className="rounded bg-amber-100 px-1 font-mono">
+          <code className="rounded bg-fh-gold/20 px-1 font-mono">
             DATABASE_URL
           </code>{" "}
           is set, your family hub will appear here. Run the migration at{" "}
-          <code className="rounded bg-amber-100 px-1 font-mono">
+          <code className="rounded bg-fh-gold/20 px-1 font-mono">
             src/db/migrations/001_schema.sql
           </code>{" "}
           to create the tables.
@@ -440,8 +441,8 @@ function Dashboard() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Members Card */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
+        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
             <span>👥</span> Family Members
           </h2>
           {group?.members && group.members.length > 0 ? (
@@ -449,17 +450,17 @@ function Dashboard() {
               {group.members.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center gap-3 rounded-lg bg-stone-50 p-3"
+                  className="flex items-center gap-3 rounded-lg bg-fh-surface p-3"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-200 text-sm font-bold text-amber-800">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-fh-hearth/60 text-sm font-bold text-fh-heading">
                     {m.display_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-stone-800">
+                    <p className="font-medium text-fh-body">
                       {m.display_name}
                       {m.id === member?.id ? " (you)" : ""}
                     </p>
-                    <p className="text-xs text-stone-400 capitalize">
+                    <p className="text-xs text-fh-muted capitalize">
                       {m.relationship.replace("_", " ")}
                     </p>
                   </div>
@@ -467,12 +468,12 @@ function Dashboard() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-stone-400">No members yet.</p>
+            <p className="text-sm text-fh-muted">No members yet.</p>
           )}
           {group && (
             <button
               onClick={() => navigate({ to: `/group/${group.id}` })}
-              className="mt-4 w-full rounded-lg border border-teal-200 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
+              className="mt-4 w-full rounded-lg border border-fh-tide/30 px-4 py-2 text-sm font-medium text-fh-tide hover:bg-fh-tide/10"
             >
               View Group Page →
             </button>
@@ -480,8 +481,8 @@ function Dashboard() {
         </div>
 
         {/* Connection Health Card */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
+        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
             <span>💞</span> Connection Health
           </h2>
           {scores && scores.length > 0 ? (
@@ -507,12 +508,12 @@ function Dashboard() {
                 );
               })}
               {scores.length > 4 && (
-                <p className="text-xs text-stone-400">
+                <p className="text-xs text-fh-muted">
                   +{scores.length - 4} more connections —{" "}
                   {group && (
                     <button
                       onClick={() => navigate({ to: `/group/${group.id}` })}
-                      className="text-teal-600 underline"
+                      className="text-fh-tide underline"
                     >
                       view all
                     </button>
@@ -521,15 +522,15 @@ function Dashboard() {
               )}
             </div>
           ) : (
-            <p className="text-sm text-stone-400">
+            <p className="text-sm text-fh-muted">
               No connection data yet. Nudges will help build momentum.
             </p>
           )}
         </div>
 
         {/* Nudges Card */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
+        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm md:col-span-2">
+          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
             <span>💌</span> Nudges for You
           </h2>
           {nudges && nudges.length > 0 ? (
@@ -568,7 +569,7 @@ function Dashboard() {
                         <button
                           onClick={() => handleEmailNudge(nudge.id)}
                           disabled={sendingEmailNudgeId === nudge.id}
-                          className="text-xs text-stone-400 hover:text-amber-600 disabled:opacity-50"
+                          className="text-xs text-fh-muted hover:text-fh-ember disabled:opacity-50"
                         >
                           {sendingEmailNudgeId === nudge.id
                             ? "Sending…"
@@ -581,7 +582,7 @@ function Dashboard() {
               })}
             </ul>
           ) : (
-            <p className="text-sm text-stone-400">
+            <p className="text-sm text-fh-muted">
               No nudges right now — you&apos;re staying connected!
             </p>
           )}
@@ -593,8 +594,8 @@ function Dashboard() {
         />
 
         {/* Quick Actions */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
+        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm md:col-span-2">
+          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
             <span>✨</span> Quick Actions
           </h2>
           <div className="flex flex-wrap gap-3">
@@ -604,7 +605,7 @@ function Dashboard() {
                 await generateNudge({ data: { groupId: group.id } });
                 await loadDashboard();
               }}
-              className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+              className="rounded-lg border border-fh-dusk/30 px-4 py-2 text-sm font-medium text-fh-dusk hover:bg-fh-dusk/10"
             >
               🔔 Check for dormant connections
             </button>
@@ -617,14 +618,14 @@ function Dashboard() {
                   );
                   alert("Invite link copied!");
                 }}
-                className="rounded-lg border border-teal-200 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
+                className="rounded-lg border border-fh-tide/30 px-4 py-2 text-sm font-medium text-fh-tide hover:bg-fh-tide/10"
               >
                 📋 Copy invite link
               </button>
             )}
             <Link
               to="/digest"
-              className="rounded-lg border border-amber-200 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50"
+              className="rounded-lg border border-fh-gold/40 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/10"
             >
               📋 View Weekly Digest
             </Link>
@@ -638,7 +639,7 @@ function Dashboard() {
           {starterLoading ? (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
               <div className="rounded-2xl bg-white p-6 shadow-xl">
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-fh-muted">
                   Generating conversation starters…
                 </p>
               </div>
@@ -676,17 +677,17 @@ function DigestPreviewCard({
   // No digest at all
   if (!content) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm md:col-span-2">
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-amber-800">
+      <div className="rounded-xl border border-fh-gold/30 bg-fh-gold/10 p-5 shadow-sm md:col-span-2">
+        <h2 className="mb-3 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
           <span>📋</span> Weekly Digest
         </h2>
-        <p className="text-sm text-amber-700">
+        <p className="text-sm text-fh-body">
           Your weekly digest will be ready soon. It curates family moments,
           conversation starters, and connection insights — all in one place.
         </p>
         <Link
           to="/digest"
-          className="mt-3 inline-block rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
+          className="mt-3 inline-block rounded-lg border border-fh-gold/40 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/20"
         >
           Preview digest →
         </Link>
@@ -699,12 +700,12 @@ function DigestPreviewCard({
   const weekLabel = content.weekLabel ?? "This week";
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-white p-5 shadow-sm md:col-span-2">
+    <div className="rounded-xl border border-fh-gold/30 bg-white p-5 shadow-sm md:col-span-2">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-amber-800">
+        <h2 className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
           <span>📋</span> Weekly Digest
         </h2>
-        <span className="text-xs text-stone-400">{weekLabel}</span>
+        <span className="text-xs text-fh-muted">{weekLabel}</span>
       </div>
 
       {moments.length > 0 ? (
@@ -712,24 +713,24 @@ function DigestPreviewCard({
           {moments.map((moment, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-lg bg-amber-50 p-3"
+              className="flex items-start gap-3 rounded-lg bg-fh-gold/10 p-3"
             >
               <span className="text-lg">{moment.emoji}</span>
-              <p className="text-sm font-medium text-stone-700">
+              <p className="text-sm font-medium text-fh-body">
                 {moment.text}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-stone-400">
+        <p className="text-sm text-fh-muted">
           Your digest is ready — view it for your full weekly summary.
         </p>
       )}
 
       <Link
         to="/digest"
-        className="mt-4 inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
+        className="mt-4 inline-flex items-center gap-1 rounded-lg border border-fh-gold/40 bg-fh-gold/10 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/20"
       >
         View full digest →
       </Link>

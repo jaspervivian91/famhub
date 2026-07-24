@@ -22,12 +22,23 @@ export const Route = createRootRoute({
           "A private, AI-powered connection platform that strengthens family relationships — the opposite of social media.",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      // Google Fonts preconnect
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      // Favicon
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+    ],
   }),
   notFoundComponent: () => (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold text-amber-800">Page not found</h1>
-      <a href="/" className="text-teal-600 underline">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-fh-bg">
+      <h1 className="text-2xl font-bold text-fh-ember">Page not found</h1>
+      <a href="/" className="text-fh-tide underline">
         Back to Family Hub
       </a>
     </div>
@@ -71,7 +82,9 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body
         className={`min-h-dvh antialiased ${
-          isGrandparent ? "gp-body" : "bg-stone-50 text-stone-800"
+          isGrandparent
+            ? "gp-body"
+            : "bg-fh-bg text-fh-body"
         }`}
       >
         {/* Mode Toggle Bar */}
@@ -79,13 +92,13 @@ function RootDocument({ children }: { children: ReactNode }) {
           className={`flex items-center justify-end px-4 py-2 ${
             isGrandparent
               ? "border-b"
-              : "border-b border-stone-100 bg-white"
+              : "border-b border-fh-border bg-white"
           }`}
           style={
             isGrandparent
               ? {
-                  borderColor: "#e0d8c8",
-                  backgroundColor: "var(--gp-bg, #fffdf7)",
+                  borderColor: "var(--color-gp-border, #D0C8BE)",
+                  backgroundColor: "var(--color-gp-bg, #FFFFFF)",
                 }
               : {}
           }
@@ -101,8 +114,8 @@ function RootDocument({ children }: { children: ReactNode }) {
             onClick={handleToggle}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               isGrandparent
-                ? "text-[#1a365d] hover:bg-[#f5e6c0]"
-                : "text-stone-500 hover:bg-stone-100 hover:text-stone-700"
+                ? "text-gp-primary hover:bg-[#f5e6c0]"
+                : "text-fh-muted hover:bg-fh-surface hover:text-fh-body"
             }`}
             style={{ minHeight: "44px" }}
           >

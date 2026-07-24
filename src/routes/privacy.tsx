@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Logo } from "~/components/Logo";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
@@ -6,24 +7,24 @@ export const Route = createFileRoute("/privacy")({
 
 function PrivacyPage() {
   return (
-    <div className="min-h-dvh bg-stone-50">
+    <div className="min-h-dvh bg-fh-bg">
       {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="border-b border-stone-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="border-b border-fh-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl">🏠</span>
-            <span className="text-xl font-bold text-amber-900">Family Hub</span>
+            <Logo variant="icon" size="md" />
+            <span className="text-xl font-bold text-fh-heading font-[family-name:var(--font-heading)]">Family Hub</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link
               to="/sign-in"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-fh-body hover:bg-fh-surface hover:text-fh-heading"
             >
               Sign In
             </Link>
             <Link
               to="/sign-up"
-              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+              className="rounded-lg bg-fh-ember px-4 py-2 text-sm font-semibold text-white hover:bg-fh-ember/90"
             >
               Get Started
             </Link>
@@ -33,14 +34,14 @@ function PrivacyPage() {
 
       {/* ── Content ──────────────────────────────────────────── */}
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <h1 className="text-3xl font-extrabold tracking-tight text-amber-900 sm:text-4xl">
+        <h1 className="font-[family-name:var(--font-heading)] text-3xl tracking-tight text-fh-heading sm:text-4xl">
           Privacy Policy
         </h1>
-        <p className="mt-2 text-stone-500">
+        <p className="mt-2 text-fh-muted">
           Last updated: July 2026
         </p>
 
-        <div className="mt-10 space-y-10 text-stone-700 leading-relaxed">
+        <div className="mt-10 space-y-10 text-fh-body leading-relaxed">
           {/* Introduction */}
           <section>
             <p>
@@ -55,7 +56,7 @@ function PrivacyPage() {
 
           {/* What we collect */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               What data we collect
             </h2>
             <p className="mb-3">To make Family Hub work, we collect:</p>
@@ -84,8 +85,8 @@ function PrivacyPage() {
 
           {/* What we DON'T collect */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
-              What we <span className="text-teal-700">don&apos;t</span> collect
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+              What we <span className="text-fh-tide">don&apos;t</span> collect
             </h2>
             <p className="mb-3">
               This is the important part. Family Hub is the opposite of social
@@ -114,7 +115,7 @@ function PrivacyPage() {
 
           {/* How we use data */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               How we use your data
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -138,7 +139,7 @@ function PrivacyPage() {
 
           {/* Data storage */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               Data storage
             </h2>
             <p>
@@ -150,7 +151,7 @@ function PrivacyPage() {
 
           {/* Data sharing */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               Data sharing
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -176,7 +177,7 @@ function PrivacyPage() {
 
           {/* Cookies */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">Cookies</h2>
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">Cookies</h2>
             <p>
               We use exactly one cookie: an httpOnly session cookie that keeps you
               signed in. It contains no personal information and expires when you
@@ -188,7 +189,7 @@ function PrivacyPage() {
 
           {/* User rights */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               Your rights
             </h2>
             <p className="mb-3">
@@ -215,7 +216,7 @@ function PrivacyPage() {
 
           {/* Children — COPPA */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               Children&apos;s privacy (COPPA)
             </h2>
             <p>
@@ -229,7 +230,7 @@ function PrivacyPage() {
 
           {/* International — GDPR / CCPA */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               International users (GDPR &amp; CCPA)
             </h2>
             <p>
@@ -244,13 +245,13 @@ function PrivacyPage() {
 
           {/* Contact */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">Contact</h2>
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">Contact</h2>
             <p>
               Questions about this policy? Want to exercise your rights? Email us
               at{" "}
               <a
                 href="mailto:privacy@familyhub.app"
-                className="text-teal-600 underline hover:text-teal-800"
+                className="text-fh-tide underline hover:text-fh-tide/80"
               >
                 privacy@familyhub.app
               </a>
@@ -260,7 +261,7 @@ function PrivacyPage() {
 
           {/* Changes */}
           <section>
-            <h2 className="mb-4 text-xl font-bold text-stone-800">
+            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               Changes to this policy
             </h2>
             <p>
@@ -272,10 +273,10 @@ function PrivacyPage() {
         </div>
 
         {/* Back link */}
-        <div className="mt-12 border-t border-stone-200 pt-8">
+        <div className="mt-12 border-t border-fh-border pt-8">
           <Link
             to="/"
-            className="text-teal-600 underline hover:text-teal-800 font-medium"
+            className="text-fh-tide underline hover:text-fh-tide/80 font-medium"
           >
             ← Back to Family Hub
           </Link>
@@ -283,30 +284,30 @@ function PrivacyPage() {
       </main>
 
       {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="border-t border-stone-200 bg-stone-100 py-10">
+      <footer className="border-t border-fh-border bg-fh-surface py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🏠</span>
-            <span className="text-sm font-medium text-stone-500">
+            <Logo variant="icon" size="sm" />
+            <span className="text-sm font-medium text-fh-muted">
               Family Hub &copy; {new Date().getFullYear()}
             </span>
           </div>
           <div className="flex items-center gap-6">
             <Link
               to="/privacy"
-              className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
+              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
             >
               Privacy
             </Link>
             <Link
               to="/terms"
-              className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
+              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
             >
               Terms
             </Link>
             <a
               href="mailto:hello@familyhub.app"
-              className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
+              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
             >
               Contact
             </a>
