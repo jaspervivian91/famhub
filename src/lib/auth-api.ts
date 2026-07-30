@@ -70,7 +70,7 @@ export const signUp = createServerFn({ method: "POST" })
     const session = await createSession(account.id);
 
     // Set cookie via response headers
-    response.setHeader("Set-Cookie", sessionCookie(session.id));
+    response.headers.set("Set-Cookie", sessionCookie(session.id));
 
     return toPublic(account);
   });
@@ -102,7 +102,7 @@ export const signIn = createServerFn({ method: "POST" })
     const session = await createSession(account.id);
 
     // Set cookie via response headers
-    response.setHeader("Set-Cookie", sessionCookie(session.id));
+    response.headers.set("Set-Cookie", sessionCookie(session.id));
 
     return toPublic(account);
   });
@@ -113,7 +113,7 @@ export const signIn = createServerFn({ method: "POST" })
 
 export const signOut = createServerFn({ method: "POST" })
   .handler(async ({ response }) => {
-    response.setHeader("Set-Cookie", clearSessionCookie());
+    response.headers.set("Set-Cookie", clearSessionCookie());
     return { success: true };
   });
 
@@ -132,7 +132,7 @@ export const getMe = createServerFn({ method: "GET" })
     // If we have a valid session, refresh the cookie expiry
     const sessionId = getSessionCookieFromRequest(request);
     if (sessionId) {
-      response.setHeader("Set-Cookie", sessionCookie(sessionId));
+      response.headers.set("Set-Cookie", sessionCookie(sessionId));
     }
 
     return toPublic(account);
