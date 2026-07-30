@@ -1,77 +1,54 @@
 /* ── Google Fonts (must precede all other rules) ────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400&display=swap');
 
 @import "tailwindcss";
 
 /* ── Tailwind v4 Theme ──────────────────────────────────────────────── */
 @theme {
   /* ── Font families ──────────────────────────────────────────────── */
-  --font-heading: "DM Serif Display", ui-serif, Georgia, serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-gp: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  --font-gp: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* ── Primary brand colors ───────────────────────────────────────── */
-  --color-fh-ember: #C4714A;
-  --color-fh-hearth: #F2B796;
-  --color-fh-gold: #E5B454;
-  --color-fh-tide: #5A8C7C;
-
-  /* ── Accent colors ──────────────────────────────────────────────── */
-  --color-fh-sunrise: #F7C948;
-  --color-fh-dusk: #B8776A;
-  --color-fh-twilight: #8B7A9E;
-
-  /* ── Neutral tones ──────────────────────────────────────────────── */
-  --color-fh-bg: #FFFDF7;
-  --color-fh-surface: #F5F0EB;
-  --color-fh-border: #E8E0D8;
-  --color-fh-muted: #B8A99A;
-  --color-fh-body: #3D352E;
-  --color-fh-heading: #1A1614;
+  /* ── Primary brand colors (brutalist palette) ────────────────────── */
+  --color-fh-bg: #F5F0EB;
+  --color-fh-surface: #EDEDEA;
+  --color-fh-border: #1A1A1A;
+  --color-fh-muted: rgba(26, 26, 26, 0.3);
+  --color-fh-body: #1A1A1A;
+  --color-fh-heading: #1A1A1A;
+  --color-fh-accent: #C8603A;
+  --color-fh-structural: #1A1A1A;
 
   /* ── Grandparent Mode ───────────────────────────────────────────── */
   --color-gp-bg: #FFFFFF;
   --color-gp-text: #1A1A1A;
-  --color-gp-primary: #2B6B9A;
-  --color-gp-accent: #FFB800;
+  --color-gp-primary: #C8603A;
+  --color-gp-accent: #C8603A;
   --color-gp-surface: #F0EDE8;
-  --color-gp-border: #D0C8BE;
-  --color-gp-success: #2E7D32;
-  --color-gp-alert: #CC3333;
+  --color-gp-border: #1A1A1A;
 
-  /* ── Border Radius ──────────────────────────────────────────────── */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  /* ── Shadows (warm undertone) ───────────────────────────────────── */
-  --shadow-sm: 0 2px 8px rgba(60, 45, 35, 0.06);
-  --shadow-md: 0 4px 16px rgba(60, 45, 35, 0.08);
-  --shadow-lg: 0 8px 32px rgba(60, 45, 35, 0.10);
-  --shadow-xl: 0 12px 48px rgba(60, 45, 35, 0.12);
-
-  /* ── Transitions ────────────────────────────────────────────────── */
-  --ease-warm: cubic-bezier(0.34, 0.1, 0.2, 1);
+  /* ── Transitions (mechanical, stepped) ───────────────────────────── */
+  --ease-mechanical: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 /* ── Base styles ────────────────────────────────────────────────────── */
 @layer base {
   html,
   body {
-    @apply bg-fh-bg text-fh-body antialiased;
+    background-color: var(--color-fh-bg);
+    color: var(--color-fh-body);
     font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3 {
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    font-weight: 800;
     color: var(--color-fh-heading);
-  }
-
-  h4, h5, h6 {
-    font-family: var(--font-body);
-    color: var(--color-fh-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 }
 
@@ -126,16 +103,16 @@
 }
 
 .gp-response-btn:focus-visible {
-  outline: 3px solid #FFB800;
+  outline: 3px solid #C8603A;
   outline-offset: 3px;
 }
 
 .gp-family-btn:hover {
-  background-color: #fffbeb !important;
+  background-color: #f5f0eb !important;
 }
 
 .gp-family-btn:focus-visible {
-  outline: 3px solid #FFB800;
+  outline: 3px solid #C8603A;
   outline-offset: 3px;
 }
 
@@ -144,15 +121,14 @@
 }
 
 .gp-back-link:focus-visible {
-  outline: 3px solid #FFB800;
+  outline: 3px solid #C8603A;
   outline-offset: 3px;
-  border-radius: 16px;
 }
 
 /* ── Accessible focus styles for all interactive elements ───────────── */
 .gp-mode button:focus-visible,
 .gp-mode a:focus-visible {
-  outline: 3px solid #FFB800;
+  outline: 3px solid #C8603A;
   outline-offset: 2px;
 }
 

@@ -31,75 +31,210 @@ function SignInPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-6 py-12 bg-fh-bg">
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-hearth/40">
-          <Logo variant="icon" size="lg" />
-        </div>
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Welcome back</h1>
-        <p className="mt-2 text-fh-muted">
-          Sign in to your Family Hub account.
-        </p>
+    <div className="relative min-h-dvh" style={{ backgroundColor: "#F5F0EB" }}>
+      {/* ── Structural grid lines ────────────────────────────── */}
+      <div
+        className="pointer-events-none fixed inset-y-0 z-0"
+        style={{
+          left: "24px",
+          width: "0",
+          borderLeft: "0.5px dashed #EDEDEA",
+        }}
+      />
+      <div
+        className="pointer-events-none fixed inset-y-0 z-0"
+        style={{
+          right: "24px",
+          width: "0",
+          borderRight: "0.5px dashed #EDEDEA",
+        }}
+      />
+
+      {/* ── Top ruled line with crosshair markers ────────────── */}
+      <div
+        className="pointer-events-none fixed left-6 right-6 top-[60px] z-10 border-t"
+        style={{ borderColor: "#1A1A1A", borderWidth: "0.5px" }}
+      />
+      <div className="pointer-events-none fixed z-10" style={{ left: "24px", top: "50px" }}>
+        <div style={{ width: "1.5px", height: "20px", backgroundColor: "#1A1A1A", margin: "0 auto" }} />
+        <div style={{ width: "20px", height: "1.5px", backgroundColor: "#1A1A1A", position: "absolute", top: "10px", left: "-9px" }} />
+      </div>
+      <div className="pointer-events-none fixed z-10" style={{ right: "24px", top: "50px" }}>
+        <div style={{ width: "1.5px", height: "20px", backgroundColor: "#1A1A1A", margin: "0 auto" }} />
+        <div style={{ width: "20px", height: "1.5px", backgroundColor: "#1A1A1A", position: "absolute", top: "10px", left: "-9px" }} />
       </div>
 
-      {error && (
-        <div className="w-full rounded-lg bg-rose-50 p-3 text-sm text-rose-700">
-          {error}
+      {/* ── Main content ─────────────────────────────────────── */}
+      <main className="relative z-10 mx-auto flex min-h-dvh max-w-[327px] flex-col justify-center px-0 py-12">
+        {/* Logo */}
+        <div className="mb-10 flex justify-center">
+          <Logo variant="icon" size="xl" />
         </div>
-      )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
-      >
-        <label
-          htmlFor="email"
-          className="mb-1 block text-sm font-medium text-fh-body"
+        {/* Heading */}
+        <h1
+          className="mb-2 text-center"
+          style={{
+            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            fontSize: "26px",
+            fontWeight: 800,
+            color: "#1A1A1A",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
         >
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-ember focus:outline-none focus:ring-2 focus:ring-fh-hearth/50"
-          required
-          autoFocus
-        />
+          SIGN IN
+        </h1>
 
-        <label
-          htmlFor="password"
-          className="mb-1 mt-4 block text-sm font-medium text-fh-body"
-        >
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-ember focus:outline-none focus:ring-2 focus:ring-fh-hearth/50"
-          required
-        />
+        {/* Ruled line */}
+        <div className="mb-8 w-full" style={{ borderTop: "0.5px solid #1A1A1A" }} />
 
-        <button
-          type="submit"
-          disabled={busy}
-          className="mt-6 w-full rounded-lg bg-fh-ember px-4 py-3 font-semibold text-white hover:bg-fh-ember/90 focus:outline-none focus:ring-2 focus:ring-fh-hearth disabled:opacity-50"
-        >
-          {busy ? "Signing in…" : "Sign In"}
-        </button>
-      </form>
+        {/* Error */}
+        {error && (
+          <div
+            className="mb-6 p-3"
+            style={{
+              backgroundColor: "#EDEDEA",
+              border: "1.5px solid #C8603A",
+              fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
+              fontSize: "10px",
+              color: "#C8603A",
+              letterSpacing: "0.03em",
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-      <p className="text-center text-sm text-fh-muted">
-        Don&apos;t have an account?{" "}
-        <a href="/sign-up" className="text-fh-tide underline">
-          Create one
-        </a>
-      </p>
-    </main>
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          {/* Email */}
+          <label
+            htmlFor="email"
+            className="mb-1 block"
+            style={{
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#1A1A1A",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            EMAIL
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="mb-5 w-full px-4 py-3"
+            style={{
+              backgroundColor: "#EDEDEA",
+              border: "1.5px solid #1A1A1A",
+              color: "#1A1A1A",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontSize: "14px",
+              outline: "none",
+            }}
+            required
+            autoFocus
+          />
+
+          {/* Password */}
+          <label
+            htmlFor="password"
+            className="mb-1 block"
+            style={{
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#1A1A1A",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            PASSWORD
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="mb-6 w-full px-4 py-3"
+            style={{
+              backgroundColor: "#EDEDEA",
+              border: "1.5px solid #1A1A1A",
+              color: "#1A1A1A",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontSize: "14px",
+              outline: "none",
+            }}
+            required
+          />
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full"
+            style={{
+              height: "50px",
+              backgroundColor: busy ? "#EDEDEA" : "#C8603A",
+              color: busy ? "#1A1A1A" : "#F5F0EB",
+              border: "none",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontSize: "13px",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.3em",
+              cursor: busy ? "default" : "pointer",
+            }}
+          >
+            {busy ? "SIGNING IN…" : "SIGN IN"}
+          </button>
+        </form>
+
+        {/* Link to sign-up */}
+        <div className="mt-6 text-center">
+          <a
+            href="/sign-up"
+            style={{
+              fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
+              fontSize: "10px",
+              color: "#1A1A1A",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+              borderBottom: "1px solid #1A1A1A",
+              paddingBottom: "2px",
+            }}
+          >
+            NO ACCOUNT? CREATE ONE
+          </a>
+        </div>
+
+        {/* ── Bottom heading with ruled line ────────────────── */}
+        <div className="mt-auto pt-16">
+          <div className="mb-3 w-full" style={{ borderTop: "0.5px solid #1A1A1A" }} />
+          <h2
+            className="text-center"
+            style={{
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontSize: "22px",
+              fontWeight: 800,
+              color: "#1A1A1A",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              opacity: 0.15,
+            }}
+          >
+            SIGN IN
+          </h2>
+        </div>
+      </main>
+    </div>
   );
 }
