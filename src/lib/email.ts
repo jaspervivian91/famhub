@@ -1,7 +1,7 @@
 /**
  * Email Service — transactional emails via Resend
  *
- * SendGrid-style wrapper around the Resend API for all Family Hub
+ * SendGrid-style wrapper around the Resend API for all Family Core
  * transactional emails (waitlist confirmations, password resets, etc.).
  */
 
@@ -9,7 +9,7 @@ import { Resend } from "resend";
 import type { Nudge } from "~/lib/types";
 import type { DigestContent } from "~/lib/digest-engine";
 
-const FROM_ADDRESS = "Family Hub <onboarding@resend.dev>";
+const FROM_ADDRESS = "Family Core <onboarding@resend.dev>";
 
 let resendInstance: Resend | null = null;
 
@@ -47,7 +47,7 @@ export async function sendWaitlistConfirmation(
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: email,
-      subject: "You're on the Family Hub waitlist!",
+      subject: "You're on the Family Core waitlist!",
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
           <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
@@ -55,19 +55,19 @@ export async function sendWaitlistConfirmation(
             You're on the list!
           </h1>
           <p style="color: #57534e; text-align: center; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-            Thanks for joining the Family Hub waitlist. We'll let you know
+            Thanks for joining the Family Core waitlist. We'll let you know
             the moment we launch — and as an early member, you'll get
             premium features free for the first year.
           </p>
           <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
             <p style="color: #92400e; font-size: 14px; line-height: 1.5; margin: 0;">
               <strong>📬 Stay tuned</strong><br/>
-              In the meantime, tell your family about Family Hub!
+              In the meantime, tell your family about Family Core!
               The more people waiting, the better the launch.
             </p>
           </div>
           <p style="color: #a8a29e; text-align: center; font-size: 12px; margin: 0;">
-            Family Hub — stay close to the people who matter, without social media.
+            Family Core — stay close to the people who matter, without social media.
           </p>
         </div>
       `,
@@ -94,7 +94,7 @@ export async function sendPasswordReset(
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: email,
-      subject: "Reset your Family Hub password",
+      subject: "Reset your Family Core password",
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
           <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
@@ -102,7 +102,7 @@ export async function sendPasswordReset(
             Reset your password
           </h1>
           <p style="color: #57534e; text-align: center; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
-            Click the link below to reset your Family Hub password.
+            Click the link below to reset your Family Core password.
             This link expires in 1 hour.
           </p>
           <a href="${resetLink}"
@@ -157,7 +157,7 @@ export async function sendNudgeEmail(
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: memberEmail,
-      subject: `${emoji} ${label} — from Family Hub`,
+      subject: `${emoji} ${label} — from Family Core`,
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
           <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
@@ -179,7 +179,7 @@ export async function sendNudgeEmail(
             View on Dashboard →
           </a>
           <p style="color: #a8a29e; text-align: center; font-size: 12px; margin: 0;">
-            Family Hub — stay close to the people who matter, without social media.
+            Family Core — stay close to the people who matter, without social media.
           </p>
         </div>
       `,
@@ -286,7 +286,7 @@ export async function sendDigestEmail(
             View Full Digest →
           </a>
           <p style="color: #a8a29e; text-align: center; font-size: 12px; margin: 0;">
-            Family Hub — stay close to the people who matter, without social media.
+            Family Core — stay close to the people who matter, without social media.
           </p>
         </div>
       `,

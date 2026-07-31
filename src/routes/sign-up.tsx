@@ -45,7 +45,7 @@ function SignUpPage() {
         style={{
           left: "24px",
           width: "0",
-          borderLeft: "0.5px dashed #EDEDEA",
+          borderLeft: "0.5px dashed #EBF0EC",
         }}
       />
       <div
@@ -53,7 +53,7 @@ function SignUpPage() {
         style={{
           right: "24px",
           width: "0",
-          borderRight: "0.5px dashed #EDEDEA",
+          borderRight: "0.5px dashed #EBF0EC",
         }}
       />
 
@@ -101,11 +101,11 @@ function SignUpPage() {
           <div
             className="mb-6 p-3"
             style={{
-              backgroundColor: "#EDEDEA",
-              border: "1.5px solid #C8603A",
+              backgroundColor: "#EBF0EC",
+              border: "1.5px solid #3A6B4A",
               fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
               fontSize: "10px",
-              color: "#C8603A",
+              color: "#3A6B4A",
               letterSpacing: "0.03em",
             }}
           >
@@ -138,7 +138,7 @@ function SignUpPage() {
             placeholder="Your name"
             className="mb-5 w-full px-4 py-3"
             style={{
-              backgroundColor: "#EDEDEA",
+              backgroundColor: "#EBF0EC",
               border: "1.5px solid #1A1A1A",
               color: "#1A1A1A",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -172,7 +172,7 @@ function SignUpPage() {
             placeholder="you@example.com"
             className="mb-5 w-full px-4 py-3"
             style={{
-              backgroundColor: "#EDEDEA",
+              backgroundColor: "#EBF0EC",
               border: "1.5px solid #1A1A1A",
               color: "#1A1A1A",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -206,7 +206,7 @@ function SignUpPage() {
             minLength={8}
             className="mb-6 w-full px-4 py-3"
             style={{
-              backgroundColor: "#EDEDEA",
+              backgroundColor: "#EBF0EC",
               border: "1.5px solid #1A1A1A",
               color: "#1A1A1A",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -223,7 +223,7 @@ function SignUpPage() {
             className="w-full"
             style={{
               height: "50px",
-              backgroundColor: busy ? "#EDEDEA" : "#C8603A",
+              backgroundColor: busy ? "#EBF0EC" : "#3A6B4A",
               color: busy ? "#1A1A1A" : "#F5F0EB",
               border: "none",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",

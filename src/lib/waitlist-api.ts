@@ -38,9 +38,9 @@ export const joinWaitlist = createServerFn({ method: "POST" })
         });
       }
 
-      return { success: true, message: "You're on the list! We'll let you know when Family Hub launches." };
+      return { success: true, message: "You're on the list! We'll let you know when Family Core launches." };
     } catch {
       // If there's a DB error, it might already be a duplicate — treat as success
-      return { success: true, message: "You're on the list! We'll let you know when Family Hub launches." };
+      return { success: true, message: "You're on the list! We'll let you know when Family Core launches." };
     }
   });

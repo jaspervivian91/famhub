@@ -205,7 +205,7 @@ function GrandparentDashboard() {
     "there";
 
   const groupName =
-    loaderData.group?.name ?? loaderData.mockGroupName ?? "Family Hub";
+    loaderData.group?.name ?? loaderData.mockGroupName ?? "Family Core";
 
   const currentMemberId = getCurrentMemberId();
 
@@ -533,7 +533,7 @@ function GrandparentDashboard() {
               minHeight: "56px",
             }}
           >
-            ← Back to Family Hub
+            ← Back to Family Core
           </a>
         </div>
 

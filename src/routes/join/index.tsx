@@ -21,8 +21,8 @@ function JoinPage() {
   return (
     <div className="relative min-h-dvh" style={{ backgroundColor: "#F5F0EB" }}>
       {/* ── Structural grid lines ────────────────────────────── */}
-      <div className="pointer-events-none fixed inset-y-0 z-0" style={{ left: "24px", width: "0", borderLeft: "0.5px dashed #EDEDEA" }} />
-      <div className="pointer-events-none fixed inset-y-0 z-0" style={{ right: "24px", width: "0", borderRight: "0.5px dashed #EDEDEA" }} />
+      <div className="pointer-events-none fixed inset-y-0 z-0" style={{ left: "24px", width: "0", borderLeft: "0.5px dashed #EBF0EC" }} />
+      <div className="pointer-events-none fixed inset-y-0 z-0" style={{ right: "24px", width: "0", borderRight: "0.5px dashed #EBF0EC" }} />
 
       {/* ── Top ruled line with crosshair markers ────────────── */}
       <div className="pointer-events-none fixed left-6 right-6 top-[60px] z-10 border-t" style={{ borderColor: "#1A1A1A", borderWidth: "0.5px" }} />
@@ -46,7 +46,7 @@ function JoinPage() {
         <div className="mb-8 mt-2 w-full" style={{ borderTop: "0.5px solid #1A1A1A" }} />
 
         {error && (
-          <div className="mb-6 p-3" style={{ backgroundColor: "#EDEDEA", border: "1.5px solid #C8603A", fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace", fontSize: "10px", color: "#C8603A" }}>
+          <div className="mb-6 p-3" style={{ backgroundColor: "#EBF0EC", border: "1.5px solid #3A6B4A", fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace", fontSize: "10px", color: "#3A6B4A" }}>
             {error}
           </div>
         )}
@@ -62,11 +62,11 @@ function JoinPage() {
             onChange={(e) => setCode(e.target.value)}
             placeholder="Enter your family invite code"
             className="mb-6 w-full px-4 py-3"
-            style={{ backgroundColor: "#EDEDEA", border: "1.5px solid #1A1A1A", color: "#1A1A1A", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: "14px", outline: "none" }}
+            style={{ backgroundColor: "#EBF0EC", border: "1.5px solid #1A1A1A", color: "#1A1A1A", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: "14px", outline: "none" }}
             required
             autoFocus
           />
-          <button type="submit" className="w-full" style={{ height: "50px", backgroundColor: "#C8603A", color: "#F5F0EB", border: "none", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em", cursor: "pointer" }}>
+          <button type="submit" className="w-full" style={{ height: "50px", backgroundColor: "#3A6B4A", color: "#F5F0EB", border: "none", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em", cursor: "pointer" }}>
             JOIN FAMILY
           </button>
         </form>

@@ -1,5 +1,5 @@
 /**
- * Digest server functions for Family Hub.
+ * Digest server functions for Family Core.
  *
  * Handles digest generation, retrieval, and status tracking.
  * All functions work with real DB data and fall back to mock data

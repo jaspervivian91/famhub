@@ -15,7 +15,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Family Hub — Stay close to the people who matter" },
+      { title: "Family Core — Stay close to the people who matter" },
       {
         name: "description",
         content:
@@ -39,7 +39,7 @@ export const Route = createRootRoute({
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-fh-bg">
       <h1 className="text-2xl font-bold text-fh-ember">Page not found</h1>
       <a href="/" className="text-fh-tide underline">
-        Back to Family Hub
+        Back to Family Core
       </a>
     </div>
   ),

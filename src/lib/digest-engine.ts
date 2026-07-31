@@ -1,5 +1,5 @@
 /**
- * Digest Engine — Weekly digest generator for Family Hub.
+ * Digest Engine — Weekly digest generator for Family Core.
  *
  * Builds personalized weekly digests that curate relationship health,
  * conversation-worthy moments, and icebreakers into a single summary
@@ -449,7 +449,7 @@ export function generateDigest(
       {
         type: "appreciation",
         emoji: "🏠",
-        text: "Family Hub is here to help you stay close — check back next week for more moments!",
+        text: "Family Core is here to help you stay close — check back next week for more moments!",
         priority: 5,
       },
     ];

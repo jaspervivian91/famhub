@@ -1,4 +1,4 @@
-// Family Hub shared types
+// Family Core shared types
 
 export interface Account {
   id: string;

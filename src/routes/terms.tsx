@@ -13,7 +13,7 @@ function TermsPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Logo variant="icon" size="md" />
-            <span className="text-xl font-bold text-fh-heading font-[family-name:var(--font-heading)]">Family Hub</span>
+            <span className="text-xl font-bold text-fh-heading font-[family-name:var(--font-heading)]">Family Core</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link
@@ -48,7 +48,7 @@ function TermsPage() {
               Acceptance of terms
             </h2>
             <p>
-              By creating an account or using Family Hub, you agree to these
+              By creating an account or using Family Core, you agree to these
               terms. If you don&apos;t agree, that&apos;s okay — but please
               don&apos;t use the service. These terms apply to everyone: free
               users, premium subscribers, and anyone who visits our website.
@@ -76,7 +76,7 @@ function TermsPage() {
               Acceptable use
             </h2>
             <p className="mb-3">
-              Family Hub exists to bring families closer together. To keep it
+              Family Core exists to bring families closer together. To keep it
               that way, you agree not to:
             </p>
             <ul className="list-disc pl-6 space-y-2">
@@ -89,7 +89,7 @@ function TermsPage() {
                 are for people you actually know and care about.
               </li>
               <li>
-                <strong>Use Family Hub for anything illegal.</strong> Pretty
+                <strong>Use Family Core for anything illegal.</strong> Pretty
                 straightforward.
               </li>
               <li>
@@ -109,7 +109,7 @@ function TermsPage() {
               Our privacy-first commitment
             </h2>
             <p>
-              Family Hub is not social media. We don&apos;t optimize for
+              Family Core is not social media. We don&apos;t optimize for
               engagement, we don&apos;t show ads, and we don&apos;t sell your
               data. Our measure of success is this: the app succeeds when you put
               your phone down and reconnect with your family in real life. Read
@@ -130,7 +130,7 @@ function TermsPage() {
               AI nudges — suggestions, not commands
             </h2>
             <p>
-              Family Hub uses AI to detect when family connections might be
+              Family Core uses AI to detect when family connections might be
               cooling and suggests nudges to help you reconnect. These are{" "}
               <strong>suggestions</strong>, not obligations. You know your family
               dynamics better than any algorithm — use your judgment about when
@@ -146,7 +146,7 @@ function TermsPage() {
               Service availability
             </h2>
             <p>
-              We aim to keep Family Hub running reliably, but we don&apos;t
+              We aim to keep Family Core running reliably, but we don&apos;t
               guarantee 100% uptime. Things break, maintenance happens, and
               sometimes the internet has a bad day. We&apos;ll do our best to
               keep you connected to your family.
@@ -159,7 +159,7 @@ function TermsPage() {
               Limitation of liability
             </h2>
             <p className="mb-3">
-              Family Hub is a tool to help families connect. We&apos;re not
+              Family Core is a tool to help families connect. We&apos;re not
               responsible for:
             </p>
             <ul className="list-disc pl-6 space-y-2">
@@ -177,7 +177,7 @@ function TermsPage() {
               </li>
             </ul>
             <p className="mt-3">
-              To the fullest extent permitted by law, Family Hub and its creators
+              To the fullest extent permitted by law, Family Core and its creators
               are not liable for any damages arising from your use of the
               service. If you&apos;re in a jurisdiction that doesn&apos;t allow
               these limitations, some of them may not apply.
@@ -207,9 +207,9 @@ function TermsPage() {
               Changes to these terms
             </h2>
             <p>
-              We may update these terms as Family Hub grows. If we make material
+              We may update these terms as Family Core grows. If we make material
               changes, we&apos;ll notify you — by email and/or a notice in the
-              app — before they take effect. Continuing to use Family Hub after
+              app — before they take effect. Continuing to use Family Core after
               the changes means you accept the updated terms.
             </p>
           </section>
@@ -236,7 +236,7 @@ function TermsPage() {
             to="/"
             className="text-fh-tide underline hover:text-fh-tide/80 font-medium"
           >
-            ← Back to Family Hub
+            ← Back to Family Core
           </Link>
         </div>
       </main>
@@ -247,7 +247,7 @@ function TermsPage() {
           <div className="flex items-center gap-2">
             <Logo variant="icon" size="sm" />
             <span className="text-sm font-medium text-fh-muted">
-              Family Hub &copy; {new Date().getFullYear()}
+              Family Core &copy; {new Date().getFullYear()}
             </span>
           </div>
           <div className="flex items-center gap-6">

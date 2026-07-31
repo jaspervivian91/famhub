@@ -12,19 +12,19 @@
 
   /* ── Primary brand colors (brutalist palette) ────────────────────── */
   --color-fh-bg: #F5F0EB;
-  --color-fh-surface: #EDEDEA;
+  --color-fh-surface: #EBF0EC;
   --color-fh-border: #1A1A1A;
   --color-fh-muted: rgba(26, 26, 26, 0.3);
   --color-fh-body: #1A1A1A;
   --color-fh-heading: #1A1A1A;
-  --color-fh-accent: #C8603A;
+  --color-fh-accent: #3A6B4A;
   --color-fh-structural: #1A1A1A;
 
   /* ── Grandparent Mode ───────────────────────────────────────────── */
   --color-gp-bg: #FFFFFF;
   --color-gp-text: #1A1A1A;
-  --color-gp-primary: #C8603A;
-  --color-gp-accent: #C8603A;
+  --color-gp-primary: #3A6B4A;
+  --color-gp-accent: #3A6B4A;
   --color-gp-surface: #F0EDE8;
   --color-gp-border: #1A1A1A;
 
@@ -103,7 +103,7 @@
 }
 
 .gp-response-btn:focus-visible {
-  outline: 3px solid #C8603A;
+  outline: 3px solid #3A6B4A;
   outline-offset: 3px;
 }
 
@@ -112,7 +112,7 @@
 }
 
 .gp-family-btn:focus-visible {
-  outline: 3px solid #C8603A;
+  outline: 3px solid #3A6B4A;
   outline-offset: 3px;
 }
 
@@ -121,14 +121,14 @@
 }
 
 .gp-back-link:focus-visible {
-  outline: 3px solid #C8603A;
+  outline: 3px solid #3A6B4A;
   outline-offset: 3px;
 }
 
 /* ── Accessible focus styles for all interactive elements ───────────── */
 .gp-mode button:focus-visible,
 .gp-mode a:focus-visible {
-  outline: 3px solid #C8603A;
+  outline: 3px solid #3A6B4A;
   outline-offset: 2px;
 }
 

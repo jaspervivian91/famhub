@@ -1,4 +1,4 @@
-// UI Mode manager for Family Hub — toggles between standard and grandparent mode.
+// UI Mode manager for Family Core — toggles between standard and grandparent mode.
 // Persists to localStorage and optionally syncs to member_preferences in the DB.
 
 import { createServerFn } from "@tanstack/react-start";

@@ -261,7 +261,7 @@ function Dashboard() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-hearth/40">
             <Logo variant="icon" size="lg" />
           </div>
-          <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Family Hub</h1>
+          <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Family Core</h1>
           <p className="mt-2 text-fh-muted">
             Stay close to the people who matter — without social media.
           </p>
@@ -300,7 +300,7 @@ function Dashboard() {
             disabled={busy}
             className="mt-4 w-full rounded-lg bg-fh-ember px-4 py-3 font-semibold text-white hover:bg-fh-ember/90 focus:outline-none focus:ring-2 focus:ring-fh-hearth disabled:opacity-50"
           >
-            {busy ? "Creating…" : "Create Family Hub"}
+            {busy ? "Creating…" : "Create Family Core"}
           </button>
         </form>
 
@@ -372,7 +372,7 @@ function Dashboard() {
             disabled={busy}
             className="mt-4 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
           >
-            {busy ? "Joining…" : "Join Family Hub"}
+            {busy ? "Joining…" : "Join Family Core"}
           </button>
         </form>
       </main>
@@ -401,7 +401,7 @@ function Dashboard() {
           </div>
           <div>
             <h1 className="font-[family-name:var(--font-heading)] text-xl text-fh-heading">
-              {group?.name ?? "Family Hub"}
+              {group?.name ?? "Family Core"}
             </h1>
             <p className="text-sm text-fh-muted">
               Welcome, {member?.display_name ?? getCurrentMemberName()}

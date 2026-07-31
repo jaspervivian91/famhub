@@ -13,7 +13,7 @@ function PrivacyPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Logo variant="icon" size="md" />
-            <span className="text-xl font-bold text-fh-heading font-[family-name:var(--font-heading)]">Family Hub</span>
+            <span className="text-xl font-bold text-fh-heading font-[family-name:var(--font-heading)]">Family Core</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link
@@ -45,7 +45,7 @@ function PrivacyPage() {
           {/* Introduction */}
           <section>
             <p>
-              Family Hub is built around a simple belief: technology should bring
+              Family Core is built around a simple belief: technology should bring
               families closer together, not exploit their attention. This policy
               explains what data we collect, how we use it, and — just as
               importantly — what we <em>don&apos;t</em> collect. We&apos;ve
@@ -59,7 +59,7 @@ function PrivacyPage() {
             <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
               What data we collect
             </h2>
-            <p className="mb-3">To make Family Hub work, we collect:</p>
+            <p className="mb-3">To make Family Core work, we collect:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>
                 <strong>Account information</strong> — your email address (for
@@ -89,7 +89,7 @@ function PrivacyPage() {
               What we <span className="text-fh-tide">don&apos;t</span> collect
             </h2>
             <p className="mb-3">
-              This is the important part. Family Hub is the opposite of social
+              This is the important part. Family Core is the opposite of social
               media. We do not collect:
             </p>
             <ul className="list-disc pl-6 space-y-2">
@@ -108,7 +108,7 @@ function PrivacyPage() {
               </li>
               <li>
                 <strong>Browsing history</strong> — we don&apos;t track what you
-                do outside Family Hub.
+                do outside Family Core.
               </li>
             </ul>
           </section>
@@ -122,7 +122,7 @@ function PrivacyPage() {
               <li>
                 <strong>To provide the service</strong> — generating connection
                 nudges, calculating pair scores, sending weekly digests, and
-                keeping your family hub running.
+                keeping your family core running.
               </li>
               <li>
                 <strong>To improve the product</strong> — anonymous, aggregated
@@ -164,7 +164,7 @@ function PrivacyPage() {
                 Google Analytics, Facebook Pixel, or any tracking SDKs.
               </li>
               <li>
-                <strong>No advertisers.</strong> Family Hub has no ads and no
+                <strong>No advertisers.</strong> Family Core has no ads and no
                 plans to introduce them.
               </li>
               <li>
@@ -221,7 +221,7 @@ function PrivacyPage() {
             </h2>
             <p>
               If a user is under 13, a parent or guardian must provide consent
-              before they can use Family Hub. We don&apos;t knowingly collect
+              before they can use Family Core. We don&apos;t knowingly collect
               personal data from children under 13 without verified parental
               consent. If you believe a child under 13 has created an account
               without consent, contact us and we&apos;ll remove it immediately.
@@ -278,7 +278,7 @@ function PrivacyPage() {
             to="/"
             className="text-fh-tide underline hover:text-fh-tide/80 font-medium"
           >
-            ← Back to Family Hub
+            ← Back to Family Core
           </Link>
         </div>
       </main>
@@ -289,7 +289,7 @@ function PrivacyPage() {
           <div className="flex items-center gap-2">
             <Logo variant="icon" size="sm" />
             <span className="text-sm font-medium text-fh-muted">
-              Family Hub &copy; {new Date().getFullYear()}
+              Family Core &copy; {new Date().getFullYear()}
             </span>
           </div>
           <div className="flex items-center gap-6">

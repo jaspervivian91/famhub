@@ -46,7 +46,7 @@ function LandingPage() {
         style={{
           left: "24px",
           width: "0",
-          borderLeft: "0.5px dashed #EDEDEA",
+          borderLeft: "0.5px dashed #EBF0EC",
         }}
       />
       {/* Right margin guide */}
@@ -55,7 +55,7 @@ function LandingPage() {
         style={{
           right: "24px",
           width: "0",
-          borderRight: "0.5px dashed #EDEDEA",
+          borderRight: "0.5px dashed #EBF0EC",
         }}
       />
       {/* Center guide */}
@@ -64,7 +64,7 @@ function LandingPage() {
         style={{
           left: "50%",
           width: "0",
-          borderLeft: "0.3px dashed #EDEDEA",
+          borderLeft: "0.3px dashed #EBF0EC",
         }}
       />
 
@@ -143,7 +143,7 @@ function LandingPage() {
         >
           FAMILY
           <br />
-          HUB
+          CORE
         </h1>
 
         {/* Ruled line under heading */}
@@ -199,7 +199,7 @@ function LandingPage() {
           style={{
             width: "275px",
             height: "50px",
-            backgroundColor: "#C8603A",
+            backgroundColor: "#3A6B4A",
             color: "#F5F0EB",
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
             fontSize: "13px",
@@ -245,7 +245,7 @@ function LandingPage() {
             <div
               className="p-3 text-center"
               style={{
-                backgroundColor: "#EDEDEA",
+                backgroundColor: "#EBF0EC",
                 border: "0.5px solid #1A1A1A",
               }}
             >
@@ -283,7 +283,7 @@ function LandingPage() {
                   placeholder="you@example.com"
                   className="flex-1 px-3 py-2"
                   style={{
-                    backgroundColor: "#EDEDEA",
+                    backgroundColor: "#EBF0EC",
                     border: "1.5px solid #1A1A1A",
                     color: "#1A1A1A",
                     fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
@@ -298,7 +298,7 @@ function LandingPage() {
                   disabled={waitlistStatus === "submitting"}
                   className="px-4 py-2"
                   style={{
-                    backgroundColor: waitlistStatus === "submitting" ? "#EDEDEA" : "#1A1A1A",
+                    backgroundColor: waitlistStatus === "submitting" ? "#EBF0EC" : "#1A1A1A",
                     color: waitlistStatus === "submitting" ? "#1A1A1A" : "#F5F0EB",
                     border: "1.5px solid #1A1A1A",
                     fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -317,7 +317,7 @@ function LandingPage() {
                   style={{
                     fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
                     fontSize: "9px",
-                    color: "#C8603A",
+                    color: "#3A6B4A",
                   }}
                 >
                   {waitlistMessage}
@@ -353,7 +353,7 @@ function LandingPage() {
             letterSpacing: "0.06em",
           }}
         >
-          FAMILY HUB &copy; {new Date().getFullYear()}
+          FAMILY CORE &copy; {new Date().getFullYear()}
         </p>
       </footer>
     </div>

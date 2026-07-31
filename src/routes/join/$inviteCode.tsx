@@ -94,7 +94,7 @@ function JoinPage() {
           your family to send a new invite.
         </p>
         <a href="/" className="text-fh-tide underline">
-          Go to Family Hub &rarr;
+          Go to Family Core &rarr;
         </a>
       </main>
     );
@@ -129,7 +129,7 @@ function JoinPage() {
           <Logo variant="icon" size="lg" />
         </div>
         <h1 className="font-[family-name:var(--font-heading)] text-2xl text-fh-heading">
-          Join {group?.name ?? "Family Hub"}
+          Join {group?.name ?? "Family Core"}
         </h1>
         <p className="mt-2 text-fh-muted">
           You&apos;ve been invited to connect with family &mdash; not social media.
@@ -185,11 +185,11 @@ function JoinPage() {
           disabled={busy}
           className="mt-6 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
         >
-          {busy ? "Joining..." : "Join the Family Hub"}
+          {busy ? "Joining..." : "Join the Family Core"}
         </button>
       </form>
       <p className="text-xs text-fh-muted">
-        Family Hub is private. No feeds, no ads &mdash; just connection.
+        Family Core is private. No feeds, no ads &mdash; just connection.
       </p>
     </main>
   );

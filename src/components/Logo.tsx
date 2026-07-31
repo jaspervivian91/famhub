@@ -33,7 +33,7 @@ export function Logo({
         viewBox="0 0 100 100"
         fill="none"
         className={`${SIZES[size]} ${className}`}
-        aria-label="Family Hub"
+        aria-label="Family Core"
       >
         {/* Heart-roof */}
         <path
@@ -56,7 +56,7 @@ export function Logo({
           strokeWidth="3"
         />
         {/* Window — accent */}
-        <circle cx="50" cy="75" r="10" fill="#C8603A" />
+        <circle cx="50" cy="75" r="10" fill="#3A6B4A" />
         {/* Structural ruled line at base */}
         <line
           x1="25" y1="95"
@@ -77,7 +77,7 @@ export function Logo({
         fill="none"
         className={`${FULL_SIZES[size]} ${className}`}
         style={{ width: "auto" }}
-        aria-label="Family Hub"
+        aria-label="Family Core"
       >
         <g transform="translate(0, 5) scale(0.85)">
           <path
@@ -95,7 +95,7 @@ export function Logo({
             rx="0" ry="0"
             fill="transparent" stroke="#1A1A1A" strokeWidth="3"
           />
-          <circle cx="50" cy="75" r="10" fill="#C8603A" />
+          <circle cx="50" cy="75" r="10" fill="#3A6B4A" />
           <line x1="25" y1="95" x2="75" y2="95" stroke="#1A1A1A" strokeWidth="2" />
         </g>
         {/* Vertical ruled divider */}
@@ -111,16 +111,16 @@ export function Logo({
         >
           FAMILY
         </text>
-        {/* "HUB" — Inter Bold uppercase, accent color */}
+        {/* "CORE" — Inter Bold uppercase, accent color */}
         <text
           x="110" y="78"
           fontFamily="Inter, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
           fontSize="28"
           fontWeight="700"
-          fill="#C8603A"
+          fill="#3A6B4A"
           letterSpacing="0.2em"
         >
-          HUB
+          CORE
         </text>
       </svg>
     );
@@ -135,7 +135,7 @@ export function Logo({
         fill="none"
         className={`${SIZES[size]} ${className}`}
         style={{ width: "auto" }}
-        aria-label="Family Hub"
+        aria-label="Family Core"
       >
         <g transform="translate(5, 5) scale(0.9)">
           <path
@@ -149,7 +149,7 @@ export function Logo({
             fill="#1A1A1A"
           />
           <rect x="25" y="55" width="50" height="40" rx="0" ry="0" fill="transparent" stroke="#1A1A1A" strokeWidth="3" />
-          <circle cx="50" cy="75" r="10" fill="#C8603A" />
+          <circle cx="50" cy="75" r="10" fill="#3A6B4A" />
           <line x1="25" y1="95" x2="75" y2="95" stroke="#1A1A1A" strokeWidth="2" />
         </g>
         {/* "FAMILY" — Inter Bold uppercase, centered */}
@@ -164,17 +164,17 @@ export function Logo({
         >
           FAMILY
         </text>
-        {/* "HUB" — Inter Bold uppercase, accent color */}
+        {/* "CORE" — Inter Bold uppercase, accent color */}
         <text
           x="50" y="126"
           fontFamily="Inter, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
           fontSize="14"
           fontWeight="700"
-          fill="#C8603A"
+          fill="#3A6B4A"
           letterSpacing="0.2em"
           textAnchor="middle"
         >
-          HUB
+          CORE
         </text>
       </svg>
     );
@@ -188,7 +188,7 @@ export function Logo({
       fill="none"
       className={`${FULL_SIZES[size]} ${className}`}
       style={{ width: "auto" }}
-      aria-label="Family Hub"
+      aria-label="Family Core"
     >
       <g transform="translate(0, 5) scale(0.9)">
         <path
@@ -202,10 +202,10 @@ export function Logo({
           fill="#1A1A1A"
         />
         <rect x="25" y="55" width="50" height="40" rx="0" ry="0" fill="#FFFFFF" stroke="#1A1A1A" strokeWidth="4" />
-        <circle cx="50" cy="75" r="10" fill="#C8603A" />
+        <circle cx="50" cy="75" r="10" fill="#3A6B4A" />
       </g>
       <text x="115" y="55" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontSize="38" fontWeight="700" fill="#1A1A1A" letterSpacing="0.08em">FAMILY</text>
-      <text x="115" y="88" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontSize="38" fontWeight="700" fill="#C8603A" letterSpacing="0.08em">HUB</text>
+      <text x="115" y="88" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontSize="38" fontWeight="700" fill="#3A6B4A" letterSpacing="0.08em">CORE</text>
     </svg>
   );
 }
