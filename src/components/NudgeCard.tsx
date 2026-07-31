@@ -1,19 +1,20 @@
 /**
  * Nudge card component — accessible, with proper heading hierarchy
  * and large tap targets (min 44px).
+ * Brutalist direction: flat cards, monospace metadata, sharp corners.
  */
 import type { Nudge, PairScore, ConversationStarter } from "~/lib/types";
-import { ScoreRing, ScoreDot, TrendArrow } from "~/components/ScoreIndicator";
+import { ScoreDot } from "~/components/ScoreIndicator";
 import { useState } from "react";
 
 const NUDGE_TYPE_CONFIG: Record<
   string,
-  { icon: string; label: string; color: string }
+  { label: string; accent: boolean }
 > = {
-  dormancy: { icon: "⏰", label: "Reconnect", color: "border-rose-200 bg-rose-50" },
-  cooling: { icon: "🌡️", label: "Cooling", color: "border-amber-200 bg-amber-50" },
-  celebration: { icon: "🎉", label: "Celebration", color: "border-emerald-200 bg-emerald-50" },
-  conversation_starter: { icon: "💬", label: "Conversation Starter", color: "border-teal-200 bg-teal-50" },
+  dormancy: { label: "RECONNECT", accent: true },
+  cooling: { label: "COOLING", accent: false },
+  celebration: { label: "CELEBRATION", accent: false },
+  conversation_starter: { label: "CONVERSATION STARTER", accent: false },
 };
 
 export interface NudgeCardProps {
@@ -41,53 +42,66 @@ export function NudgeCard({
 
   return (
     <li
-      className={`rounded-xl border p-4 ${config.color} shadow-sm`}
+      className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-4"
+      style={{ borderRadius: 0 }}
       role="article"
       aria-label={`${config.label} nudge: ${nudge.message_text}`}
     >
       {/* Header row */}
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-lg" aria-hidden="true">
-          {config.icon}
-        </span>
-        <span className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+        {/* Accent left bar for dormancy */}
+        {config.accent && (
+          <span
+            className="block h-5 w-0.5 shrink-0 bg-[#C8603A]"
+            aria-hidden="true"
+          />
+        )}
+        <span className="font-mono text-[9px] font-normal uppercase tracking-[0.06em] text-[#1A1A1A]/50">
           {config.label}
         </span>
         {score && (
-          <span className="ml-auto flex items-center gap-1">
+          <span className="ml-auto flex items-center gap-1.5">
             <ScoreDot category={score.category} />
-            <span className="text-xs text-stone-400">Score: {score.score}</span>
+            <span className="font-mono text-[9px] tabular-nums text-[#1A1A1A]/50">
+              {score.score}
+            </span>
           </span>
         )}
       </div>
 
       {/* Message */}
-      <h3 className="mb-3 text-sm leading-relaxed text-stone-700">
+      <h3 className="mb-3 text-[13px] font-normal leading-relaxed text-[#1A1A1A]">
         {nudge.message_text}
       </h3>
 
       {/* Relationship context */}
-      <p className="mb-3 text-xs text-stone-400">
-        {displayFrom} ↔ {displayTo}
+      <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.03em] text-[#1A1A1A]/40">
+        {displayFrom} &mdash; {displayTo}
       </p>
 
       {/* Score details if available */}
       {score && (
-        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-white/60 p-2 text-xs">
-          <ScoreRing score={score.score} category={score.category} size="sm" showLabel={false} />
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-stone-500">
+        <div className="mb-3 flex flex-wrap items-center gap-3 border border-[#1A1A1A]/10 bg-[#F5F0EB] p-2.5" style={{ borderRadius: 0 }}>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[11px] tabular-nums font-normal text-[#1A1A1A]">
+              {score.score}
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/40">
+              {score.category}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[9px] tabular-nums text-[#1A1A1A]/70">
             <span>
-              Recency: <strong>{score.factors.recency}%</strong>
+              RECENCY <span className="text-[#1A1A1A]">{score.factors.recency}%</span>
             </span>
             <span>
-              Frequency: <strong>{score.factors.frequency}%</strong>
+              FREQ <span className="text-[#1A1A1A]">{score.factors.frequency}%</span>
             </span>
             <span>
-              Balance: <strong>{score.factors.initiationBalance}%</strong>
+              BAL <span className="text-[#1A1A1A]">{score.factors.initiationBalance}%</span>
             </span>
-            <span className="inline-flex items-center gap-1">
-              Trend: <strong>{score.factors.trend}%</strong>
-              <TrendArrow trend={score.factors.trend} />
+            <span>
+              TREND <span className="text-[#1A1A1A]">{score.factors.trend}%</span>
             </span>
           </div>
         </div>
@@ -97,25 +111,28 @@ export function NudgeCard({
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => onAcknowledge(nudge.id)}
-          className="min-h-[44px] min-w-[44px] rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300"
+          className="min-h-[44px] min-w-[44px] border-2 border-[#1A1A1A] bg-[#C8603A] px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#F5F0EB] hover:bg-[#C8603A]/90 focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+          style={{ borderRadius: 0 }}
           aria-label="Acknowledge this nudge"
         >
-          👍 Got it!
+          GOT IT
         </button>
         <button
           onClick={() => onDismiss(nudge.id)}
-          className="min-h-[44px] min-w-[44px] rounded-lg border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-500 hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-300"
+          className="min-h-[44px] min-w-[44px] border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+          style={{ borderRadius: 0 }}
           aria-label="Dismiss this nudge"
         >
-          Dismiss
+          DISMISS
         </button>
         {onGenerateStarters && (
           <button
             onClick={() => onGenerateStarters(nudge)}
-            className="min-h-[44px] min-w-[44px] rounded-lg border border-teal-200 bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-300"
+            className="min-h-[44px] min-w-[44px] border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
             aria-label="Generate conversation starters"
           >
-            💡 Get ideas
+            GET IDEAS
           </button>
         )}
       </div>
@@ -133,11 +150,11 @@ export interface ConversationStarterPanelProps {
   onClose: () => void;
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  memory: "📖",
-  photo: "📸",
-  question: "💭",
-  activity: "🎯",
+const CATEGORY_LABEL: Record<string, string> = {
+  memory: "MEMORY",
+  photo: "PHOTO",
+  question: "QUESTION",
+  activity: "ACTIVITY",
 };
 
 export function ConversationStarterPanel({
@@ -145,33 +162,50 @@ export function ConversationStarterPanel({
   memberName,
   onClose,
 }: ConversationStarterPanelProps) {
+  const [copiedIds, setCopiedIds] = useState<Set<string>>(new Set());
+
+  function handleCopy(text: string, id: string) {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopiedIds((prev) => new Set(prev).add(id));
+    setTimeout(() => {
+      setCopiedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 2000);
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#1A1A1A]/30 sm:items-center"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={`Conversation starters for ${memberName}`}
     >
       <div
-        className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl motion-safe:animate-[slideUp_0.2s_ease-out]"
+        className="w-full max-w-md border-2 border-[#1A1A1A] bg-[#F5F0EB] p-6 sm:max-w-md"
+        style={{ borderRadius: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-stone-800">
-            💡 Conversation Starters
+          <h3 className="font-[Inter] text-[16px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            CONVERSATION STARTERS
           </h3>
           <button
             onClick={onClose}
-            className="min-h-[44px] min-w-[44px] rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+            className="min-h-[44px] min-w-[44px] font-mono text-[18px] text-[#1A1A1A]/50 hover:text-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
             aria-label="Close conversation starters"
           >
-            ✕
+            X
           </button>
         </div>
-        <p className="mb-4 text-sm text-stone-500">
-          Ideas to reconnect with <strong>{memberName}</strong>:
+        <p className="mb-4 font-mono text-[11px] text-[#1A1A1A]/50">
+          Ideas to reconnect with{" "}
+          <span className="text-[#1A1A1A]">{memberName}</span>:
         </p>
 
         {/* Starter cards */}
@@ -179,14 +213,22 @@ export function ConversationStarterPanel({
           {starters.map((starter) => (
             <li
               key={starter.id}
-              className="flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50/50 p-4"
+              className="flex items-start gap-3 border border-[#1A1A1A]/20 bg-[#EDEDEA] p-4"
+              style={{ borderRadius: 0 }}
             >
-              <span className="shrink-0 pt-0.5 text-xl" aria-hidden="true">
-                {CATEGORY_EMOJI[starter.category] ?? "💬"}
+              <span className="shrink-0 pt-0.5 font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/40">
+                {CATEGORY_LABEL[starter.category] ?? "IDEA"}
               </span>
-              <p className="text-sm leading-relaxed text-stone-700">
+              <p className="text-[13px] leading-relaxed text-[#1A1A1A]">
                 {starter.text}
               </p>
+              <button
+                onClick={() => handleCopy(starter.text, starter.id)}
+                className="shrink-0 border border-[#1A1A1A] bg-transparent px-2 py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/70 hover:bg-[#EDEDEA]"
+                style={{ borderRadius: 0 }}
+              >
+                {copiedIds.has(starter.id) ? "COPIED" : "COPY"}
+              </button>
             </li>
           ))}
         </ul>
@@ -194,9 +236,10 @@ export function ConversationStarterPanel({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="mt-4 w-full min-h-[44px] rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-300"
+          className="mt-4 w-full min-h-[44px] border-2 border-[#1A1A1A] bg-[#1A1A1A] px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#F5F0EB] hover:bg-[#1A1A1A]/90 focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+          style={{ borderRadius: 0 }}
         >
-          Got it, thanks!
+          GOT IT
         </button>
       </div>
     </div>
