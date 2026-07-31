@@ -50,20 +50,6 @@ function SignInPage() {
         }}
       />
 
-      {/* ── Top ruled line with crosshair markers ────────────── */}
-      <div
-        className="pointer-events-none fixed left-6 right-6 top-[60px] z-10 border-t"
-        style={{ borderColor: "#1A1A1A", borderWidth: "0.5px" }}
-      />
-      <div className="pointer-events-none fixed z-10" style={{ left: "24px", top: "50px" }}>
-        <div style={{ width: "1.5px", height: "20px", backgroundColor: "#1A1A1A", margin: "0 auto" }} />
-        <div style={{ width: "20px", height: "1.5px", backgroundColor: "#1A1A1A", position: "absolute", top: "10px", left: "-9px" }} />
-      </div>
-      <div className="pointer-events-none fixed z-10" style={{ right: "24px", top: "50px" }}>
-        <div style={{ width: "1.5px", height: "20px", backgroundColor: "#1A1A1A", margin: "0 auto" }} />
-        <div style={{ width: "20px", height: "1.5px", backgroundColor: "#1A1A1A", position: "absolute", top: "10px", left: "-9px" }} />
-      </div>
-
       {/* ── Main content ─────────────────────────────────────── */}
       <main className="relative z-10 mx-auto flex min-h-dvh max-w-[327px] flex-col justify-center px-0 py-12">
         {/* Logo */}
