@@ -1,5 +1,7 @@
 /**
- * Visual indicators and helpers for relationship health scores.
+ * Visual indicators for relationship health scores.
+ * Brutalist direction: square dots, monospace data, ruled-line bars.
+ * No emoji, no rounded corners, no gradients.
  */
 import type { ScoreCategory } from "~/lib/types";
 
@@ -13,44 +15,37 @@ export interface ScoreIndicatorProps {
 
 const CATEGORY_CONFIG: Record<
   ScoreCategory,
-  { color: string; ring: string; bg: string; label: string; emoji: string }
+  { color: string; bg: string; label: string }
 > = {
   dormant: {
-    color: "text-rose-600",
-    ring: "stroke-rose-500",
-    bg: "bg-rose-100",
-    label: "Needs attention",
-    emoji: "🔴",
+    color: "text-[#C8603A]",
+    bg: "bg-[#F5F0EB]",
+    label: "NEEDS ATTENTION",
   },
   cooling: {
-    color: "text-amber-600",
-    ring: "stroke-amber-500",
-    bg: "bg-amber-100",
-    label: "Cooling down",
-    emoji: "🟡",
+    color: "text-[#C8603A]",
+    bg: "bg-[#EDEDEA]",
+    label: "COOLING",
   },
   steady: {
-    color: "text-teal-600",
-    ring: "stroke-teal-500",
-    bg: "bg-teal-100",
-    label: "Steady",
-    emoji: "🟢",
+    color: "text-[#1A1A1A]",
+    bg: "bg-[#EDEDEA]",
+    label: "STEADY",
   },
   thriving: {
-    color: "text-emerald-600",
-    ring: "stroke-emerald-500",
-    bg: "bg-emerald-100",
-    label: "Thriving",
-    emoji: "💚",
+    color: "text-[#1A1A1A]",
+    bg: "bg-[#EDEDEA]",
+    label: "THRIVING",
   },
 };
 
 const SIZE_MAP = {
-  sm: { ring: 32, stroke: 3, text: "text-xs" },
-  md: { ring: 48, stroke: 4, text: "text-sm" },
-  lg: { ring: 64, stroke: 5, text: "text-base" },
+  sm: { bar: "h-1 w-16" },
+  md: { bar: "h-1.5 w-24" },
+  lg: { bar: "h-2 w-32" },
 } as const;
 
+/** A ruled-line bar indicator replacing the old ScoreRing SVG. */
 export function ScoreRing({
   score,
   category,
@@ -60,71 +55,49 @@ export function ScoreRing({
 }: ScoreIndicatorProps) {
   const config = CATEGORY_CONFIG[category];
   const dims = SIZE_MAP[size];
-  const radius = (dims.ring - dims.stroke * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - score / 100);
+  const pct = Math.max(0, Math.min(100, score));
 
   return (
     <div
-      className={`inline-flex items-center gap-2 ${className}`}
+      className={`inline-flex flex-col gap-1 ${className}`}
       role="img"
       aria-label={`Connection health: ${score} out of 100 — ${config.label}`}
     >
-      <svg
-        width={dims.ring}
-        height={dims.ring}
-        viewBox={`0 0 ${dims.ring} ${dims.ring}`}
-        className="shrink-0"
-        aria-hidden="true"
-      >
-        {/* Background ring */}
-        <circle
-          cx={dims.ring / 2}
-          cy={dims.ring / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={dims.stroke}
-          className="text-stone-200"
+      <div className="flex items-center gap-2">
+        {/* Square status dot — no border-radius */}
+        <span
+          className={`inline-block h-2.5 w-2.5 shrink-0 ${
+            category === "dormant"
+              ? "bg-[#C8603A]"
+              : category === "cooling"
+                ? "bg-[#C8603A]/70"
+                : "bg-[#1A1A1A]"
+          }`}
+          style={{ borderRadius: 0 }}
+          aria-hidden="true"
         />
-        {/* Score ring */}
-        <circle
-          cx={dims.ring / 2}
-          cy={dims.ring / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={dims.stroke}
-          strokeLinecap="round"
-          className={config.ring}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform={`rotate(-90 ${dims.ring / 2} ${dims.ring / 2})`}
-          style={{
-            transition: "stroke-dashoffset 0.6s ease",
-          }}
-        />
-        {/* Center text */}
-        <text
-          x={dims.ring / 2}
-          y={dims.ring / 2}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className={`fill-stone-700 font-semibold ${dims.text}`}
-        >
+        {/* Monospace score */}
+        <span className="font-mono text-[11px] font-normal text-[#1A1A1A] tabular-nums">
           {score}
-        </text>
-      </svg>
+        </span>
+        {/* Ruled-line bar */}
+        <div className={`${dims.bar} bg-[#EDEDEA]`} style={{ borderRadius: 0 }}>
+          <div
+            className="h-full bg-[#1A1A1A]"
+            style={{ width: `${pct}%`, borderRadius: 0 }}
+          />
+        </div>
+      </div>
       {showLabel && (
-        <span className={`font-medium ${config.color} text-sm`}>
-          {config.emoji} {config.label}
+        <span className="font-mono text-[9px] font-normal uppercase tracking-[0.06em] text-[#1A1A1A]/50">
+          {config.label}
         </span>
       )}
     </div>
   );
 }
 
-/** Simple colored dot indicator for compact displays. */
+/** Simple square dot indicator for compact displays. No border-radius. */
 export function ScoreDot({
   category,
   className = "",
@@ -135,14 +108,21 @@ export function ScoreDot({
   const config = CATEGORY_CONFIG[category];
   return (
     <span
-      className={`inline-block h-3 w-3 rounded-full ${config.bg} border-2 ${config.ring.replace("stroke", "border")} ${className}`}
+      className={`inline-block h-3 w-3 shrink-0 ${
+        category === "dormant"
+          ? "bg-[#C8603A]"
+          : category === "cooling"
+            ? "bg-[#C8603A]/70"
+            : "bg-[#1A1A1A]"
+      } ${className}`}
+      style={{ borderRadius: 0 }}
       role="img"
       aria-label={`Connection: ${config.label}`}
     />
   );
 }
 
-/** Trend arrow indicator. */
+/** Trend indicator — text arrows, no emoji. */
 export function TrendArrow({
   trend,
   className = "",
@@ -152,21 +132,30 @@ export function TrendArrow({
 }) {
   if (trend >= 65) {
     return (
-      <span className={`text-emerald-600 ${className}`} aria-label="Trending up">
-        ↗
+      <span
+        className={`font-mono text-[11px] tabular-nums text-[#1A1A1A] ${className}`}
+        aria-label="Trending up"
+      >
+        UP
       </span>
     );
   }
   if (trend <= 35) {
     return (
-      <span className={`text-rose-600 ${className}`} aria-label="Trending down">
-        ↘
+      <span
+        className={`font-mono text-[11px] tabular-nums text-[#C8603A] ${className}`}
+        aria-label="Trending down"
+      >
+        DOWN
       </span>
     );
   }
   return (
-    <span className={`text-stone-400 ${className}`} aria-label="Trending steady">
-      →
+    <span
+      className={`font-mono text-[11px] tabular-nums text-[#1A1A1A]/50 ${className}`}
+      aria-label="Trending steady"
+    >
+      --
     </span>
   );
 }

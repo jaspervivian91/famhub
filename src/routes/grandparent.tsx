@@ -72,7 +72,7 @@ const MOCK_NUDGES: (Nudge & { from_name: string })[] = [
     to_member_id: "mock-gp",
     nudge_type: "dormancy",
     message_text:
-      "It's been 12 days since you connected with Grandma Sue. Send a quick hello! 👋",
+      "It's been 12 days since you connected with Grandma Sue. Send a quick hello!",
     status: "pending",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     acknowledged_at: null,
@@ -85,7 +85,7 @@ const MOCK_NUDGES: (Nudge & { from_name: string })[] = [
     to_member_id: "mock-gp",
     nudge_type: "celebration",
     message_text:
-      "Little Emma has been asking about you! She'd love to hear from Grandma 💛",
+      "Little Emma has been asking about you! She'd love to hear from Grandma",
     status: "pending",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     acknowledged_at: null,
@@ -168,24 +168,24 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-const MEMBER_COLORS = [
-  "bg-[#7c3aed] text-white",
-  "bg-[#059669] text-white",
-  "bg-[#d97706] text-white",
-  "bg-[#dc2626] text-white",
-  "bg-[#2563eb] text-white",
-  "bg-[#9333ea] text-white",
-];
-
-function getMemberColor(index: number): string {
-  return MEMBER_COLORS[index % MEMBER_COLORS.length];
-}
-
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return "GOOD MORNING";
+  if (hour < 17) return "GOOD AFTERNOON";
+  return "GOOD EVENING";
+}
+
+function getDateString(): string {
+  const now = new Date();
+  const days = [
+    "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY",
+    "THURSDAY", "FRIDAY", "SATURDAY",
+  ];
+  const months = [
+    "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+    "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
+  ];
+  return `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
 }
 
 // ── Main Component ──────────────────────────────────────────────────
@@ -197,7 +197,6 @@ function GrandparentDashboard() {
     visible: boolean;
   }>({ message: "", visible: false });
 
-  // Determine what to show
   const memberName =
     loaderData.member?.display_name ??
     loaderData.mockMemberName ??
@@ -225,7 +224,7 @@ function GrandparentDashboard() {
 
     if (!currentId || !currentGroupId) {
       showConfirmation(
-        `❤️ ${member.display_name} will know you're thinking of them`,
+        `${member.display_name} WILL KNOW YOU'RE THINKING OF THEM`,
       );
       return;
     }
@@ -241,11 +240,11 @@ function GrandparentDashboard() {
         },
       });
       showConfirmation(
-        `❤️ ${member.display_name} will know you're thinking of them`,
+        `${member.display_name} WILL KNOW YOU'RE THINKING OF THEM`,
       );
     } catch {
       showConfirmation(
-        `❤️ ${member.display_name} will know you're thinking of them`,
+        `${member.display_name} WILL KNOW YOU'RE THINKING OF THEM`,
       );
     }
   }
@@ -284,13 +283,13 @@ function GrandparentDashboard() {
     }
 
     const messages: Record<string, string> = {
-      thinking: `❤️ ${fromName} will know you're thinking of them`,
-      call: `📞 ${fromName} will know you'd like a call`,
-      note: `📝 ${fromName} will know you sent a note`,
+      thinking: `${fromName} WILL KNOW YOU'RE THINKING OF THEM`,
+      call: `${fromName} WILL KNOW YOU'D LIKE A CALL`,
+      note: `${fromName} WILL KNOW YOU SENT A NOTE`,
     };
     showConfirmation(
       messages[responseType] ??
-        `❤️ ${fromName} will know you're thinking of them`,
+        `${fromName} WILL KNOW YOU'RE THINKING OF THEM`,
     );
   }
 
@@ -307,35 +306,59 @@ function GrandparentDashboard() {
     <main
       className="gp-mode min-h-dvh px-6 py-8"
       style={{
-        backgroundColor: "var(--gp-bg, #fffdf7)",
-        color: "var(--gp-text, #1a1a1a)",
-        fontSize: "var(--gp-text-size, 20px)",
+        backgroundColor: "#FFFFFF",
+        color: "#1A1A1A",
+        fontSize: "20px",
         lineHeight: 1.6,
       }}
     >
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-[375px]">
         {/* Greeting */}
         <h1
-          className="mb-8 font-bold"
+          className="mb-8 font-bold uppercase"
           style={{
-            fontSize: "var(--gp-heading-size, 28px)",
-            color: "var(--gp-text, #1a1a1a)",
+            fontSize: "32px",
+            fontWeight: 800,
+            fontFamily: "Inter, sans-serif",
+            letterSpacing: "0.04em",
+            color: "#1A1A1A",
           }}
         >
-          {getTimeGreeting()}, {memberName}
+          HELLO, {memberName}
         </h1>
+
+        {/* Date — monospace, full */}
+        <p
+          className="mb-8 font-mono"
+          style={{
+            fontSize: "16px",
+            color: "#1A1A1A",
+            opacity: 0.5,
+          }}
+        >
+          {getDateString()}
+        </p>
+
+        {/* Ruled line separator */}
+        <div
+          className="mb-10 w-full"
+          style={{ borderTop: "2px solid #1A1A1A" }}
+        />
 
         {/* Confirmation toast */}
         {confirmation.visible && (
           <div
             role="status"
             aria-live="polite"
-            className="gp-confirmation mb-8 rounded-2xl p-6 text-center font-semibold"
+            className="gp-confirmation mb-8 p-6 text-center font-bold uppercase"
             style={{
-              fontSize: "var(--gp-text-size, 20px)",
-              backgroundColor: "#ffd700",
-              color: "#1a365d",
-              transition: "opacity 0.5s ease-in-out",
+              fontSize: "20px",
+              backgroundColor: "#F0EDE8",
+              color: "#1A1A1A",
+              border: "2px solid #C8603A",
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
               opacity: confirmation.visible ? 1 : 0,
             }}
           >
@@ -346,13 +369,16 @@ function GrandparentDashboard() {
         {/* Your Family section */}
         <section className="mb-10">
           <h2
-            className="mb-6 font-bold"
+            className="mb-6 font-bold uppercase"
             style={{
-              fontSize: "var(--gp-heading-size, 28px)",
-              color: "var(--gp-text, #1a1a1a)",
+              fontSize: "28px",
+              fontWeight: 800,
+              fontFamily: "Inter, sans-serif",
+              letterSpacing: "0.06em",
+              color: "#1A1A1A",
             }}
           >
-            Your family
+            YOUR FAMILY
           </h2>
 
           {familyOthers.length > 0 ? (
@@ -361,20 +387,28 @@ function GrandparentDashboard() {
                 <button
                   key={member.id}
                   onClick={() => handleSayHello(member)}
-                  className="gp-family-btn flex w-full items-center gap-5 rounded-2xl border-2 p-5 text-left transition-colors"
+                  className="gp-family-btn flex w-full items-center gap-5 p-5 text-left font-bold uppercase"
                   style={{
-                    borderColor: "#ffd700",
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "#F0EDE8",
+                    border: "2px solid #1A1A1A",
+                    color: "#1A1A1A",
                     minHeight: "72px",
+                    fontFamily: "Inter, sans-serif",
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
                   }}
                   aria-label={`Say hello to ${member.display_name}`}
                 >
+                  {/* Square avatar — filled */}
                   <div
-                    className={`flex shrink-0 items-center justify-center rounded-full font-bold ${getMemberColor(idx)}`}
+                    className="flex shrink-0 items-center justify-center font-bold"
                     style={{
-                      width: "72px",
-                      height: "72px",
-                      fontSize: "28px",
+                      width: "44px",
+                      height: "44px",
+                      backgroundColor: "#1A1A1A",
+                      color: "#FFFFFF",
+                      fontSize: "22px",
+                      fontFamily: "Inter, sans-serif",
                     }}
                     aria-hidden="true"
                   >
@@ -382,26 +416,35 @@ function GrandparentDashboard() {
                   </div>
                   <div className="flex flex-col items-start">
                     <span
-                      className="font-semibold"
+                      className="font-bold uppercase"
                       style={{
-                        fontSize: "var(--gp-text-size, 20px)",
-                        color: "var(--gp-text, #1a1a1a)",
+                        fontSize: "20px",
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 800,
+                        letterSpacing: "0.03em",
+                        color: "#1A1A1A",
                       }}
                     >
                       {member.display_name}
                     </span>
                     <span
-                      className="capitalize"
+                      className="font-mono uppercase"
                       style={{
-                        fontSize: "18px",
-                        color: "#555",
+                        fontSize: "14px",
+                        color: "#1A1A1A",
+                        opacity: 0.5,
                       }}
                     >
                       {member.relationship.replace("_", " ")}
                     </span>
                   </div>
-                  <span className="ml-auto text-2xl" aria-hidden="true">
-                    →
+                  {/* Crosshair marker instead of arrow emoji */}
+                  <span
+                    className="ml-auto font-mono"
+                    style={{ fontSize: "24px", color: "#1A1A1A", opacity: 0.3 }}
+                    aria-hidden="true"
+                  >
+                    +
                   </span>
                 </button>
               ))}
@@ -409,11 +452,12 @@ function GrandparentDashboard() {
           ) : (
             <p
               style={{
-                fontSize: "var(--gp-text-size, 20px)",
-                color: "#666",
+                fontSize: "20px",
+                color: "#1A1A1A",
+                opacity: 0.4,
               }}
             >
-              Your family will appear here once they join.
+              YOUR FAMILY WILL APPEAR HERE ONCE THEY JOIN.
             </p>
           )}
         </section>
@@ -421,13 +465,16 @@ function GrandparentDashboard() {
         {/* They've been thinking of you section */}
         <section className="mb-10">
           <h2
-            className="mb-6 font-bold"
+            className="mb-6 font-bold uppercase"
             style={{
-              fontSize: "var(--gp-heading-size, 28px)",
-              color: "var(--gp-text, #1a1a1a)",
+              fontSize: "28px",
+              fontWeight: 800,
+              fontFamily: "Inter, sans-serif",
+              letterSpacing: "0.06em",
+              color: "#1A1A1A",
             }}
           >
-            They&apos;ve been thinking of you
+            THEY&apos;VE BEEN THINKING OF YOU
           </h2>
 
           {pendingNudges.length > 0 ? (
@@ -437,17 +484,20 @@ function GrandparentDashboard() {
                 return (
                   <div
                     key={nudge.id}
-                    className="rounded-2xl border-2 p-6"
+                    className="p-6"
                     style={{
-                      borderColor: "#ffd700",
-                      backgroundColor: "#ffffff",
+                      border: "2px solid #1A1A1A",
+                      backgroundColor: "#F0EDE8",
                     }}
                   >
                     <p
-                      className="mb-3 font-semibold"
+                      className="mb-3 font-bold uppercase"
                       style={{
-                        fontSize: "var(--gp-text-size, 20px)",
-                        color: "var(--gp-text, #1a1a1a)",
+                        fontSize: "20px",
+                        fontWeight: 800,
+                        fontFamily: "Inter, sans-serif",
+                        letterSpacing: "0.04em",
+                        color: "#1A1A1A",
                       }}
                     >
                       {fromName}
@@ -456,7 +506,7 @@ function GrandparentDashboard() {
                       className="mb-5"
                       style={{
                         fontSize: "18px",
-                        color: "#444",
+                        color: "#1A1A1A",
                         lineHeight: 1.5,
                       }}
                     >
@@ -467,42 +517,51 @@ function GrandparentDashboard() {
                         onClick={() =>
                           handleNudgeResponse(nudge, "thinking")
                         }
-                        className="gp-response-btn w-full rounded-2xl px-6 py-4 text-left font-semibold transition-colors"
+                        className="gp-response-btn w-full px-6 py-4 text-left font-bold uppercase"
                         style={{
-                          minHeight: "56px",
-                          fontSize: "var(--gp-text-size, 20px)",
-                          backgroundColor: "var(--gp-accent-bg, #ffd700)",
-                          color: "var(--gp-accent-text, #1a365d)",
-                          border: "none",
+                          minHeight: "64px",
+                          fontSize: "18px",
+                          fontWeight: 800,
+                          fontFamily: "Inter, sans-serif",
+                          letterSpacing: "0.04em",
+                          backgroundColor: "#C8603A",
+                          color: "#FFFFFF",
+                          border: "2px solid #1A1A1A",
                         }}
                       >
-                        ❤️ Thinking of you too
+                        SAY HELLO
                       </button>
                       <button
                         onClick={() => handleNudgeResponse(nudge, "call")}
-                        className="gp-response-btn w-full rounded-2xl px-6 py-4 text-left font-semibold transition-colors"
+                        className="gp-response-btn w-full px-6 py-4 text-left font-bold uppercase"
                         style={{
-                          minHeight: "56px",
-                          fontSize: "var(--gp-text-size, 20px)",
-                          backgroundColor: "#ffffff",
-                          color: "#1a365d",
-                          border: "2px solid #1a365d",
+                          minHeight: "64px",
+                          fontSize: "18px",
+                          fontWeight: 800,
+                          fontFamily: "Inter, sans-serif",
+                          letterSpacing: "0.04em",
+                          backgroundColor: "#FFFFFF",
+                          color: "#1A1A1A",
+                          border: "2px solid #1A1A1A",
                         }}
                       >
-                        📞 Call me?
+                        CALL ME?
                       </button>
                       <button
                         onClick={() => handleNudgeResponse(nudge, "note")}
-                        className="gp-response-btn w-full rounded-2xl px-6 py-4 text-left font-semibold transition-colors"
+                        className="gp-response-btn w-full px-6 py-4 text-left font-bold uppercase"
                         style={{
-                          minHeight: "56px",
-                          fontSize: "var(--gp-text-size, 20px)",
-                          backgroundColor: "#ffffff",
-                          color: "#1a365d",
-                          border: "2px solid #1a365d",
+                          minHeight: "64px",
+                          fontSize: "18px",
+                          fontWeight: 800,
+                          fontFamily: "Inter, sans-serif",
+                          letterSpacing: "0.04em",
+                          backgroundColor: "#FFFFFF",
+                          color: "#1A1A1A",
+                          border: "2px solid #1A1A1A",
                         }}
                       >
-                        📝 Send a note
+                        SEND A NOTE
                       </button>
                     </div>
                   </div>
@@ -512,33 +571,42 @@ function GrandparentDashboard() {
           ) : (
             <p
               style={{
-                fontSize: "var(--gp-text-size, 20px)",
-                color: "#666",
+                fontSize: "20px",
+                color: "#1A1A1A",
+                opacity: 0.4,
               }}
             >
-              No new messages right now. Your family is staying in touch!
+              NO NEW MESSAGES RIGHT NOW. YOUR FAMILY IS STAYING IN TOUCH.
             </p>
           )}
         </section>
 
         {/* Back to standard dashboard */}
-        <div className="mt-8 border-t pt-6" style={{ borderColor: "#e0d8c8" }}>
+        <div
+          className="mt-8 pt-6"
+          style={{ borderTop: "2px solid #1A1A1A" }}
+        >
           <a
             href="/"
-            className="gp-back-link inline-flex items-center rounded-2xl px-6 py-4 font-medium transition-colors"
+            className="gp-back-link inline-flex items-center px-6 py-4 font-bold uppercase underline"
             style={{
               fontSize: "18px",
-              color: "#1a365d",
-              textDecoration: "underline",
+              color: "#1A1A1A",
               minHeight: "56px",
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
             }}
           >
-            ← Back to Family Hub
+            BACK TO FAMILY HUB
           </a>
         </div>
 
         {/* Mode toggle at bottom */}
-        <div className="mt-6 border-t pt-6" style={{ borderColor: "#e0d8c8" }}>
+        <div
+          className="mt-6 pt-6"
+          style={{ borderTop: "2px solid #1A1A1A" }}
+        >
           <a
             href="/"
             onClick={(e) => {
@@ -546,14 +614,18 @@ function GrandparentDashboard() {
               setUIMode("standard");
               window.location.href = "/";
             }}
-            className="inline-flex items-center rounded-2xl px-6 py-4 font-medium transition-colors"
+            className="inline-flex items-center px-6 py-4 font-bold uppercase"
             style={{
               fontSize: "16px",
-              color: "#666",
+              color: "#1A1A1A",
+              opacity: 0.4,
               minHeight: "56px",
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
             }}
           >
-            Switch to standard view
+            SWITCH TO STANDARD VIEW
           </a>
         </div>
       </div>

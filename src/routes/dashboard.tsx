@@ -90,7 +90,6 @@ function Dashboard() {
         navigate({ to: "/sign-in" });
         return;
       }
-      // Cache auth info for fast subsequent renders
       setCachedAccount(account.id, account.email, account.display_name);
       setAuthChecked(true);
       loadDashboard();
@@ -210,7 +209,6 @@ function Dashboard() {
     try {
       const toName =
         (nudge as Record<string, unknown>).to_name as string;
-      // Estimate days since based on nudge type
       const daysEstimate =
         nudge.nudge_type === "dormancy" ? 45 : nudge.nudge_type === "cooling" ? 21 : 10;
 
@@ -256,35 +254,43 @@ function Dashboard() {
   // ── No Group State ──────────────────────────────────────────────
   if (state === "no-group") {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-8 px-6 py-12">
+      <main
+        className="mx-auto flex min-h-dvh max-w-[375px] flex-col items-center justify-center gap-8 px-6 py-12"
+        style={{ backgroundColor: "#F5F0EB" }}
+      >
+        {/* Logo + wordmark */}
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-hearth/40">
-            <Logo variant="icon" size="lg" />
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <Logo variant="stacked" size="lg" />
           </div>
-          <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Family Hub</h1>
-          <p className="mt-2 text-fh-muted">
-            Stay close to the people who matter — without social media.
-          </p>
         </div>
 
+        {/* Ruled line separator */}
+        <div className="w-full border-t border-[#1A1A1A]" style={{ borderWidth: "0.5px" }} />
+
         {error && (
-          <div className="w-full rounded-lg bg-rose-50 p-3 text-sm text-rose-700">
+          <div
+            className="w-full border border-[#C8603A] bg-[#F5F0EB] p-3 font-mono text-[11px] text-[#C8603A]"
+            style={{ borderRadius: 0 }}
+          >
             {error}
           </div>
         )}
 
+        {/* Create form */}
         <form
           onSubmit={handleCreate}
-          className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
+          className="w-full border border-[#1A1A1A] bg-[#EDEDEA] p-6"
+          style={{ borderRadius: 0 }}
         >
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            Create your family hub
+          <h2 className="mb-4 font-[Inter] text-[16px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            CREATE YOUR FAMILY HUB
           </h2>
           <label
             htmlFor="create-name"
-            className="mb-1 block text-sm font-medium text-fh-body"
+            className="mb-1 block font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50"
           >
-            Family name
+            FAMILY NAME
           </label>
           <input
             id="create-name"
@@ -292,36 +298,43 @@ function Dashboard() {
             value={createName}
             onChange={(e) => setCreateName(e.target.value)}
             placeholder="e.g. The Johnsons"
-            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-ember focus:outline-none focus:ring-2 focus:ring-fh-hearth/50"
+            className="w-full border border-[#1A1A1A] bg-[#F5F0EB] px-4 py-3 font-[Inter] text-[13px] text-[#1A1A1A] placeholder-[#1A1A1A]/30 focus:border-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
             required
           />
           <button
             type="submit"
             disabled={busy}
-            className="mt-4 w-full rounded-lg bg-fh-ember px-4 py-3 font-semibold text-white hover:bg-fh-ember/90 focus:outline-none focus:ring-2 focus:ring-fh-hearth disabled:opacity-50"
+            className="mt-4 w-full border-2 border-[#1A1A1A] bg-[#C8603A] px-4 py-3 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#F5F0EB] hover:bg-[#C8603A]/90 focus:outline-none focus:ring-2 focus:ring-[#1A1A1A] disabled:opacity-50"
+            style={{ borderRadius: 0 }}
           >
-            {busy ? "Creating…" : "Create Family Hub"}
+            {busy ? "CREATING…" : "CREATE FAMILY HUB"}
           </button>
         </form>
 
+        {/* Divider */}
         <div className="flex w-full items-center gap-3">
-          <div className="h-px flex-1 bg-fh-border" />
-          <span className="text-sm text-fh-muted">or join existing</span>
-          <div className="h-px flex-1 bg-fh-border" />
+          <div className="h-px flex-1 bg-[#1A1A1A]/20" />
+          <span className="font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/40">
+            OR JOIN EXISTING
+          </span>
+          <div className="h-px flex-1 bg-[#1A1A1A]/20" />
         </div>
 
+        {/* Join form */}
         <form
           onSubmit={handleJoin}
-          className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
+          className="w-full border border-[#1A1A1A] bg-[#EDEDEA] p-6"
+          style={{ borderRadius: 0 }}
         >
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            Join a family hub
+          <h2 className="mb-4 font-[Inter] text-[16px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            JOIN A FAMILY HUB
           </h2>
           <label
             htmlFor="join-code"
-            className="mb-1 block text-sm font-medium text-fh-body"
+            className="mb-1 block font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50"
           >
-            Invite code
+            INVITE CODE
           </label>
           <input
             id="join-code"
@@ -330,14 +343,15 @@ function Dashboard() {
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="ABC123DE"
             maxLength={8}
-            className="w-full rounded-lg border border-fh-border px-4 py-3 font-mono text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
+            className="w-full border border-[#1A1A1A] bg-[#F5F0EB] px-4 py-3 font-mono text-[13px] text-[#1A1A1A] placeholder-[#1A1A1A]/30 focus:border-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
             required
           />
           <label
             htmlFor="join-name"
-            className="mb-1 mt-3 block text-sm font-medium text-fh-body"
+            className="mb-1 mt-3 block font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50"
           >
-            Your display name
+            YOUR DISPLAY NAME
           </label>
           <input
             id="join-name"
@@ -345,20 +359,22 @@ function Dashboard() {
             value={joinName}
             onChange={(e) => setJoinName(e.target.value)}
             placeholder="e.g. Grandma Sue"
-            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
+            className="w-full border border-[#1A1A1A] bg-[#F5F0EB] px-4 py-3 font-[Inter] text-[13px] text-[#1A1A1A] placeholder-[#1A1A1A]/30 focus:border-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
             required
           />
           <label
             htmlFor="join-relationship"
-            className="mb-1 mt-3 block text-sm font-medium text-fh-body"
+            className="mb-1 mt-3 block font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50"
           >
-            Relationship
+            RELATIONSHIP
           </label>
           <select
             id="join-relationship"
             value={joinRelationship}
             onChange={(e) => setJoinRelationship(e.target.value)}
-            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
+            className="w-full border border-[#1A1A1A] bg-[#F5F0EB] px-4 py-3 font-[Inter] text-[13px] text-[#1A1A1A] focus:border-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
           >
             <option value="grandparent">Grandparent</option>
             <option value="parent">Parent</option>
@@ -370,9 +386,10 @@ function Dashboard() {
           <button
             type="submit"
             disabled={busy}
-            className="mt-4 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
+            className="mt-4 w-full border-2 border-[#1A1A1A] bg-[#1A1A1A] px-4 py-3 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#F5F0EB] hover:bg-[#1A1A1A]/90 focus:outline-none focus:ring-2 focus:ring-[#1A1A1A] disabled:opacity-50"
+            style={{ borderRadius: 0 }}
           >
-            {busy ? "Joining…" : "Join Family Hub"}
+            {busy ? "JOINING…" : "JOIN FAMILY HUB"}
           </button>
         </form>
       </main>
@@ -382,8 +399,13 @@ function Dashboard() {
   // ── Loading State ──────────────────────────────────────────────
   if (state === "loading") {
     return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <p className="text-fh-muted">Loading your family hub…</p>
+      <main
+        className="flex min-h-dvh items-center justify-center"
+        style={{ backgroundColor: "#F5F0EB" }}
+      >
+        <p className="font-mono text-[11px] text-[#1A1A1A]/50">
+          LOADING YOUR FAMILY HUB…
+        </p>
       </main>
     );
   }
@@ -392,75 +414,89 @@ function Dashboard() {
   const { group, member, nudges, scores } = groupData ?? {};
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
+    <main
+      className="mx-auto max-w-[375px] px-6 py-8"
+      style={{ backgroundColor: "#F5F0EB" }}
+    >
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fh-hearth/40">
-            <Logo variant="icon" size="sm" />
+          <div className="flex items-center justify-center" style={{ width: 44, height: 44 }}>
+            <Logo variant="icon" size="md" />
           </div>
           <div>
-            <h1 className="font-[family-name:var(--font-heading)] text-xl text-fh-heading">
-              {group?.name ?? "Family Hub"}
+            <h1 className="font-[Inter] text-[16px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+              {group?.name ?? "FAMILY HUB"}
             </h1>
-            <p className="text-sm text-fh-muted">
-              Welcome, {member?.display_name ?? getCurrentMemberName()}
+            <p className="font-mono text-[9px] uppercase tracking-[0.03em] text-[#1A1A1A]/50">
+              {member?.display_name ?? getCurrentMemberName()}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={handleSignOut}
-            className="rounded-lg px-3 py-1.5 text-sm text-fh-muted hover:bg-fh-surface hover:text-fh-body"
+            className="border border-[#1A1A1A]/20 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50 hover:bg-[#EDEDEA] hover:text-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
           >
-            Sign out
+            OUT
           </button>
           <button
             onClick={handleLeaveGroup}
-            className="rounded-lg px-3 py-1.5 text-sm text-fh-muted hover:bg-fh-surface hover:text-fh-body"
+            className="border border-[#1A1A1A]/20 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50 hover:bg-[#EDEDEA] hover:text-[#1A1A1A]"
+            style={{ borderRadius: 0 }}
           >
-            Leave
+            LEAVE
           </button>
         </div>
       </div>
 
+      {/* Ruled line separator */}
+      <div className="mb-6 w-full border-t border-[#1A1A1A]" style={{ borderWidth: "0.5px" }} />
+
       {/* DB not connected banner */}
       {!group && (
-        <div className="mb-6 rounded-lg border border-fh-gold/30 bg-fh-gold/10 p-4 text-sm text-fh-heading">
-          ⚠️ Database not connected yet. Once{" "}
-          <code className="rounded bg-fh-gold/20 px-1 font-mono">
-            DATABASE_URL
-          </code>{" "}
-          is set, your family hub will appear here. Run the migration at{" "}
-          <code className="rounded bg-fh-gold/20 px-1 font-mono">
-            src/db/migrations/001_schema.sql
-          </code>{" "}
-          to create the tables.
+        <div className="mb-6 border border-[#1A1A1A] bg-[#EDEDEA] p-4 font-mono text-[11px] text-[#1A1A1A]">
+          DATABASE NOT CONNECTED YET. ONCE{" "}
+          <code className="bg-[#F5F0EB] px-1 font-mono text-[11px]">DATABASE_URL</code>{" "}
+          IS SET, YOUR FAMILY HUB WILL APPEAR HERE. RUN THE MIGRATION AT{" "}
+          <code className="bg-[#F5F0EB] px-1 font-mono text-[11px]">src/db/migrations/001_schema.sql</code>{" "}
+          TO CREATE THE TABLES.
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="flex flex-col gap-6">
         {/* Members Card */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>👥</span> Family Members
+        <div className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-5" style={{ borderRadius: 0 }}>
+          <h2 className="mb-4 font-[Inter] text-[13px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            FAMILY MEMBERS
           </h2>
           {group?.members && group.members.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {group.members.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center gap-3 rounded-lg bg-fh-surface p-3"
+                  className="flex items-center gap-3 border border-[#1A1A1A]/10 bg-[#F5F0EB] p-3"
+                  style={{ borderRadius: 0 }}
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-fh-hearth/60 text-sm font-bold text-fh-heading">
+                  {/* Square avatar — 44x44, outlined */}
+                  <div
+                    className="flex shrink-0 items-center justify-center font-[Inter] text-[18px] font-bold uppercase text-[#1A1A1A]"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      backgroundColor: "#EDEDEA",
+                      border: "1.5px solid #1A1A1A",
+                    }}
+                  >
                     {m.display_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-fh-body">
+                    <p className="font-[Inter] text-[13px] font-semibold text-[#1A1A1A]">
                       {m.display_name}
-                      {m.id === member?.id ? " (you)" : ""}
+                      {m.id === member?.id ? " (YOU)" : ""}
                     </p>
-                    <p className="text-xs text-fh-muted capitalize">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50">
                       {m.relationship.replace("_", " ")}
                     </p>
                   </div>
@@ -468,27 +504,27 @@ function Dashboard() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-fh-muted">No members yet.</p>
+            <p className="font-mono text-[11px] text-[#1A1A1A]/50">NO MEMBERS YET.</p>
           )}
           {group && (
             <button
               onClick={() => navigate({ to: `/group/${group.id}` })}
-              className="mt-4 w-full rounded-lg border border-fh-tide/30 px-4 py-2 text-sm font-medium text-fh-tide hover:bg-fh-tide/10"
+              className="mt-4 w-full border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA]"
+              style={{ borderRadius: 0 }}
             >
-              View Group Page →
+              VIEW GROUP PAGE
             </button>
           )}
         </div>
 
         {/* Connection Health Card */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>💞</span> Connection Health
+        <div className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-5" style={{ borderRadius: 0 }}>
+          <h2 className="mb-4 font-[Inter] text-[13px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            CONNECTION HEALTH
           </h2>
           {scores && scores.length > 0 ? (
             <div className="space-y-2">
               {scores.slice(0, 4).map((s) => {
-                // Find names from group members if available
                 const memberA = group?.members?.find(
                   (m) => m.id === s.fromMemberId,
                 );
@@ -508,35 +544,34 @@ function Dashboard() {
                 );
               })}
               {scores.length > 4 && (
-                <p className="text-xs text-fh-muted">
-                  +{scores.length - 4} more connections —{" "}
+                <p className="font-mono text-[9px] text-[#1A1A1A]/50">
+                  +{scores.length - 4} MORE CONNECTIONS —{" "}
                   {group && (
                     <button
                       onClick={() => navigate({ to: `/group/${group.id}` })}
-                      className="text-fh-tide underline"
+                      className="font-mono text-[9px] underline text-[#1A1A1A]/70"
                     >
-                      view all
+                      VIEW ALL
                     </button>
                   )}
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-sm text-fh-muted">
-              No connection data yet. Nudges will help build momentum.
+            <p className="font-mono text-[11px] text-[#1A1A1A]/50">
+              NO CONNECTION DATA YET. NUDGES WILL HELP BUILD MOMENTUM.
             </p>
           )}
         </div>
 
         {/* Nudges Card */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>💌</span> Nudges for You
+        <div className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-5" style={{ borderRadius: 0 }}>
+          <h2 className="mb-4 font-[Inter] text-[13px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            NUDGES FOR YOU
           </h2>
           {nudges && nudges.length > 0 ? (
             <ul className="space-y-4">
               {nudges.map((nudge) => {
-                // Try to find matching score for this nudge
                 const matchingScore = scores?.find(
                   (s) =>
                     (s.fromMemberId === nudge.from_member_id &&
@@ -562,18 +597,18 @@ function Dashboard() {
                     />
                     <div className="flex justify-end px-1 pt-1">
                       {emailedNudgeIds.has(nudge.id) ? (
-                        <span className="text-xs text-emerald-600">
-                          ✅ Emailed!
+                        <span className="font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50">
+                          EMAILED
                         </span>
                       ) : (
                         <button
                           onClick={() => handleEmailNudge(nudge.id)}
                           disabled={sendingEmailNudgeId === nudge.id}
-                          className="text-xs text-fh-muted hover:text-fh-ember disabled:opacity-50"
+                          className="font-mono text-[9px] uppercase tracking-[0.06em] text-[#1A1A1A]/50 hover:text-[#C8603A] disabled:opacity-50"
                         >
                           {sendingEmailNudgeId === nudge.id
-                            ? "Sending…"
-                            : "🔔 Email me"}
+                            ? "SENDING…"
+                            : "EMAIL ME"}
                         </button>
                       )}
                     </div>
@@ -582,8 +617,8 @@ function Dashboard() {
               })}
             </ul>
           ) : (
-            <p className="text-sm text-fh-muted">
-              No nudges right now — you&apos;re staying connected!
+            <p className="font-mono text-[11px] text-[#1A1A1A]/50">
+              NO NUDGES RIGHT NOW — YOU&apos;RE STAYING CONNECTED.
             </p>
           )}
         </div>
@@ -594,20 +629,21 @@ function Dashboard() {
         />
 
         {/* Quick Actions */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>✨</span> Quick Actions
+        <div className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-5" style={{ borderRadius: 0 }}>
+          <h2 className="mb-4 font-[Inter] text-[13px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+            QUICK ACTIONS
           </h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-2">
             <button
               onClick={async () => {
                 if (!group?.id) return;
                 await generateNudge({ data: { groupId: group.id } });
                 await loadDashboard();
               }}
-              className="rounded-lg border border-fh-dusk/30 px-4 py-2 text-sm font-medium text-fh-dusk hover:bg-fh-dusk/10"
+              className="border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA]"
+              style={{ borderRadius: 0 }}
             >
-              🔔 Check for dormant connections
+              CHECK FOR DORMANT CONNECTIONS
             </button>
             {group && (
               <button
@@ -618,16 +654,18 @@ function Dashboard() {
                   );
                   alert("Invite link copied!");
                 }}
-                className="rounded-lg border border-fh-tide/30 px-4 py-2 text-sm font-medium text-fh-tide hover:bg-fh-tide/10"
+                className="border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA]"
+                style={{ borderRadius: 0 }}
               >
-                📋 Copy invite link
+                COPY INVITE LINK
               </button>
             )}
             <Link
               to="/digest"
-              className="rounded-lg border border-fh-gold/40 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/10"
+              className="border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA]"
+              style={{ borderRadius: 0 }}
             >
-              📋 View Weekly Digest
+              VIEW WEEKLY DIGEST
             </Link>
           </div>
         </div>
@@ -637,10 +675,10 @@ function Dashboard() {
       {starterNudge && (
         <>
           {starterLoading ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-              <div className="rounded-2xl bg-white p-6 shadow-xl">
-                <p className="text-sm text-fh-muted">
-                  Generating conversation starters…
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/30">
+              <div className="border-2 border-[#1A1A1A] bg-[#F5F0EB] p-6" style={{ borderRadius: 0 }}>
+                <p className="font-mono text-[11px] text-[#1A1A1A]/50">
+                  GENERATING CONVERSATION STARTERS…
                 </p>
               </div>
             </div>
@@ -677,19 +715,20 @@ function DigestPreviewCard({
   // No digest at all
   if (!content) {
     return (
-      <div className="rounded-xl border border-fh-gold/30 bg-fh-gold/10 p-5 shadow-sm md:col-span-2">
-        <h2 className="mb-3 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-          <span>📋</span> Weekly Digest
+      <div className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-5" style={{ borderRadius: 0 }}>
+        <h2 className="mb-3 font-[Inter] text-[13px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+          WEEKLY DIGEST
         </h2>
-        <p className="text-sm text-fh-body">
-          Your weekly digest will be ready soon. It curates family moments,
-          conversation starters, and connection insights — all in one place.
+        <p className="font-mono text-[11px] text-[#1A1A1A]/50">
+          YOUR WEEKLY DIGEST WILL BE READY SOON. IT CURATES FAMILY MOMENTS,
+          CONVERSATION STARTERS, AND CONNECTION INSIGHTS — ALL IN ONE PLACE.
         </p>
         <Link
           to="/digest"
-          className="mt-3 inline-block rounded-lg border border-fh-gold/40 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/20"
+          className="mt-3 inline-block border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA]"
+          style={{ borderRadius: 0 }}
         >
-          Preview digest →
+          PREVIEW DIGEST
         </Link>
       </div>
     );
@@ -697,15 +736,17 @@ function DigestPreviewCard({
 
   // Has digest — show preview
   const moments = content.momentsToMention?.slice(0, 2) ?? [];
-  const weekLabel = content.weekLabel ?? "This week";
+  const weekLabel = content.weekLabel ?? "THIS WEEK";
 
   return (
-    <div className="rounded-xl border border-fh-gold/30 bg-white p-5 shadow-sm md:col-span-2">
+    <div className="border border-[#1A1A1A]/20 bg-[#EDEDEA] p-5" style={{ borderRadius: 0 }}>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-          <span>📋</span> Weekly Digest
+        <h2 className="font-[Inter] text-[13px] font-bold uppercase tracking-[0.06em] text-[#1A1A1A]">
+          WEEKLY DIGEST
         </h2>
-        <span className="text-xs text-fh-muted">{weekLabel}</span>
+        <span className="font-mono text-[9px] uppercase tracking-[0.03em] text-[#1A1A1A]/50">
+          {weekLabel}
+        </span>
       </div>
 
       {moments.length > 0 ? (
@@ -713,26 +754,29 @@ function DigestPreviewCard({
           {moments.map((moment, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-lg bg-fh-gold/10 p-3"
+              className="flex items-start gap-3 border border-[#1A1A1A]/10 bg-[#F5F0EB] p-3"
+              style={{ borderRadius: 0 }}
             >
-              <span className="text-lg">{moment.emoji}</span>
-              <p className="text-sm font-medium text-fh-body">
+              {/* Square dot marker */}
+              <span className="mt-1 block h-2 w-2 shrink-0 bg-[#1A1A1A]" style={{ borderRadius: 0 }} aria-hidden="true" />
+              <p className="font-[Inter] text-[13px] font-normal text-[#1A1A1A]">
                 {moment.text}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-fh-muted">
-          Your digest is ready — view it for your full weekly summary.
+        <p className="font-mono text-[11px] text-[#1A1A1A]/50">
+          YOUR DIGEST IS READY — VIEW IT FOR YOUR FULL WEEKLY SUMMARY.
         </p>
       )}
 
       <Link
         to="/digest"
-        className="mt-4 inline-flex items-center gap-1 rounded-lg border border-fh-gold/40 bg-fh-gold/10 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/20"
+        className="mt-4 inline-flex items-center border border-[#1A1A1A] bg-transparent px-4 py-2 font-[Inter] text-[13px] font-bold uppercase tracking-[0.04em] text-[#1A1A1A] hover:bg-[#EDEDEA]"
+        style={{ borderRadius: 0 }}
       >
-        View full digest →
+        VIEW FULL DIGEST
       </Link>
     </div>
   );
