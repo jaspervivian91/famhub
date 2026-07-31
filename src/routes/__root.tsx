@@ -91,14 +91,14 @@ function RootDocument({ children }: { children: ReactNode }) {
         <div
           className={`flex items-center justify-end px-4 py-2 ${
             isGrandparent
-              ? "border-b"
+              ? "border-b-2"
               : "border-b border-fh-border bg-white"
           }`}
           style={
             isGrandparent
               ? {
-                  borderColor: "var(--color-gp-border, #D0C8BE)",
-                  backgroundColor: "var(--color-gp-bg, #FFFFFF)",
+                  borderColor: "#1A1A1A",
+                  backgroundColor: "#FFFFFF",
                 }
               : {}
           }
@@ -112,13 +112,27 @@ function RootDocument({ children }: { children: ReactNode }) {
                 : "Switch to simplified mode"
             }
             onClick={handleToggle}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-none px-4 py-2 text-sm font-medium transition-colors ${
               isGrandparent
-                ? "text-gp-primary hover:bg-[#f5e6c0]"
+                ? "border-2 bg-white text-fh-body hover:bg-gp-surface"
                 : "text-fh-muted hover:bg-fh-surface hover:text-fh-body"
             }`}
-            style={{ minHeight: "44px" }}
+            style={{
+              minHeight: isGrandparent ? "56px" : "44px",
+              ...(isGrandparent ? { borderColor: "#1A1A1A" } : {}),
+            }}
           >
+            <span
+              aria-hidden="true"
+              className="shrink-0"
+              style={{
+                width: isGrandparent ? 10 : 8,
+                height: isGrandparent ? 10 : 8,
+                backgroundColor: isGrandparent
+                  ? "#1A1A1A"
+                  : "rgba(26, 26, 26, 0.3)",
+              }}
+            />
             {isGrandparent ? "Standard mode" : "Simplified mode"}
           </button>
         </div>

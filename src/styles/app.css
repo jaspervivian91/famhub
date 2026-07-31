@@ -25,7 +25,7 @@
   --color-gp-text: #1A1A1A;
   --color-gp-primary: #3A6B4A;
   --color-gp-accent: #3A6B4A;
-  --color-gp-surface: #F0EDE8;
+  --color-gp-surface: #EBF0EC;
   --color-gp-border: #1A1A1A;
 
   /* ── Transitions (mechanical, stepped) ───────────────────────────── */
@@ -108,7 +108,7 @@
 }
 
 .gp-family-btn:hover {
-  background-color: #f5f0eb !important;
+  background-color: #EBF0EC !important;
 }
 
 .gp-family-btn:focus-visible {
