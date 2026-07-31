@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setCookie } from "@tanstack/start-server-core/request-response";
 import {
   hashPassword,
   verifyPassword,
@@ -6,8 +7,7 @@ import {
   getAccountByEmail,
   createSession,
   deleteSession,
-  sessionCookie,
-  clearSessionCookie,
+  COOKIE_NAME,
   getSessionCookieFromRequest,
   getAccountFromRequest,
 } from "~/lib/auth";
@@ -38,7 +38,7 @@ export const signUp = createServerFn({ method: "POST" })
   .validator(
     (d: { email: string; password: string; displayName: string }) => d,
   )
-  .handler(async ({ data, response }) => {
+  .handler(async ({ data }) => {
     const { email, password, displayName } = data;
 
     // Validate
@@ -69,8 +69,13 @@ export const signUp = createServerFn({ method: "POST" })
     // Create session
     const session = await createSession(account.id);
 
-    // Set cookie via response headers
-    response.headers.set("Set-Cookie", sessionCookie(session.id));
+    // Set cookie via framework utility
+    setCookie(COOKIE_NAME, session.id, {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 2592000,
+      path: "/",
+    });
 
     return toPublic(account);
   });
@@ -81,7 +86,7 @@ export const signUp = createServerFn({ method: "POST" })
 
 export const signIn = createServerFn({ method: "POST" })
   .validator((d: { email: string; password: string }) => d)
-  .handler(async ({ data, response }) => {
+  .handler(async ({ data }) => {
     const { email, password } = data;
 
     if (!email || !password) {
@@ -101,8 +106,13 @@ export const signIn = createServerFn({ method: "POST" })
     // Create session
     const session = await createSession(account.id);
 
-    // Set cookie via response headers
-    response.headers.set("Set-Cookie", sessionCookie(session.id));
+    // Set cookie via framework utility
+    setCookie(COOKIE_NAME, session.id, {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 2592000,
+      path: "/",
+    });
 
     return toPublic(account);
   });
@@ -112,18 +122,22 @@ export const signIn = createServerFn({ method: "POST" })
 // ---------------------------------------------------------------------------
 
 export const signOut = createServerFn({ method: "POST" })
-  .handler(async ({ response }) => {
-    response.headers.set("Set-Cookie", clearSessionCookie());
+  .handler(async () => {
+    setCookie(COOKIE_NAME, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 0,
+      path: "/",
+    });
     return { success: true };
   });
 
 // ---------------------------------------------------------------------------
 // getMe — get current account from session cookie
-// Uses the request object to read the session cookie.
 // ---------------------------------------------------------------------------
 
 export const getMe = createServerFn({ method: "GET" })
-  .handler(async ({ request, response }): Promise<AccountPublic | null> => {
+  .handler(async ({ request }): Promise<AccountPublic | null> => {
     if (!request) return null;
 
     const account = await getAccountFromRequest(request);
@@ -132,7 +146,12 @@ export const getMe = createServerFn({ method: "GET" })
     // If we have a valid session, refresh the cookie expiry
     const sessionId = getSessionCookieFromRequest(request);
     if (sessionId) {
-      response.headers.set("Set-Cookie", sessionCookie(sessionId));
+      setCookie(COOKIE_NAME, sessionId, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 2592000,
+        path: "/",
+      });
     }
 
     return toPublic(account);
