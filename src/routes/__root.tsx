@@ -21,9 +21,23 @@ export const Route = createRootRoute({
         content:
           "A private, AI-powered connection platform that strengthens family relationships — the opposite of social media.",
       },
+      // PWA / mobile
+      { name: "theme-color", content: "#1A1A1A" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Family Core" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      // PWA manifest
+      { rel: "manifest", href: "/manifest.json" },
+      // Apple touch icon (iOS home screen)
+      {
+        rel: "apple-touch-icon",
+        sizes: "192x192",
+        href: "/icons/icon-192.png",
+      },
       // Google Fonts preconnect
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
@@ -59,6 +73,17 @@ function RootDocument({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMode(getUIMode());
+  }, []);
+
+  // Register PWA service worker
+  useEffect(() => {
+    if ("serviceWorker" in navigator && window.location.protocol === "https:") {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .catch((err) => {
+          console.error("Service worker registration failed:", err);
+        });
+    }
   }, []);
 
   function handleToggle() {
