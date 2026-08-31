@@ -6,8 +6,10 @@ import type { Account, Session } from "~/lib/types";
 // Rollup still tries to resolve the static import during the client build.
 // The dynamic import + build.rollupOptions.external in vite.config.ts
 // keeps bcryptjs out of the client bundle.
-async function getBcrypt(): Promise<typeof import("bcryptjs")> {
-  return import("bcryptjs");
+async function getBcrypt() {
+  // bcryptjs is a CommonJS module — ESM dynamic import wraps it in a
+  // `default` key, so named destructuring won't work directly.
+  return import("bcryptjs") as Promise<{ default: typeof import("bcryptjs") }>;
 }
 
 const SALT_ROUNDS = 12;
@@ -19,16 +21,16 @@ export const COOKIE_NAME = "famhub_session";
 // ---------------------------------------------------------------------------
 
 export async function hashPassword(plain: string): Promise<string> {
-  const { hash } = await getBcrypt();
-  return hash(plain, SALT_ROUNDS);
+  const bcrypt = await getBcrypt();
+  return bcrypt.default.hash(plain, SALT_ROUNDS);
 }
 
 export async function verifyPassword(
   plain: string,
   hashed: string,
 ): Promise<boolean> {
-  const { compare } = await getBcrypt();
-  return compare(plain, hashed);
+  const bcrypt = await getBcrypt();
+  return bcrypt.default.compare(plain, hashed);
 }
 
 // ---------------------------------------------------------------------------
