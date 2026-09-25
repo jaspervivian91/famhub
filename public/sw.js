@@ -1,10 +1,14 @@
-const CACHE_NAME = "family-core-v1";
+const CACHE_NAME = "family-core-v2";
 
 const PRECACHE_URLS = [
   "/",
   "/sign-in",
   "/sign-up",
   "/manifest.json",
+  "/favicon.svg",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/apple-touch-icon-180.png",
 ];
 
 // Install — cache app shell

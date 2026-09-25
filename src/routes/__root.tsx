@@ -47,11 +47,11 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: appCss },
       // PWA manifest
       { rel: "manifest", href: "/manifest.json" },
-      // Apple touch icon (iOS home screen)
+      // Apple touch icon (iOS home screen) — warm cream tile, mark centred
       {
         rel: "apple-touch-icon",
-        sizes: "192x192",
-        href: "/icons/icon-192.png",
+        sizes: "180x180",
+        href: "/icons/apple-touch-icon-180.png",
       },
       // Google Fonts preconnect
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -60,7 +60,14 @@ export const Route = createRootRoute({
         href: "https://fonts.gstatic.com",
         crossOrigin: "anonymous",
       },
-      // Favicon
+      // Favicon — warm heart-roof house. PNG first (fallback for older
+      // browsers / unfurlers), then the SVG mark, which modern browsers prefer.
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "192x192",
+        href: "/icons/icon-192.png",
+      },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
     ],
   }),
