@@ -47,8 +47,12 @@ const CATEGORY_CONFIG: Record<
   },
 };
 
+// Smallest ring clears the spec's 13px caption minimum: the sm digit
+// is 13px (was 11px, below the caption minimum and too small for the
+// grandparent-friendly audience), with the ring nudged 32 → 34 so a
+// three-digit score keeps clear of the stroke.
 const SIZE_MAP = {
-  sm: { ring: 32, stroke: 3, font: 11 },
+  sm: { ring: 34, stroke: 3, font: 13 },
   md: { ring: 48, stroke: 4, font: 15 },
   lg: { ring: 64, stroke: 5, font: 19 },
 } as const;
@@ -141,7 +145,10 @@ export function ScoreDot({
   return (
     <span
       className={`inline-block h-3 w-3 shrink-0 rounded-full ${className}`}
-      style={{ backgroundColor: config.dot, border: `1.5px solid ${config.dot}` }}
+      style={{
+        backgroundColor: config.dot,
+        border: `1.5px solid ${config.dot}`,
+      }}
       role="img"
       aria-label={`Connection: ${config.label}`}
     />

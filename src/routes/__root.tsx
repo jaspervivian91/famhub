@@ -3,12 +3,27 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import appCss from "~/styles/app.css?url";
 import { getUIMode, setUIMode } from "~/lib/ui-mode";
+
+/**
+ * The "Larger text" mode switch belongs to the app, not to the marketing
+ * pages: a signed-out visitor reading the landing / sign-up / sign-in / join
+ * / legal pages never sees it. Anything on this allow-list (and only this
+ * allow-list) shows the pill.
+ */
+const APP_ROUTE_PREFIXES = ["/dashboard", "/digest", "/grandparent", "/group"];
+
+function isAppRoute(pathname: string): boolean {
+  return APP_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -97,6 +112,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   }
 
   const isGrandparent = mode === "grandparent";
+  // Public marketing / auth / legal pages carry no mode switch at all.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showModeSwitch = isAppRoute(pathname);
 
   return (
     <html lang="en" className={isGrandparent ? "gp-mode-active" : ""}>
@@ -108,49 +126,52 @@ function RootDocument({ children }: { children: ReactNode }) {
           isGrandparent ? "gp-body" : "bg-fh-bg text-fh-body"
         }`}
       >
-        {/* ── Warm mode switch — a quiet corner control, never a toolbar ── */}
-        <div
-          className="flex items-center justify-end px-5 pt-4 pb-1"
-          style={{ backgroundColor: "var(--color-fh-bg)" }}
-        >
-          <button
-            role="switch"
-            aria-checked={isGrandparent}
-            aria-label={
-              isGrandparent
-                ? "Switch to standard mode"
-                : "Switch to simplified mode"
-            }
-            onClick={handleToggle}
-            className={`inline-flex items-center gap-2 rounded-full border font-[family-name:var(--font-body)] transition-colors ${
-              isGrandparent
-                ? "px-5 py-3 text-[1.125rem] font-bold"
-                : "px-3 py-1.5 text-[0.8125rem]"
-            }`}
-            style={{
-              minHeight: isGrandparent ? 60 : 44,
-              backgroundColor: isGrandparent
-                ? "var(--color-fh-surface-soft)"
-                : "transparent",
-              borderColor: "var(--color-fh-line)",
-              color: isGrandparent
-                ? "var(--color-fh-body)"
-                : "var(--color-fh-muted)",
-              transitionDuration: "200ms",
-            }}
+        {/* ── Warm mode switch — a quiet corner control, never a toolbar.
+               Inside the app only; never on the public pages. ── */}
+        {showModeSwitch && (
+          <div
+            className="flex items-center justify-end px-5 pt-4 pb-1"
+            style={{ backgroundColor: "var(--color-fh-bg)" }}
           >
-            <span
-              aria-hidden="true"
-              className="shrink-0 rounded-full"
+            <button
+              role="switch"
+              aria-checked={isGrandparent}
+              aria-label={
+                isGrandparent
+                  ? "Switch to standard mode"
+                  : "Switch to simplified mode"
+              }
+              onClick={handleToggle}
+              className={`inline-flex items-center gap-2 rounded-full border font-[family-name:var(--font-body)] transition-colors ${
+                isGrandparent
+                  ? "px-5 py-3 text-[1.125rem] font-bold"
+                  : "px-3 py-1.5 text-[0.8125rem]"
+              }`}
               style={{
-                width: isGrandparent ? 12 : 8,
-                height: isGrandparent ? 12 : 8,
-                backgroundColor: "var(--color-fh-accent)",
+                minHeight: isGrandparent ? 60 : 44,
+                backgroundColor: isGrandparent
+                  ? "var(--color-fh-surface-soft)"
+                  : "transparent",
+                borderColor: "var(--color-fh-line)",
+                color: isGrandparent
+                  ? "var(--color-fh-body)"
+                  : "var(--color-fh-muted)",
+                transitionDuration: "200ms",
               }}
-            />
-            {isGrandparent ? "Standard text" : "Larger text"}
-          </button>
-        </div>
+            >
+              <span
+                aria-hidden="true"
+                className="shrink-0 rounded-full"
+                style={{
+                  width: isGrandparent ? 12 : 8,
+                  height: isGrandparent ? 12 : 8,
+                  backgroundColor: "var(--color-fh-accent)",
+                }}
+              />
+              {isGrandparent ? "Standard text" : "Larger text"}
+            </button>
+          </div>
+        )}
 
         {children}
         <Scripts />
