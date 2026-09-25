@@ -15,7 +15,7 @@ import {
 } from "~/lib/api";
 import { getMe, signOut } from "~/lib/auth-api";
 import { getMyDigest } from "~/lib/api-digest";
-import type { Digest, Nudge, PairScore, ConversationStarter } from "~/lib/types";
+import type { Digest, Nudge, ConversationStarter } from "~/lib/types";
 import type { DigestContent } from "~/lib/digest-engine";
 import {
   getCurrentMemberId,
@@ -29,6 +29,13 @@ import {
 import { NudgeCard, ConversationStarterPanel } from "~/components/NudgeCard";
 import { ConnectionHealth } from "~/components/ConnectionHealth";
 import { Logo } from "~/components/Logo";
+import { Icon } from "~/components/Icon";
+import {
+  HandDivider,
+  PageTurn,
+  SectionHeading,
+  SketchUnderline,
+} from "~/components/Warm";
 
 // Loader: fetch group if identity is stored
 const getDashboardData = createServerFn({ method: "GET" })
@@ -72,12 +79,13 @@ function Dashboard() {
   const [starterNudge, setStarterNudge] = useState<Nudge | null>(null);
   const [starters, setStarters] = useState<ConversationStarter[]>([]);
   const [starterLoading, setStarterLoading] = useState(false);
-  const [sendingEmailNudgeId, setSendingEmailNudgeId] = useState<
-    string | null
-  >(null);
+  const [sendingEmailNudgeId, setSendingEmailNudgeId] = useState<string | null>(
+    null,
+  );
   const [emailedNudgeIds, setEmailedNudgeIds] = useState<Set<string>>(
     new Set(),
   );
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -90,7 +98,6 @@ function Dashboard() {
         navigate({ to: "/sign-in" });
         return;
       }
-      // Cache auth info for fast subsequent renders
       setCachedAccount(account.id, account.email, account.display_name);
       setAuthChecked(true);
       loadDashboard();
@@ -119,9 +126,7 @@ function Dashboard() {
     }
 
     try {
-      const result = await getDashboardData({
-        data: { memberId, groupId },
-      });
+      const result = await getDashboardData({ data: { memberId, groupId } });
       if (result?.group) {
         setGroupData(result);
         setState("dashboard");
@@ -208,11 +213,13 @@ function Dashboard() {
     setStarters([]);
 
     try {
-      const toName =
-        (nudge as Record<string, unknown>).to_name as string;
-      // Estimate days since based on nudge type
+      const toName = (nudge as Record<string, unknown>).to_name as string;
       const daysEstimate =
-        nudge.nudge_type === "dormancy" ? 45 : nudge.nudge_type === "cooling" ? 21 : 10;
+        nudge.nudge_type === "dormancy"
+          ? 45
+          : nudge.nudge_type === "cooling"
+            ? 21
+            : 10;
 
       const result = await getConversationStarters({
         data: {
@@ -235,9 +242,7 @@ function Dashboard() {
 
     setSendingEmailNudgeId(nudgeId);
     try {
-      const result = await sendNudgeByEmail({
-        data: { nudgeId, memberId },
-      });
+      const result = await sendNudgeByEmail({ data: { nudgeId, memberId } });
       if (result.success) {
         setEmailedNudgeIds((prev) => new Set(prev).add(nudgeId));
       }
@@ -253,487 +258,521 @@ function Dashboard() {
     setState("no-group");
   }
 
+  async function handleCheckDormant(groupId: string) {
+    await generateNudge({ data: { groupId } });
+    await loadDashboard();
+  }
+
+  function handleCopyInvite(code: string) {
+    navigator.clipboard
+      .writeText(`${window.location.origin}/join/${code}`)
+      .catch(() => {});
+    setInviteCopied(true);
+    setTimeout(() => setInviteCopied(false), 2500);
+  }
+
   // ── No Group State ──────────────────────────────────────────────
   if (state === "no-group") {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-8 px-6 py-12">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-hearth/40">
-            <Logo variant="icon" size="lg" />
+      <PageTurn className="min-h-dvh">
+        <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col items-center justify-center px-5 py-12 md:max-w-[600px] md:px-10">
+          <div className="text-center">
+            <Logo variant="icon" size="lg" className="mx-auto" />
+            <h1 className="fh-h2 mt-5">Your family home</h1>
+            <SketchUnderline className="mx-auto mt-2" />
+            <p className="fh-body mt-4 max-w-[32ch]" style={{ color: "var(--color-fh-muted)" }}>
+              Stay close to the people who matter — without social media.
+            </p>
           </div>
-          <h1 className="font-[family-name:var(--font-heading)] text-3xl text-fh-heading">Family Core</h1>
-          <p className="mt-2 text-fh-muted">
-            Stay close to the people who matter — without social media.
-          </p>
-        </div>
 
-        {error && (
-          <div className="w-full rounded-lg bg-rose-50 p-3 text-sm text-rose-700">
-            {error}
+          {error && (
+            <p className="fh-alert-error mt-7 w-full" role="alert">
+              {error}
+            </p>
+          )}
+
+          <form onSubmit={handleCreate} className="mt-7 w-full">
+            <div className="fh-card">
+              <h2 className="fh-h3">Start a family home</h2>
+              <p className="fh-body-sm mt-1" style={{ color: "var(--color-fh-muted)" }}>
+                It takes a moment. Then invite the people you love.
+              </p>
+              <label htmlFor="create-name" className="fh-label mt-5 mb-1.5 block">
+                What should we call your family?
+              </label>
+              <input
+                id="create-name"
+                type="text"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+                placeholder="e.g. The Johnsons"
+                className="fh-input"
+                required
+              />
+              <button
+                type="submit"
+                disabled={busy}
+                className="fh-btn fh-btn-primary mt-5 w-full"
+              >
+                {busy ? "Setting things up…" : "Create your family home"}
+              </button>
+            </div>
+          </form>
+
+          <div className="my-8 flex w-full items-center gap-4">
+            <HandDivider className="flex-1" />
+            <span className="fh-caption">or join an existing one</span>
+            <HandDivider className="flex-1" />
           </div>
-        )}
 
-        <form
-          onSubmit={handleCreate}
-          className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
-        >
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            Create your family hub
-          </h2>
-          <label
-            htmlFor="create-name"
-            className="mb-1 block text-sm font-medium text-fh-body"
-          >
-            Family name
-          </label>
-          <input
-            id="create-name"
-            type="text"
-            value={createName}
-            onChange={(e) => setCreateName(e.target.value)}
-            placeholder="e.g. The Johnsons"
-            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-ember focus:outline-none focus:ring-2 focus:ring-fh-hearth/50"
-            required
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-4 w-full rounded-lg bg-fh-ember px-4 py-3 font-semibold text-white hover:bg-fh-ember/90 focus:outline-none focus:ring-2 focus:ring-fh-hearth disabled:opacity-50"
-          >
-            {busy ? "Creating…" : "Create Family Core"}
-          </button>
-        </form>
-
-        <div className="flex w-full items-center gap-3">
-          <div className="h-px flex-1 bg-fh-border" />
-          <span className="text-sm text-fh-muted">or join existing</span>
-          <div className="h-px flex-1 bg-fh-border" />
-        </div>
-
-        <form
-          onSubmit={handleJoin}
-          className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
-        >
-          <h2 className="mb-4 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            Join a family hub
-          </h2>
-          <label
-            htmlFor="join-code"
-            className="mb-1 block text-sm font-medium text-fh-body"
-          >
-            Invite code
-          </label>
-          <input
-            id="join-code"
-            type="text"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="ABC123DE"
-            maxLength={8}
-            className="w-full rounded-lg border border-fh-border px-4 py-3 font-mono text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
-            required
-          />
-          <label
-            htmlFor="join-name"
-            className="mb-1 mt-3 block text-sm font-medium text-fh-body"
-          >
-            Your display name
-          </label>
-          <input
-            id="join-name"
-            type="text"
-            value={joinName}
-            onChange={(e) => setJoinName(e.target.value)}
-            placeholder="e.g. Grandma Sue"
-            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
-            required
-          />
-          <label
-            htmlFor="join-relationship"
-            className="mb-1 mt-3 block text-sm font-medium text-fh-body"
-          >
-            Relationship
-          </label>
-          <select
-            id="join-relationship"
-            value={joinRelationship}
-            onChange={(e) => setJoinRelationship(e.target.value)}
-            className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
-          >
-            <option value="grandparent">Grandparent</option>
-            <option value="parent">Parent</option>
-            <option value="child">Child</option>
-            <option value="aunt_uncle">Aunt / Uncle</option>
-            <option value="cousin">Cousin</option>
-            <option value="family">Family</option>
-          </select>
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-4 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
-          >
-            {busy ? "Joining…" : "Join Family Core"}
-          </button>
-        </form>
-      </main>
+          <form onSubmit={handleJoin} className="w-full">
+            <div className="fh-card">
+              <h2 className="fh-h3">Join your family</h2>
+              <p className="fh-body-sm mt-1" style={{ color: "var(--color-fh-muted)" }}>
+                Use the invite code someone in your family sent you.
+              </p>
+              <label htmlFor="join-code" className="fh-label mt-5 mb-1.5 block">
+                Invite code
+              </label>
+              <input
+                id="join-code"
+                type="text"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="ABC123DE"
+                maxLength={8}
+                className="fh-input"
+                required
+              />
+              <label htmlFor="join-name" className="fh-label mt-4 mb-1.5 block">
+                What should your family call you?
+              </label>
+              <input
+                id="join-name"
+                type="text"
+                value={joinName}
+                onChange={(e) => setJoinName(e.target.value)}
+                placeholder="e.g. Grandma Sue"
+                className="fh-input"
+                required
+              />
+              <label
+                htmlFor="join-relationship"
+                className="fh-label mt-4 mb-1.5 block"
+              >
+                Your relationship
+              </label>
+              <select
+                id="join-relationship"
+                value={joinRelationship}
+                onChange={(e) => setJoinRelationship(e.target.value)}
+                className="fh-input"
+              >
+                <option value="grandparent">Grandparent</option>
+                <option value="parent">Parent</option>
+                <option value="child">Child</option>
+                <option value="aunt_uncle">Aunt / Uncle</option>
+                <option value="cousin">Cousin</option>
+                <option value="family">Family</option>
+              </select>
+              <button
+                type="submit"
+                disabled={busy}
+                className="fh-btn fh-btn-secondary mt-5 w-full"
+              >
+                {busy ? "Coming inside…" : "Join your family"}
+              </button>
+            </div>
+          </form>
+        </main>
+      </PageTurn>
     );
   }
 
   // ── Loading State ──────────────────────────────────────────────
-  if (state === "loading") {
+  if (state === "loading" || !authChecked) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <p className="text-fh-muted">Loading your family hub…</p>
+        <p className="fh-body" style={{ color: "var(--color-fh-muted)" }}>
+          Opening your family home…
+        </p>
       </main>
     );
   }
 
   // ── Dashboard State ────────────────────────────────────────────
   const { group, member, nudges, scores } = groupData ?? {};
+  const memberFirstName = (member?.display_name ?? getCurrentMemberName() ?? "there")
+    .split(" ")[0];
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fh-hearth/40">
-            <Logo variant="icon" size="sm" />
-          </div>
-          <div>
-            <h1 className="font-[family-name:var(--font-heading)] text-xl text-fh-heading">
-              {group?.name ?? "Family Core"}
-            </h1>
-            <p className="text-sm text-fh-muted">
-              Welcome, {member?.display_name ?? getCurrentMemberName()}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSignOut}
-            className="rounded-lg px-3 py-1.5 text-sm text-fh-muted hover:bg-fh-surface hover:text-fh-body"
-          >
-            Sign out
-          </button>
-          <button
-            onClick={handleLeaveGroup}
-            className="rounded-lg px-3 py-1.5 text-sm text-fh-muted hover:bg-fh-surface hover:text-fh-body"
-          >
-            Leave
-          </button>
-        </div>
-      </div>
-
-      {/* DB not connected banner */}
-      {!group && (
-        <div className="mb-6 rounded-lg border border-fh-gold/30 bg-fh-gold/10 p-4 text-sm text-fh-heading">
-          ⚠️ Database not connected yet. Once{" "}
-          <code className="rounded bg-fh-gold/20 px-1 font-mono">
-            DATABASE_URL
-          </code>{" "}
-          is set, your family hub will appear here. Run the migration at{" "}
-          <code className="rounded bg-fh-gold/20 px-1 font-mono">
-            src/db/migrations/001_schema.sql
-          </code>{" "}
-          to create the tables.
-        </div>
-      )}
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Members Card */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>👥</span> Family Members
-          </h2>
-          {group?.members && group.members.length > 0 ? (
-            <ul className="space-y-3">
-              {group.members.map((m) => (
-                <li
-                  key={m.id}
-                  className="flex items-center gap-3 rounded-lg bg-fh-surface p-3"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-fh-hearth/60 text-sm font-bold text-fh-heading">
-                    {m.display_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-medium text-fh-body">
-                      {m.display_name}
-                      {m.id === member?.id ? " (you)" : ""}
-                    </p>
-                    <p className="text-xs text-fh-muted capitalize">
-                      {m.relationship.replace("_", " ")}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-fh-muted">No members yet.</p>
-          )}
-          {group && (
-            <button
-              onClick={() => navigate({ to: `/group/${group.id}` })}
-              className="mt-4 w-full rounded-lg border border-fh-tide/30 px-4 py-2 text-sm font-medium text-fh-tide hover:bg-fh-tide/10"
-            >
-              View Group Page →
-            </button>
-          )}
-        </div>
-
-        {/* Connection Health Card */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>💞</span> Connection Health
-          </h2>
-          {scores && scores.length > 0 ? (
-            <div className="space-y-2">
-              {scores.slice(0, 4).map((s) => {
-                // Find names from group members if available
-                const memberA = group?.members?.find(
-                  (m) => m.id === s.fromMemberId,
-                );
-                const memberB = group?.members?.find(
-                  (m) => m.id === s.toMemberId,
-                );
-                const nameA = memberA?.display_name ?? "Member A";
-                const nameB = memberB?.display_name ?? "Member B";
-                return (
-                  <ConnectionHealth
-                    key={`${s.fromMemberId}-${s.toMemberId}`}
-                    score={s}
-                    nameA={nameA}
-                    nameB={nameB}
-                    compact
-                  />
-                );
-              })}
-              {scores.length > 4 && (
-                <p className="text-xs text-fh-muted">
-                  +{scores.length - 4} more connections —{" "}
-                  {group && (
-                    <button
-                      onClick={() => navigate({ to: `/group/${group.id}` })}
-                      className="text-fh-tide underline"
-                    >
-                      view all
-                    </button>
-                  )}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-fh-muted">
-              No connection data yet. Nudges will help build momentum.
-            </p>
-          )}
-        </div>
-
-        {/* Nudges Card */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>💌</span> Nudges for You
-          </h2>
-          {nudges && nudges.length > 0 ? (
-            <ul className="space-y-4">
-              {nudges.map((nudge) => {
-                // Try to find matching score for this nudge
-                const matchingScore = scores?.find(
-                  (s) =>
-                    (s.fromMemberId === nudge.from_member_id &&
-                      s.toMemberId === nudge.to_member_id) ||
-                    (s.fromMemberId === nudge.to_member_id &&
-                      s.toMemberId === nudge.from_member_id),
-                );
-                const fromName =
-                  (nudge as Record<string, unknown>).from_name as string;
-                const toName =
-                  (nudge as Record<string, unknown>).to_name as string;
-
-                return (
-                  <li key={nudge.id} className="space-y-0">
-                    <NudgeCard
-                      nudge={nudge}
-                      score={matchingScore}
-                      fromName={fromName}
-                      toName={toName}
-                      onAcknowledge={handleAcknowledgeNudge}
-                      onDismiss={handleDismissNudge}
-                      onGenerateStarters={handleGenerateStarters}
-                    />
-                    <div className="flex justify-end px-1 pt-1">
-                      {emailedNudgeIds.has(nudge.id) ? (
-                        <span className="text-xs text-emerald-600">
-                          ✅ Emailed!
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleEmailNudge(nudge.id)}
-                          disabled={sendingEmailNudgeId === nudge.id}
-                          className="text-xs text-fh-muted hover:text-fh-ember disabled:opacity-50"
-                        >
-                          {sendingEmailNudgeId === nudge.id
-                            ? "Sending…"
-                            : "🔔 Email me"}
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="text-sm text-fh-muted">
-              No nudges right now — you&apos;re staying connected!
-            </p>
-          )}
-        </div>
-
-        {/* Weekly Digest Preview */}
-        <DigestPreviewCard
-          digest={groupData?.digest ?? undefined}
-        />
-
-        {/* Quick Actions */}
-        <div className="rounded-xl border border-fh-border bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-            <span>✨</span> Quick Actions
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={async () => {
-                if (!group?.id) return;
-                await generateNudge({ data: { groupId: group.id } });
-                await loadDashboard();
-              }}
-              className="rounded-lg border border-fh-dusk/30 px-4 py-2 text-sm font-medium text-fh-dusk hover:bg-fh-dusk/10"
-            >
-              🔔 Check for dormant connections
-            </button>
-            {group && (
-              <button
-                onClick={() => {
-                  const code = group.invite_code;
-                  navigator.clipboard.writeText(
-                    `${window.location.origin}/join/${code}`,
-                  );
-                  alert("Invite link copied!");
-                }}
-                className="rounded-lg border border-fh-tide/30 px-4 py-2 text-sm font-medium text-fh-tide hover:bg-fh-tide/10"
-              >
-                📋 Copy invite link
-              </button>
-            )}
-            <Link
-              to="/digest"
-              className="rounded-lg border border-fh-gold/40 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/10"
-            >
-              📋 View Weekly Digest
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Conversation Starter Modal */}
-      {starterNudge && (
-        <>
-          {starterLoading ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-              <div className="rounded-2xl bg-white p-6 shadow-xl">
-                <p className="text-sm text-fh-muted">
-                  Generating conversation starters…
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto w-full max-w-[480px] px-5 pt-2 pb-14 md:max-w-[700px] md:px-10">
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <header>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Logo variant="icon" size="md" />
+              <div>
+                <h1 className="fh-h2">{group?.name ?? "Family Core"}</h1>
+                <p className="fh-caption mt-0.5">
+                  Welcome back, {memberFirstName} ·{" "}
+                  <button
+                    onClick={handleSignOut}
+                    className="fh-link fh-caption"
+                    style={{ background: "none", border: "none", padding: 0 }}
+                  >
+                    sign out
+                  </button>
                 </p>
               </div>
             </div>
-          ) : starters.length > 0 ? (
-            <ConversationStarterPanel
-              starters={starters}
-              memberName={
-                ((starterNudge as Record<string, unknown>).to_name as string) ??
-                "them"
-              }
-              onClose={() => {
-                setStarterNudge(null);
-                setStarters([]);
-              }}
-            />
-          ) : null}
-        </>
-      )}
-    </main>
+          </div>
+          <HandDivider className="mt-3" dot />
+        </header>
+
+        {/* ── DB not connected notice ────────────────────────────── */}
+        {!group && (
+          <div className="fh-card mt-6 flex items-start gap-3">
+            <Icon name="reminder" size={24} />
+            <p className="fh-body-sm">
+              Your family&apos;s data store isn&apos;t connected yet. Once it is,
+              everyone&apos;s connections will appear here.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-7 flex flex-col gap-7">
+          {/* ── Nudges for you ───────────────────────────────────── */}
+          <section>
+            <SectionHeading
+              underline={false}
+              className="mb-4"
+            >
+              Nudges for you
+            </SectionHeading>
+            {nudges && nudges.length > 0 ? (
+              <ul className="flex flex-col gap-5">
+                {nudges.map((nudge, index) => {
+                  const matchingScore = scores?.find(
+                    (s) =>
+                      (s.fromMemberId === nudge.from_member_id &&
+                        s.toMemberId === nudge.to_member_id) ||
+                      (s.fromMemberId === nudge.to_member_id &&
+                        s.toMemberId === nudge.from_member_id),
+                  );
+                  const fromName = (nudge as Record<string, unknown>)
+                    .from_name as string;
+                  const toName = (nudge as Record<string, unknown>)
+                    .to_name as string;
+
+                  return (
+                    <li
+                      key={nudge.id}
+                      className={`fh-reveal ${
+                        index === 0
+                          ? "fh-reveal-1"
+                          : index === 1
+                            ? "fh-reveal-2"
+                            : index === 2
+                              ? "fh-reveal-3"
+                              : ""
+                      }`}
+                    >
+                      <NudgeCard
+                        nudge={nudge}
+                        score={matchingScore}
+                        fromName={fromName}
+                        toName={toName}
+                        onAcknowledge={handleAcknowledgeNudge}
+                        onDismiss={handleDismissNudge}
+                        onGenerateStarters={handleGenerateStarters}
+                      />
+                      <div className="mt-1 flex justify-end px-2">
+                        {emailedNudgeIds.has(nudge.id) ? (
+                          <span
+                            className="fh-caption inline-flex items-center gap-1.5"
+                            style={{ color: "var(--color-fh-status-ok)" }}
+                          >
+                            <Icon name="check" size={18} />
+                            Emailed
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleEmailNudge(nudge.id)}
+                            disabled={sendingEmailNudgeId === nudge.id}
+                            className="fh-btn fh-btn-quiet fh-caption inline-flex items-center gap-1.5"
+                            style={{ minHeight: 40 }}
+                          >
+                            <Icon name="bell" size={18} />
+                            {sendingEmailNudgeId === nudge.id
+                              ? "Sending…"
+                              : "Email me this one"}
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="fh-card flex items-start gap-3">
+                <Icon name="nudge" size={24} />
+                <p className="fh-body-sm">
+                  No nudges right now — you&apos;re staying close all on your own.
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* ── Your family + connection health ──────────────────── */}
+          <section className="grid gap-7 md:grid-cols-2">
+            <div className="fh-card">
+              <h2 className="fh-h3 flex items-center gap-2.5">
+                <Icon name="members" size={24} />
+                Your family
+              </h2>
+              <SketchUnderline className="mt-1.5" />
+              {group?.members && group.members.length > 0 ? (
+                <ul className="mt-5 flex flex-col gap-3">
+                  {group.members.map((m) => (
+                    <li
+                      key={m.id}
+                      className="fh-nested flex items-center gap-3 p-3"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-body)] font-bold"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          backgroundColor: "var(--color-fh-surface)",
+                          border: "1px solid var(--color-fh-border)",
+                          color: "var(--color-fh-body)",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {m.display_name.charAt(0).toUpperCase()}
+                      </span>
+                      <div>
+                        <p className="fh-body-sm font-bold">
+                          {m.display_name}
+                          {m.id === member?.id ? " (you)" : ""}
+                        </p>
+                        <p className="fh-caption capitalize">
+                          {m.relationship.replace("_", " ")}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                  Your family will appear here once they join.
+                </p>
+              )}
+              {group && (
+                <button
+                  onClick={() => navigate({ to: `/group/${group.id}` })}
+                  className="fh-btn fh-btn-secondary mt-5 w-full"
+                >
+                  See everyone
+                </button>
+              )}
+            </div>
+
+            <div className="fh-card">
+              <h2 className="fh-h3 flex items-center gap-2.5">
+                <Icon name="heart" size={24} />
+                How we&apos;re doing
+              </h2>
+              <SketchUnderline className="mt-1.5" />
+              {scores && scores.length > 0 ? (
+                <div className="mt-5 flex flex-col gap-2.5">
+                  {scores.slice(0, 4).map((s) => {
+                    const memberA = group?.members?.find(
+                      (m) => m.id === s.fromMemberId,
+                    );
+                    const memberB = group?.members?.find(
+                      (m) => m.id === s.toMemberId,
+                    );
+                    return (
+                      <ConnectionHealth
+                        key={`${s.fromMemberId}-${s.toMemberId}`}
+                        score={s}
+                        nameA={memberA?.display_name ?? "Member A"}
+                        nameB={memberB?.display_name ?? "Member B"}
+                        compact
+                      />
+                    );
+                  })}
+                  {scores.length > 4 && group && (
+                    <p className="fh-caption">
+                      +{scores.length - 4} more connections —{" "}
+                      <button
+                        onClick={() => navigate({ to: `/group/${group.id}` })}
+                        className="fh-link fh-caption"
+                        style={{ background: "none", border: "none", padding: 0 }}
+                      >
+                        see all
+                      </button>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                  No connection history yet. A gentle nudge is a good place to
+                  begin.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* ── Weekly letter preview ────────────────────────────── */}
+          <DigestPreviewCard digest={groupData?.digest ?? undefined} />
+
+          {/* ── Little things ────────────────────────────────────── */}
+          <section>
+            <SectionHeading underline={false} className="mb-1">
+              Little things
+            </SectionHeading>
+            <p className="fh-caption mb-4">Small gestures, done together.</p>
+            <div className="flex flex-col gap-3">
+              {group && (
+                <button
+                  onClick={() => handleCheckDormant(group.id)}
+                  className="fh-btn fh-btn-sand w-full justify-start"
+                >
+                  <Icon name="bell" size={22} />
+                  Check for dormant connections
+                </button>
+              )}
+              {group && (
+                <button
+                  onClick={() => handleCopyInvite(group.invite_code)}
+                  className="fh-btn fh-btn-sand w-full justify-start"
+                >
+                  <Icon name={inviteCopied ? "check" : "members"} size={22} />
+                  {inviteCopied ? "Invite link copied" : "Copy the invite link"}
+                </button>
+              )}
+              <Link
+                to="/digest"
+                className="fh-btn fh-btn-sand w-full justify-start"
+              >
+                <Icon name="checklist" size={22} />
+                Read this week&apos;s letter
+              </Link>
+              <button
+                onClick={handleLeaveGroup}
+                className="fh-btn fh-btn-quiet w-full"
+              >
+                Leave this family home
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <footer className="mt-12">
+          <HandDivider className="mb-5" />
+          <p className="fh-caption text-center">
+            Family Core · the app that puts your phone down
+          </p>
+        </footer>
+
+        {/* ── Conversation starter sheet ─────────────────────────── */}
+        {starterNudge && (
+          <>
+            {starterLoading ? (
+              <div className="fh-backdrop fixed inset-0 z-50 flex items-center justify-center">
+                <div className="fh-sheet fh-card-soft">
+                  <p className="fh-body-sm">
+                    Gathering a few gentle ideas…
+                  </p>
+                </div>
+              </div>
+            ) : starters.length > 0 ? (
+              <ConversationStarterPanel
+                starters={starters}
+                memberName={
+                  ((starterNudge as Record<string, unknown>).to_name as
+                    | string) ?? "them"
+                }
+                onClose={() => {
+                  setStarterNudge(null);
+                  setStarters([]);
+                }}
+              />
+            ) : null}
+          </>
+        )}
+      </main>
+    </PageTurn>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Digest Preview Card
+// Weekly letter preview card
 // ═══════════════════════════════════════════════════════════════════
 
-function DigestPreviewCard({
-  digest,
-}: {
-  digest?: Digest | null;
-}) {
+function DigestPreviewCard({ digest }: { digest?: Digest | null }) {
   const content = digest?.content as DigestContent | undefined;
 
-  // No digest at all
   if (!content) {
     return (
-      <div className="rounded-xl border border-fh-gold/30 bg-fh-gold/10 p-5 shadow-sm md:col-span-2">
-        <h2 className="mb-3 flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-          <span>📋</span> Weekly Digest
+      <section className="fh-card">
+        <h2 className="fh-h3 flex items-center gap-2.5">
+          <Icon name="checklist" size={24} />
+          Your weekly letter
         </h2>
-        <p className="text-sm text-fh-body">
-          Your weekly digest will be ready soon. It curates family moments,
-          conversation starters, and connection insights — all in one place.
+        <SketchUnderline className="mt-1.5" />
+        <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+          Your first letter is being written. It gathers the week&apos;s small
+          moments and a few things worth talking about.
         </p>
-        <Link
-          to="/digest"
-          className="mt-3 inline-block rounded-lg border border-fh-gold/40 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/20"
-        >
-          Preview digest →
+        <Link to="/digest" className="fh-btn fh-btn-sand mt-5 w-full">
+          <Icon name="digest" size={22} />
+          Preview this week&apos;s letter
         </Link>
-      </div>
+      </section>
     );
   }
 
-  // Has digest — show preview
   const moments = content.momentsToMention?.slice(0, 2) ?? [];
   const weekLabel = content.weekLabel ?? "This week";
 
   return (
-    <div className="rounded-xl border border-fh-gold/30 bg-white p-5 shadow-sm md:col-span-2">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 font-[family-name:var(--font-heading)] text-lg text-fh-heading">
-          <span>📋</span> Weekly Digest
+    <section className="fh-card">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="fh-h3 flex items-center gap-2.5">
+          <Icon name="checklist" size={24} />
+          Your weekly letter
         </h2>
-        <span className="text-xs text-fh-muted">{weekLabel}</span>
+        <span className="fh-caption">{weekLabel}</span>
       </div>
+      <SketchUnderline className="mt-1.5" />
+      <p className="fh-caption mt-3">
+        This week&apos;s moments, gathered by hand.
+      </p>
 
       {moments.length > 0 ? (
-        <div className="space-y-2">
+        <ul className="mt-4 flex flex-col gap-3">
           {moments.map((moment, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-3 rounded-lg bg-fh-gold/10 p-3"
-            >
-              <span className="text-lg">{moment.emoji}</span>
-              <p className="text-sm font-medium text-fh-body">
-                {moment.text}
-              </p>
-            </div>
+            <li key={i} className="fh-nested flex items-start gap-3 p-3">
+              <Icon name="warm" size={22} />
+              <p className="fh-body-sm">{moment.text}</p>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <p className="text-sm text-fh-muted">
-          Your digest is ready — view it for your full weekly summary.
+        <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+          Your letter is ready — open it for the full week.
         </p>
       )}
 
-      <Link
-        to="/digest"
-        className="mt-4 inline-flex items-center gap-1 rounded-lg border border-fh-gold/40 bg-fh-gold/10 px-4 py-2 text-sm font-medium text-fh-heading hover:bg-fh-gold/20"
-      >
-        View full digest →
+      <Link to="/digest" className="fh-btn fh-btn-secondary mt-5 w-full">
+        Open letter
       </Link>
-    </div>
+    </section>
   );
 }

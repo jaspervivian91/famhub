@@ -9,7 +9,7 @@ function PrivacyPage() {
   return (
     <div className="min-h-dvh bg-fh-bg">
       {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="border-b border-fh-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="sticky top-0 z-50" style={{ backgroundColor: "var(--color-fh-bg)", borderBottom: "1px solid var(--color-fh-line)" }}>
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Logo variant="icon" size="md" />
@@ -18,13 +18,13 @@ function PrivacyPage() {
           <div className="flex items-center gap-3">
             <Link
               to="/sign-in"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-fh-body hover:bg-fh-surface hover:text-fh-heading"
+              className="fh-btn fh-btn-quiet"
             >
               Sign In
             </Link>
             <Link
               to="/sign-up"
-              className="rounded-lg bg-fh-ember px-4 py-2 text-sm font-semibold text-white hover:bg-fh-ember/90"
+              className="fh-btn fh-btn-primary" style={{ minHeight: 44, padding: "10px 18px" }}
             >
               Get Started
             </Link>
@@ -34,14 +34,14 @@ function PrivacyPage() {
 
       {/* ── Content ──────────────────────────────────────────── */}
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl tracking-tight text-fh-heading sm:text-4xl">
+        <h1 className="fh-h2">
           Privacy Policy
         </h1>
         <p className="mt-2 text-fh-muted">
           Last updated: July 2026
         </p>
 
-        <div className="mt-10 space-y-10 text-fh-body leading-relaxed">
+        <div className="fh-body mt-10 flex flex-col gap-10">
           {/* Introduction */}
           <section>
             <p>
@@ -56,7 +56,7 @@ function PrivacyPage() {
 
           {/* What we collect */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               What data we collect
             </h2>
             <p className="mb-3">To make Family Core work, we collect:</p>
@@ -85,8 +85,8 @@ function PrivacyPage() {
 
           {/* What we DON'T collect */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
-              What we <span className="text-fh-tide">don&apos;t</span> collect
+            <h2 className="fh-h3 mb-4">
+              What we <span style={{ color: "var(--color-fh-accent)" }}>don&apos;t</span> collect
             </h2>
             <p className="mb-3">
               This is the important part. Family Core is the opposite of social
@@ -115,7 +115,7 @@ function PrivacyPage() {
 
           {/* How we use data */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               How we use your data
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -139,7 +139,7 @@ function PrivacyPage() {
 
           {/* Data storage */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Data storage
             </h2>
             <p>
@@ -151,7 +151,7 @@ function PrivacyPage() {
 
           {/* Data sharing */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Data sharing
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -177,7 +177,7 @@ function PrivacyPage() {
 
           {/* Cookies */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">Cookies</h2>
+            <h2 className="fh-h3 mb-4">Cookies</h2>
             <p>
               We use exactly one cookie: an httpOnly session cookie that keeps you
               signed in. It contains no personal information and expires when you
@@ -189,7 +189,7 @@ function PrivacyPage() {
 
           {/* User rights */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Your rights
             </h2>
             <p className="mb-3">
@@ -216,7 +216,7 @@ function PrivacyPage() {
 
           {/* Children — COPPA */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Children&apos;s privacy (COPPA)
             </h2>
             <p>
@@ -230,7 +230,7 @@ function PrivacyPage() {
 
           {/* International — GDPR / CCPA */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               International users (GDPR &amp; CCPA)
             </h2>
             <p>
@@ -245,13 +245,13 @@ function PrivacyPage() {
 
           {/* Contact */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">Contact</h2>
+            <h2 className="fh-h3 mb-4">Contact</h2>
             <p>
               Questions about this policy? Want to exercise your rights? Email us
               at{" "}
               <a
                 href="mailto:privacy@familyhub.app"
-                className="text-fh-tide underline hover:text-fh-tide/80"
+                className="fh-link"
               >
                 privacy@familyhub.app
               </a>
@@ -261,7 +261,7 @@ function PrivacyPage() {
 
           {/* Changes */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Changes to this policy
             </h2>
             <p>
@@ -273,10 +273,10 @@ function PrivacyPage() {
         </div>
 
         {/* Back link */}
-        <div className="mt-12 border-t border-fh-border pt-8">
+        <div className="mt-12" style={{ borderTop: "1px solid var(--color-fh-line)", paddingTop: 32 }}>
           <Link
             to="/"
-            className="text-fh-tide underline hover:text-fh-tide/80 font-medium"
+            className="fh-link"
           >
             ← Back to Family Core
           </Link>
@@ -284,7 +284,7 @@ function PrivacyPage() {
       </main>
 
       {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="border-t border-fh-border bg-fh-surface py-10">
+      <footer className="py-10" style={{ backgroundColor: "var(--color-fh-surface)", borderTop: "1px solid var(--color-fh-border)" }}>
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
           <div className="flex items-center gap-2">
             <Logo variant="icon" size="sm" />
@@ -295,19 +295,19 @@ function PrivacyPage() {
           <div className="flex items-center gap-6">
             <Link
               to="/privacy"
-              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
+              className="fh-body-sm fh-link" style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
             >
               Privacy
             </Link>
             <Link
               to="/terms"
-              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
+              className="fh-body-sm fh-link" style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
             >
               Terms
             </Link>
             <a
               href="mailto:hello@familyhub.app"
-              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
+              className="fh-body-sm fh-link" style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
             >
               Contact
             </a>

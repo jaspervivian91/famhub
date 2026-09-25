@@ -4,7 +4,6 @@ import { getUIMode } from "~/lib/ui-mode";
 import {
   getCurrentMemberId,
   getCurrentGroupId,
-  getCurrentMemberName,
 } from "~/lib/client-store";
 import {
   getMyDigest,
@@ -12,19 +11,40 @@ import {
   updateDigestPreference,
   sendDigestByEmail,
 } from "~/lib/api-digest";
-import type { Digest } from "~/lib/types";
+import type { Digest, ScoreCategory } from "~/lib/types";
 import type {
   DigestContent,
   DigestPairSnapshot,
   DigestMoment,
   DigestIRLNudge,
 } from "~/lib/digest-engine";
-import { ScoreRing, ScoreDot, TrendArrow } from "~/components/ScoreIndicator";
-import { CATEGORY_EMOJI, CATEGORY_LABEL } from "~/lib/conversation-starters";
+import { ScoreDot } from "~/components/ScoreIndicator";
+import { Logo } from "~/components/Logo";
+import { Icon, type IconName } from "~/components/Icon";
+import {
+  HandDivider,
+  PageTurn,
+  SketchUnderline,
+} from "~/components/Warm";
 
 export const Route = createFileRoute("/digest")({
   component: DigestPage,
 });
+
+/* ── Illustrated replacements for the old emoji chrome ──────────────── */
+const MOMENT_ICON: Record<string, IconName> = {
+  reconnection: "reconnect",
+  appreciation: "heart",
+  dormancy_alert: "clock",
+  celebration: "celebration",
+};
+
+const STARTER_ICON: Record<string, IconName> = {
+  memory: "talk",
+  photo: "warm",
+  question: "idea",
+  activity: "pin",
+};
 
 function DigestPage() {
   const [uiMode, setUIMode] = useState<"standard" | "grandparent">("standard");
@@ -49,7 +69,6 @@ function DigestPage() {
 
   async function loadDigest() {
     if (!memberId || !groupId) {
-      // No identity — still show mock data for preview
       setLoading(true);
       try {
         const result = await generateMyDigest({
@@ -64,40 +83,26 @@ function DigestPage() {
     }
 
     try {
-      const result = await getMyDigest({
-        data: { groupId, memberId },
-      });
+      const result = await getMyDigest({ data: { groupId, memberId } });
       setDigest(result ?? null);
     } catch {
-      setError("Could not load your digest.");
+      setError("We couldn't open your letter just now.");
     }
     setLoading(false);
   }
 
   async function handleGenerate() {
-    if (!memberId || !groupId) {
-      // Generate preview anyway
-      setGenerating(true);
-      try {
-        const result = await generateMyDigest({
-          data: { groupId: "preview", memberId: "preview-user" },
-        });
-        setDigest(result ?? null);
-      } catch {
-        setError("Could not generate digest.");
-      }
-      setGenerating(false);
-      return;
-    }
-
     setGenerating(true);
     try {
       const result = await generateMyDigest({
-        data: { groupId, memberId },
+        data: memberId && groupId
+          ? { groupId, memberId }
+          : { groupId: "preview", memberId: "preview-user" },
       });
       setDigest(result ?? null);
+      setError("");
     } catch {
-      setError("Could not generate digest.");
+      setError("We couldn't write this week's letter just now.");
     }
     setGenerating(false);
   }
@@ -120,16 +125,14 @@ function DigestPage() {
     setSendingEmail(true);
     setEmailSent(false);
     try {
-      const result = await sendDigestByEmail({
-        data: { groupId, memberId },
-      });
+      const result = await sendDigestByEmail({ data: { groupId, memberId } });
       if (result.success) {
         setEmailSent(true);
       } else {
-        setError(result.error ?? "Could not send email");
+        setError(result.error ?? "We couldn't send the letter");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not send email");
+      setError(e instanceof Error ? e.message : "We couldn't send the letter");
     }
     setSendingEmail(false);
   }
@@ -140,62 +143,24 @@ function DigestPage() {
   // ── Loading state ──────────────────────────────────────────────
   if (loading) {
     return (
-      <main
-        className={
-          isGrandparent
-            ? "mx-auto max-w-2xl px-6 py-8 gp-body"
-            : "mx-auto max-w-2xl px-6 py-8"
-        }
-      >
-        <p className={isGrandparent ? "text-2xl" : "text-stone-400"}>
-          Loading your digest…
+      <main className="mx-auto w-full max-w-[480px] px-5 py-10">
+        <p className="fh-body" style={{ color: "var(--color-fh-muted)" }}>
+          Opening your letter…
         </p>
       </main>
     );
   }
 
-  // ── Empty / No digest yet ──────────────────────────────────────
-  if (!content && !loading) {
-    return (
-      <main
-        className={
-          isGrandparent
-            ? "mx-auto max-w-2xl px-6 py-8 gp-body"
-            : "mx-auto max-w-2xl px-6 py-8"
-        }
-      >
-        {isGrandparent ? (
-          <GrandparentEmptyState onGenerate={handleGenerate} generating={generating} />
-        ) : (
-          <StandardEmptyState onGenerate={handleGenerate} generating={generating} />
-        )}
-      </main>
-    );
-  }
-
-  // ── Digest exists ──────────────────────────────────────────────
+  // ── Empty / no letter yet ──────────────────────────────────────
   if (!content) {
-    return (
-      <main
-        className={
-          isGrandparent
-            ? "mx-auto max-w-2xl px-6 py-8 gp-body"
-            : "mx-auto max-w-2xl px-6 py-8"
-        }
-      >
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center">
-          <p className="text-rose-700">
-            Something went wrong loading your digest. Please try again.
-          </p>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
-          >
-            {generating ? "Generating…" : "Try again"}
-          </button>
-        </div>
-      </main>
+    return isGrandparent ? (
+      <GrandparentEmptyState onGenerate={handleGenerate} generating={generating} />
+    ) : (
+      <StandardEmptyState
+        onGenerate={handleGenerate}
+        generating={generating}
+        error={error}
+      />
     );
   }
 
@@ -219,12 +184,13 @@ function DigestPage() {
       onSendEmail={handleSendDigestEmail}
       sendingEmail={sendingEmail}
       emailSent={emailSent}
+      error={error}
     />
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Standard Mode
+// Standard mode — the letter
 // ═══════════════════════════════════════════════════════════════════
 
 function StandardDigest({
@@ -236,6 +202,7 @@ function StandardDigest({
   onSendEmail,
   sendingEmail,
   emailSent,
+  error,
 }: {
   content: DigestContent;
   emailPref: boolean;
@@ -245,160 +212,204 @@ function StandardDigest({
   onSendEmail: () => void;
   sendingEmail: boolean;
   emailSent: boolean;
+  error: string;
 }) {
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
-      {/* Back link */}
-      <Link
-        to="/"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-600"
-      >
-        ← Back to Dashboard
-      </Link>
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto w-full max-w-[480px] px-5 pt-2 pb-16 md:max-w-[640px] md:px-10">
+        <Link
+          to="/dashboard"
+          className="fh-body-sm fh-link inline-flex items-center"
+          style={{ textDecoration: "none", color: "var(--color-fh-muted)" }}
+        >
+          ← Back to my family home
+        </Link>
 
-      {/* Hero */}
-      <section className="mb-8 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-200 text-2xl">
-            📋
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-amber-900">
-              Your Week in the Family
-            </h1>
-            <p className="text-sm text-amber-700">{content.weekLabel}</p>
-          </div>
-        </div>
-        <p className="mt-4 text-sm text-stone-500">
-          A private summary of the moments that matter — designed to spark real
-          conversations, not more screen time.
-        </p>
-      </section>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Connection Health */}
-        <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
-            <span>💞</span> Connection Health
-          </h2>
-          {content.connectionSnapshot.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              {content.connectionSnapshot.map((snap) => (
-                <DigestHealthCard key={snap.memberB.id} snapshot={snap} />
-              ))}
+        {/* ── The letter ─────────────────────────────────────────── */}
+        <article
+          className="mt-5 px-6 py-8 md:px-10 md:py-10"
+          style={{
+            backgroundColor: "var(--color-fh-surface)",
+            border: "1px solid var(--color-fh-border)",
+            borderRadius: "26px 24px 24px 22px", // drawn by hand, one corner softer
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
+          <header className="text-center">
+            <div className="flex items-center justify-center gap-2">
+              <Logo variant="icon" size="sm" />
+              <span className="fh-caption">
+                Your family · {content.weekLabel}
+              </span>
             </div>
-          ) : (
-            <p className="text-sm text-stone-400">
-              No connection data yet. Keep interacting!
-            </p>
+            <HandDivider className="mt-4" dot />
+            <h1 className="fh-h2 mt-5">Your week in the family</h1>
+            <SketchUnderline className="mx-auto mt-2" color="var(--color-fh-highlight)" />
+          </header>
+
+          <p className="fh-body mt-7" style={{ fontWeight: 700 }}>
+            Dear {content.memberName},
+          </p>
+          <p className="fh-body mt-3">
+            Here is this week&apos;s letter from your family — a few quiet notes
+            about the people who love you. No scoreboards, no feeds. Just
+            moments worth talking about.
+          </p>
+
+          {content.momentsToMention.length > 0 && (
+            <section className="mt-8">
+              <h2 className="fh-h3">Moments worth mentioning</h2>
+              <SketchUnderline className="mt-1.5" />
+              <ul className="mt-5 flex flex-col gap-4">
+                {content.momentsToMention.map((moment, i) => (
+                  <MomentRow key={i} moment={moment} />
+                ))}
+              </ul>
+            </section>
           )}
-        </section>
 
-        {/* Moments to Mention */}
-        <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
-            <span>✨</span> Moments to Mention
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {content.momentsToMention.map((moment, i) => (
-              <MomentCard key={i} moment={moment} />
-            ))}
-          </div>
-        </section>
-
-        {/* Conversation Starters */}
-        <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-stone-800">
-            <span>💬</span> Start a Conversation
-          </h2>
-          {content.conversationStarters.length > 0 ? (
-            <div className="space-y-3">
-              {content.conversationStarters.map((starter) => (
-                <StarterCard key={starter.id} starter={starter} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-stone-400">
-              No conversation starters available right now.
-            </p>
+          {content.connectionSnapshot.length > 0 && (
+            <section className="mt-8">
+              <h2 className="fh-h3">How we&apos;re doing</h2>
+              <SketchUnderline className="mt-1.5" />
+              <ul className="mt-5 flex flex-col gap-2.5">
+                {content.connectionSnapshot.map((snap) => (
+                  <DigestHealthRow key={snap.memberB.id} snapshot={snap} />
+                ))}
+              </ul>
+            </section>
           )}
-        </section>
 
-        {/* IRL Nudge */}
-        {content.irlNudge && (
-          <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-amber-800">
-              <span>📍</span> Make It Real
-            </h2>
-            <IRLNudgeCard nudge={content.irlNudge} />
-          </section>
-        )}
+          {content.conversationStarters.length > 0 && (
+            <section className="mt-8">
+              <h2 className="fh-h3">A few threads to pull</h2>
+              <SketchUnderline className="mt-1.5" />
+              <ul className="mt-5 flex flex-col gap-3">
+                {content.conversationStarters.map((starter) => (
+                  <StarterRow key={starter.id} starter={starter} />
+                ))}
+              </ul>
+            </section>
+          )}
 
-        {/* Digest delivery section */}
-        <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-stone-700">
-            <span>📬</span> Digest Delivery
+          {content.irlNudge && (
+            <section className="mt-8">
+              <h2 className="fh-h3">Make it real</h2>
+              <SketchUnderline className="mt-1.5" />
+              <div className="mt-5">
+                <IRLNudgeCard nudge={content.irlNudge} />
+              </div>
+            </section>
+          )}
+
+          <HandDivider className="mt-9" />
+
+          <p className="fh-body mt-6">
+            That&apos;s all for this week. The phone is yours — go make one of
+            these moments happen.
+          </p>
+          <p className="fh-body mt-5" style={{ fontWeight: 700 }}>
+            With love,
+          </p>
+          <p className="fh-h3 mt-0.5">
+            Your family
+            <span
+              aria-hidden="true"
+              className="ml-2 inline-block align-middle rounded-full"
+              style={{
+                width: 9,
+                height: 9,
+                backgroundColor: "var(--color-fh-highlight)",
+              }}
+            />
+          </p>
+        </article>
+
+        {/* ── Delivery ───────────────────────────────────────────── */}
+        <section className="fh-card mt-7">
+          <h2 className="fh-h4 flex items-center gap-2.5">
+            <Icon name="bell" size={22} />
+            Email this letter every Monday
           </h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-stone-600">
-                Receive your weekly digest by email
-              </p>
-              <p className="text-xs text-stone-400">
-                {emailPref
-                  ? "You'll get a summary every Monday morning"
-                  : "Email delivery is turned off"}
-              </p>
-            </div>
+          <p className="fh-caption mt-1">
+            Just for you · private · never shared
+          </p>
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <span className="fh-body-sm">
+              {emailPref
+                ? "You'll get a summary each Monday morning"
+                : "Email delivery is turned off"}
+            </span>
             <button
               role="switch"
               aria-checked={emailPref}
+              aria-label="Email this letter every Monday"
               onClick={onToggleEmail}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                emailPref ? "bg-amber-600" : "bg-stone-300"
-              }`}
+              className="relative inline-flex h-8 w-14 shrink-0 items-center rounded-full"
+              style={{
+                backgroundColor: emailPref
+                  ? "var(--color-fh-accent)"
+                  : "var(--color-fh-border)",
+                transition: "background-color var(--duration-fade) ease-out",
+              }}
             >
               <span
-                className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-                  emailPref ? "translate-x-6" : "translate-x-1"
-                }`}
+                className="inline-block h-6 w-6 rounded-full"
+                style={{
+                  backgroundColor: "var(--color-fh-bg)",
+                  transform: emailPref ? "translateX(30px)" : "translateX(4px)",
+                  transition: "transform var(--duration-fade) var(--ease-gentle)",
+                }}
               />
             </button>
           </div>
-          <div className="mt-4">
+          <div className="mt-5">
             {emailSent ? (
-              <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-                <span className="font-medium">✅ Email sent!</span> — check your inbox for your digest.
-              </div>
+              <p
+                className="fh-note fh-body-sm inline-flex items-center gap-2"
+                style={{ color: "var(--color-fh-status-ok)" }}
+              >
+                <Icon name="check" size={20} />
+                Sent — it&apos;s on its way to your inbox.
+              </p>
             ) : (
               <button
                 onClick={onSendEmail}
                 disabled={sendingEmail}
-                className="w-full rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+                className="fh-btn fh-btn-primary w-full"
               >
-                {sendingEmail ? "Sending…" : "📬 Email me this digest"}
+                <Icon name="digest" size={20} />
+                {sendingEmail ? "Sending…" : "Email me this letter now"}
               </button>
             )}
           </div>
+          {error && (
+            <p
+              className="fh-body-sm mt-3"
+              style={{ color: "var(--color-fh-status-error)" }}
+            >
+              {error}
+            </p>
+          )}
         </section>
-      </div>
 
-      {/* Regenerate */}
-      <div className="mt-6 text-center">
-        <button
-          onClick={onGenerate}
-          disabled={generating}
-          className="rounded-lg border border-stone-200 px-4 py-2 text-sm text-stone-500 hover:bg-stone-50 disabled:opacity-50"
-        >
-          {generating ? "Refreshing…" : "🔄 Refresh digest"}
-        </button>
-      </div>
-    </main>
+        <div className="mt-7 text-center">
+          <button
+            onClick={onGenerate}
+            disabled={generating}
+            className="fh-btn fh-btn-sand"
+          >
+            <Icon name="reconnect" size={20} />
+            {generating ? "Writing…" : "Write this week's letter again"}
+          </button>
+        </div>
+      </main>
+    </PageTurn>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Grandparent Mode
+// Grandparent mode — larger, warmer, simplest
 // ═══════════════════════════════════════════════════════════════════
 
 function GrandparentDigest({
@@ -412,132 +423,81 @@ function GrandparentDigest({
 }) {
   return (
     <main
-      className="mx-auto max-w-2xl px-6 py-8 gp-body"
-      style={{ fontSize: "var(--gp-text-size, 20px)", lineHeight: 1.6 }}
+      className="gp-mode mx-auto w-full max-w-[520px] px-5 py-8"
+      style={{ backgroundColor: "var(--color-gp-bg)", color: "var(--color-gp-text)" }}
     >
-      {/* Back */}
       <Link
         to="/grandparent"
-        className="gp-back-link mb-6 inline-flex items-center gap-2 text-[#1a365d] underline"
-        style={{ fontSize: "var(--gp-text-size, 20px)" }}
+        className="gp-btn"
+        style={{ minHeight: 60, width: "auto", padding: "12px 20px" }}
       >
-        ← Back
+        <Icon name="talk" size={32} />
+        Back
       </Link>
 
-      {/* Hero */}
-      <div
-        className="mb-8 rounded-2xl p-6"
-        style={{
-          backgroundColor: "#fff8e1",
-          border: "2px solid #e0d8c8",
-        }}
-      >
-        <h1
-          className="font-bold text-[#1a365d]"
-          style={{ fontSize: "var(--gp-heading-size, 28px)" }}
-        >
-          Your Week in the Family
-        </h1>
-        <p style={{ fontSize: "var(--gp-text-size, 20px)", color: "#5c4a2e" }}>
-          {content.weekLabel}
-        </p>
-        <p
-          className="mt-3"
-          style={{ fontSize: "var(--gp-text-size, 20px)", color: "#4a3728" }}
-        >
+      <div className="gp-card mt-6">
+        <h1 style={{ fontSize: "2.25rem" }}>Your week in the family</h1>
+        <p className="mt-2">{content.weekLabel}</p>
+        <p className="mt-3">
           Here are the moments that matter — just for you, {content.memberName}.
         </p>
       </div>
 
-      {/* Moments to Mention (simplified) */}
-      <div className="mb-6">
-        <h2
-          className="mb-4 font-bold text-[#1a365d]"
-          style={{ fontSize: "var(--gp-heading-size, 28px)" }}
-        >
-          ✨ Moments from this week
+      <section className="mt-8">
+        <h2 className="mb-5" style={{ fontSize: "2rem" }}>
+          Moments from this week
         </h2>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-5">
           {content.momentsToMention.slice(0, 3).map((moment, i) => (
-            <div
-              key={i}
-              className="rounded-xl p-5"
-              style={{
-                backgroundColor: "#fffdf7",
-                border: "2px solid #e0d8c8",
-              }}
-            >
-              <p style={{ fontSize: "var(--gp-text-size, 20px)" }}>
-                <span className="mr-2">{moment.emoji}</span>
-                {moment.text}
-              </p>
+            <div key={i} className="gp-card flex items-start gap-4">
+              <Icon name={MOMENT_ICON[moment.type] ?? "warm"} size={32} />
+              <p>{moment.text}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Conversation Starters (simplified) */}
-      <div className="mb-6">
-        <h2
-          className="mb-4 font-bold text-[#1a365d]"
-          style={{ fontSize: "var(--gp-heading-size, 28px)" }}
-        >
-          💬 Ideas to start a conversation
+      <section className="mt-9">
+        <h2 className="mb-5" style={{ fontSize: "2rem" }}>
+          Ideas to start a conversation
         </h2>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-5">
           {content.conversationStarters.map((starter) => (
-            <div
-              key={starter.id}
-              className="rounded-xl p-5"
-              style={{
-                backgroundColor: "#f0f9ff",
-                border: "2px solid #bae6fd",
-              }}
-            >
-              <p style={{ fontSize: "var(--gp-text-size, 20px)" }}>
-                {starter.text}
-              </p>
+            <div key={starter.id} className="gp-card flex items-start gap-4">
+              <Icon name={STARTER_ICON[starter.category] ?? "idea"} size={32} />
+              <p>{starter.text}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* IRL Nudge (simplified) */}
       {content.irlNudge && (
-        <div
-          className="mb-6 rounded-xl p-6"
-          style={{
-            backgroundColor: "#fef3c7",
-            border: "2px solid #fcd34d",
-          }}
-        >
-          <p
-            className="font-bold text-[#1a365d]"
-            style={{ fontSize: "var(--gp-heading-size, 28px)" }}
+        <section className="mt-9">
+          <div
+            className="gp-card"
+            style={{ backgroundColor: "var(--color-gp-surface)" }}
           >
-            📍 A suggestion for you
-          </p>
-          <p style={{ fontSize: "var(--gp-text-size, 20px)" }}>
-            {content.irlNudge.activitySuggestion}
-          </p>
-        </div>
+            <p
+              className="flex items-center gap-3"
+              style={{ fontSize: "2rem", fontWeight: 700 }}
+            >
+              <Icon name="pin" size={36} />
+              A suggestion for you
+            </p>
+            <p className="mt-4">{content.irlNudge.activitySuggestion}</p>
+          </div>
+        </section>
       )}
 
-      {/* Refresh */}
-      <div className="mt-8 text-center">
+      <div className="mt-10">
         <button
           onClick={onGenerate}
           disabled={generating}
-          className="gp-family-btn rounded-xl px-6 py-4 font-medium"
-          style={{
-            fontSize: "var(--gp-text-size, 20px)",
-            minHeight: "var(--gp-touch-target, 56px)",
-            backgroundColor: "#fef3c7",
-            border: "2px solid #e0d8c8",
-            color: "#1a365d",
-          }}
+          className="gp-btn gp-btn-primary"
+          style={{ minHeight: 72, justifyContent: "center" }}
         >
-          {generating ? "Refreshing…" : "🔄 Refresh my digest"}
+          <Icon name="reconnect" size={32} />
+          {generating ? "Writing…" : "Write my letter again"}
         </button>
       </div>
     </main>
@@ -552,116 +512,99 @@ function GrandparentEmptyState({
   generating: boolean;
 }) {
   return (
-    <div className="text-center" style={{ fontSize: "var(--gp-text-size, 20px)" }}>
-      <div className="mb-4 text-5xl">📋</div>
-      <h1
-        className="mb-3 font-bold text-[#1a365d]"
-        style={{ fontSize: "var(--gp-heading-size, 28px)" }}
-      >
-        Your Weekly Digest
+    <main
+      className="gp-mode mx-auto w-full max-w-[520px] px-5 py-10 text-center"
+      style={{ backgroundColor: "var(--color-gp-bg)", color: "var(--color-gp-text)" }}
+    >
+      <Icon name="checklist" size={56} className="mx-auto" />
+      <h1 className="mt-6" style={{ fontSize: "2.25rem" }}>
+        Your weekly letter
       </h1>
-      <p style={{ fontSize: "var(--gp-text-size, 20px)", color: "#4a3728" }}>
-        Your first digest is being prepared — check back soon!
+      <p className="mt-4">
+        Your first letter is being written. Check back soon.
       </p>
       <button
         onClick={onGenerate}
         disabled={generating}
-        className="gp-family-btn mt-6 rounded-xl px-6 py-4 font-medium"
-        style={{
-          fontSize: "var(--gp-text-size, 20px)",
-          minHeight: "var(--gp-touch-target, 56px)",
-          backgroundColor: "#fef3c7",
-          border: "2px solid #e0d8c8",
-          color: "#1a365d",
-        }}
+        className="gp-btn gp-btn-primary gp-tap-lg mt-8"
+        style={{ justifyContent: "center" }}
       >
-        {generating ? "Generating…" : "Generate my digest now"}
+        {generating ? "Writing…" : "Write my letter now"}
       </button>
-    </div>
+    </main>
   );
 }
 
 function StandardEmptyState({
   onGenerate,
   generating,
+  error,
 }: {
   onGenerate: () => void;
   generating: boolean;
+  error: string;
 }) {
   return (
-    <div className="text-center">
-      <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-4xl">
-        📋
-      </div>
-      <h1 className="text-2xl font-bold text-amber-900">Your Weekly Digest</h1>
-      <p className="mt-2 text-stone-500">
-        Your first digest is being prepared — check back soon!
-      </p>
-      <p className="mt-2 text-sm text-stone-400">
-        Digests curate your family&apos;s connection moments into a private
-        summary designed to spark real conversations.
-      </p>
-      <button
-        onClick={onGenerate}
-        disabled={generating}
-        className="mt-6 rounded-lg bg-amber-600 px-6 py-3 font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-      >
-        {generating ? "Generating…" : "Generate my first digest"}
-      </button>
-    </div>
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto w-full max-w-[480px] px-5 py-16 text-center">
+        <Icon name="checklist" size={56} className="mx-auto" />
+        <h1 className="fh-h2 mt-6">Your weekly letter</h1>
+        <p className="fh-body mt-3" style={{ color: "var(--color-fh-muted)" }}>
+          Your first letter is being written. Check back soon.
+        </p>
+        <p className="fh-caption mx-auto mt-3 max-w-[36ch]">
+          Each letter gathers your family&apos;s small moments into something
+          private, warm, and worth a phone call.
+        </p>
+        <button
+          onClick={onGenerate}
+          disabled={generating}
+          className="fh-btn fh-btn-primary mt-7"
+        >
+          {generating ? "Writing…" : "Write my first letter"}
+        </button>
+        {error && (
+          <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-status-error)" }}>
+            {error}
+          </p>
+        )}
+      </main>
+    </PageTurn>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Sub-components
+// Rows
 // ═══════════════════════════════════════════════════════════════════
 
-function DigestHealthCard({ snapshot }: { snapshot: DigestPairSnapshot }) {
+function MomentRow({ moment }: { moment: DigestMoment }) {
   return (
-    <div className="flex flex-col items-center rounded-lg bg-stone-50 p-4 text-center">
-      <ScoreRing
-        score={snapshot.score}
-        category={snapshot.category as "thriving" | "steady" | "cooling" | "dormant"}
-        size="md"
-        showLabel={false}
-      />
-      <p className="mt-2 font-medium text-stone-800">
-        {snapshot.memberB.name}
-      </p>
-      <p className="text-xs text-stone-400">
-        {snapshot.emoji} {snapshot.label} — {snapshot.score}/100
-      </p>
-      <div className="mt-1.5">
-        <TrendArrow trend={snapshot.score > 50 ? 70 : 30} />
+    <li className="flex items-start gap-3">
+      <Icon name={MOMENT_ICON[moment.type] ?? "warm"} size={24} />
+      <div>
+        <p className="fh-body-sm" style={{ fontWeight: 700 }}>
+          {moment.text}
+        </p>
       </div>
-    </div>
+    </li>
   );
 }
 
-function MomentCard({ moment }: { moment: DigestMoment }) {
-  const bgMap: Record<string, string> = {
-    reconnection: "from-emerald-50 to-emerald-100 border-emerald-200",
-    appreciation: "from-rose-50 to-rose-100 border-rose-200",
-    dormancy_alert: "from-amber-50 to-amber-100 border-amber-200",
-    celebration: "from-blue-50 to-blue-100 border-blue-200",
-  };
-
-  const bgClass = bgMap[moment.type] ?? "from-stone-50 to-stone-100 border-stone-200";
-
+function DigestHealthRow({ snapshot }: { snapshot: DigestPairSnapshot }) {
   return (
-    <div
-      className={`rounded-xl border bg-gradient-to-br p-4 ${bgClass}`}
-      style={{ minHeight: "80px" }}
-    >
-      <div className="flex items-start gap-3">
-        <span className="text-xl">{moment.emoji}</span>
-        <p className="font-medium text-stone-700">{moment.text}</p>
-      </div>
-    </div>
+    <li className="flex items-center gap-3">
+      <ScoreDot category={snapshot.category as ScoreCategory} />
+      <p className="fh-body-sm">
+        You ↔ {snapshot.memberB.name} · {snapshot.label}
+      </p>
+      <span className="fh-caption ml-auto tabular-nums">
+        {snapshot.score}/100
+      </span>
+    </li>
   );
 }
 
-function StarterCard({
+function StarterRow({
   starter,
 }: {
   starter: { id: string; text: string; category: string };
@@ -674,23 +617,27 @@ function StarterCard({
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const emoji = CATEGORY_EMOJI[starter.category as keyof typeof CATEGORY_EMOJI] ?? "💬";
-  const label = CATEGORY_LABEL[starter.category as keyof typeof CATEGORY_LABEL] ?? "Idea";
-
   return (
-    <div className="flex items-start gap-3 rounded-lg bg-stone-50 p-4">
-      <span className="mt-0.5 text-lg">{emoji}</span>
+    <li className="fh-nested flex items-start gap-3 p-4">
+      <Icon name={STARTER_ICON[starter.category] ?? "idea"} size={22} />
       <div className="flex-1">
-        <p className="text-sm text-stone-700">{starter.text}</p>
-        <span className="text-xs text-stone-400">{label}</span>
+        <p className="fh-body-sm">“{starter.text}”</p>
+        <p className="fh-caption mt-1 capitalize">{starter.category}</p>
       </div>
       <button
         onClick={handleCopy}
-        className="shrink-0 rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-700"
+        className="fh-btn fh-btn-secondary fh-caption shrink-0"
+        style={{ minHeight: 44, padding: "8px 14px" }}
       >
-        {copied ? "✓ Copied" : "Copy"}
+        {copied ? (
+          <>
+            <Icon name="check" size={16} /> Copied
+          </>
+        ) : (
+          "Copy"
+        )}
       </button>
-    </div>
+    </li>
   );
 }
 
@@ -704,24 +651,25 @@ function IRLNudgeCard({ nudge }: { nudge: DigestIRLNudge }) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start gap-3 rounded-lg bg-white p-4">
-        <span className="text-2xl">📍</span>
-        <div className="flex-1">
-          <p className="font-medium text-amber-900">
-            {nudge.memberName} could use some time with you
-          </p>
-          <p className="mt-1 text-sm text-amber-700">{nudge.activitySuggestion}</p>
-          <p className="mt-1 text-xs text-amber-500">
-            Connection score: {nudge.score}/100 — a little nudge goes a long way
-          </p>
-        </div>
-      </div>
+    <div
+      className="fh-nested p-5"
+      style={{ borderColor: "var(--color-fh-highlight)" }}
+    >
+      <p className="fh-h4 flex items-start gap-3">
+        <Icon name="pin" size={24} />
+        {nudge.memberName} could use some time with you
+      </p>
+      <p className="fh-body-sm mt-3">{nudge.activitySuggestion}</p>
+      <p className="fh-caption mt-2">
+        Connection score: {nudge.score}/100 — a little nudge goes a long way.
+      </p>
       <button
         onClick={handleCopy}
-        className="w-full rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
+        className="fh-btn fh-btn-quiet mt-2 inline-flex items-center gap-2 px-0"
+        style={{ minHeight: 44 }}
       >
-        {copied ? "✓ Copied suggestion" : "📋 Copy suggestion"}
+        {copied ? <Icon name="check" size={18} /> : <Icon name="pin" size={18} />}
+        {copied ? "Copied" : "Copy this idea"}
       </button>
     </div>
   );

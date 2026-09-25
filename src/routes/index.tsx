@@ -2,19 +2,108 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { joinWaitlist } from "~/lib/waitlist-api";
 import { Logo } from "~/components/Logo";
+import { Icon } from "~/components/Icon";
+import {
+  HandDivider,
+  SketchUnderline,
+  Sprig,
+  PageTurn,
+} from "~/components/Warm";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-/* ── Shared inline style constants (kept in sync with brand spec) ───── */
-const MONO =
-  "'JetBrains Mono', 'SF Mono', 'Courier New', monospace";
-const SANS = "Inter, ui-sans-serif, system-ui, sans-serif";
-const INK = "#1A1A1A";
-const CANVAS = "#F5F0EB";
-const ACCENT = "#3A6B4A";
-const SURFACE = "#EBF0EC";
+/* ── The three quiet steps of how Family Core works ─────────────────── */
+const HOW_IT_WORKS = [
+  {
+    icon: "reminder" as const,
+    title: "We notice the silence",
+    body: "Thirty days without a word, and we gently flag the relationship — nothing more. Frequency, recency and who reaches out first. Never what you said.",
+  },
+  {
+    icon: "nudge" as const,
+    title: "We nudge, gently",
+    body: "One warm prompt to reach out. No streak counters, no badges, no notification storm — a single note, and then quiet.",
+  },
+  {
+    icon: "heart" as const,
+    title: "You reconnect for real",
+    body: "You make the call, send the letter, take the walk. The app steps back and the bond grows stronger. That is the whole point.",
+  },
+];
+
+/* ── A warm illustrated album card (no stock photography, per spec §8) ── */
+function AlbumIllustration() {
+  return (
+    <figure className="fh-card-soft m-0 overflow-hidden p-0">
+      <svg
+        viewBox="0 0 360 200"
+        className="block h-auto w-full"
+        role="img"
+        aria-label="Illustration of a warm golden-hour hillside"
+      >
+        <defs>
+          <linearGradient id="fh-goldenhour" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#F5F0EB" />
+            <stop offset="100%" stopColor="#E8D5C0" />
+          </linearGradient>
+        </defs>
+        <rect width="360" height="200" fill="url(#fh-goldenhour)" />
+        {/* low sun */}
+        <circle cx="268" cy="66" r="26" fill="#D4845A" opacity="0.9" />
+        {/* far hill */}
+        <path
+          d="M-10 162 C 60 124, 130 150, 196 140 C 258 131, 316 148, 370 138 L 370 210 L -10 210 Z"
+          fill="#3A6B4A"
+          opacity="0.9"
+        />
+        {/* near bank */}
+        <path
+          d="M-10 184 C 70 166, 150 190, 232 178 C 292 169, 330 181, 370 174 L 370 210 L -10 210 Z"
+          fill="#1A1A1A"
+          opacity="0.75"
+        />
+        {/* hand-drawn grass ticks */}
+        <path
+          d="M44 176 C 46 168, 48 164, 50 160 M56 178 C 58 171, 61 167, 63 163"
+          stroke="#1A1A1A"
+          strokeWidth="2"
+          strokeLinecap="round"
+          opacity="0.45"
+        />
+        {/* two figures, drawn by hand */}
+        <path
+          d="M150 168 C 150 156, 154 150, 158 150 C 162 150, 166 156, 166 168"
+          stroke="#1A1A1A"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle cx="158" cy="143" r="7" stroke="#1A1A1A" strokeWidth="2.4" />
+        <path
+          d="M176 170 C 176 159, 180 153, 183 153 C 186 153, 190 159, 190 170"
+          stroke="#1A1A1A"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle cx="183" cy="147" r="6" stroke="#1A1A1A" strokeWidth="2.4" />
+        {/* held hands */}
+        <path
+          d="M166 158 C 170 160, 172 160, 176 158"
+          stroke="#1A1A1A"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <figcaption className="fh-caption px-6 py-4">
+        A place for your family&apos;s real photos — warm light, real moments,
+        never a stock image.
+      </figcaption>
+    </figure>
+  );
+}
 
 function LandingPage() {
   const [email, setEmail] = useState("");
@@ -47,507 +136,141 @@ function LandingPage() {
   }
 
   return (
-    <div className="relative min-h-dvh" style={{ backgroundColor: CANVAS }}>
-      {/* ── Structural grid lines (fixed, subtle guides only) ── */}
-      {/* Left margin guide */}
-      <div
-        className="pointer-events-none fixed inset-y-0 z-0"
-        style={{ left: "24px", width: "0", borderLeft: "0.5px dashed #EBF0EC" }}
-      />
-      {/* Right margin guide */}
-      <div
-        className="pointer-events-none fixed inset-y-0 z-0"
-        style={{ right: "24px", width: "0", borderRight: "0.5px dashed #EBF0EC" }}
-      />
-      {/* Center guide */}
-      <div
-        className="pointer-events-none fixed inset-y-0 z-0"
-        style={{ left: "50%", width: "0", borderLeft: "0.3px dashed #EBF0EC" }}
-      />
-
-      <main className="relative z-10 mx-auto flex min-h-dvh max-w-[327px] flex-col px-0 pt-8 pb-0">
-        {/* ── 01 Header — in-flow spec strip (scrolls with page) ── */}
-        <header className="pt-2">
-          <div className="flex items-baseline justify-between">
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: "8px",
-                letterSpacing: "0.22em",
-                color: INK,
-                textTransform: "uppercase",
-              }}
-            >
-              Family Core
-            </span>
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: "8px",
-                letterSpacing: "0.22em",
-                color: INK,
-                textTransform: "uppercase",
-                opacity: 0.55,
-              }}
-            >
-              Private Network
-            </span>
-          </div>
-          {/* Ruled line with square registration dots at both ends */}
-          <div className="relative mt-3" style={{ borderTop: "1px solid #1A1A1A" }}>
-            <div
-              className="absolute"
-              style={{
-                width: "7px",
-                height: "7px",
-                backgroundColor: INK,
-                top: "-4px",
-                left: "-2px",
-              }}
-            />
-            <div
-              className="absolute"
-              style={{
-                width: "7px",
-                height: "7px",
-                backgroundColor: INK,
-                top: "-4px",
-                right: "-2px",
-              }}
-            />
-          </div>
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 pt-2 pb-14 md:max-w-[680px] md:px-10">
+        {/* ── Header — wordmark + sign in ─────────────────────────── */}
+        <header className="flex items-center justify-between gap-4">
+          <Logo variant="full" size="md" />
+          <Link
+            to="/sign-in"
+            className="fh-body-sm fh-link"
+            style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
+          >
+            Sign in
+          </Link>
         </header>
+        <HandDivider className="mt-3" dot />
 
-        {/* ── 02 Hero — brand mark + core message ─────────────────── */}
-        <section className="mt-14 flex flex-col items-center text-center">
-          {/* Eyebrow */}
-          <p
-            style={{
-              fontFamily: MONO,
-              fontSize: "9px",
-              letterSpacing: "0.3em",
-              color: INK,
-              opacity: 0.7,
-              textTransform: "uppercase",
-            }}
-          >
-            Private • AI-Powered • Family
-          </p>
-
-          {/* Logo — stacked variant */}
-          <div className="mt-8">
-            <Logo variant="stacked" size="xl" />
-          </div>
-
-          {/* Heading */}
-          <h1
-            className="mt-8"
-            style={{
-              fontFamily: SANS,
-              fontSize: "30px",
-              fontWeight: 800,
-              color: INK,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              lineHeight: 1.16,
-            }}
-          >
-            Stay Close
-            <br />
-            To The People
-            <br />
-            Who Matter.
+        {/* ── Hero ────────────────────────────────────────────────── */}
+        <section className="mt-10 flex flex-col items-center text-center md:mt-14">
+          <Sprig />
+          <h1 className="fh-hero mt-5 max-w-[9.5em]">
+            Stay close to the people who{" "}
+            <span style={{ color: "var(--color-fh-accent)" }}>matter</span>
           </h1>
-
-          {/* Ruled line under heading — accent registration square at end */}
-          <div className="relative mt-6" style={{ width: "175px", borderTop: "0.5px solid #1A1A1A" }}>
-            <div
-              className="absolute"
-              style={{
-                width: "7px",
-                height: "7px",
-                backgroundColor: ACCENT,
-                top: "-3.5px",
-                right: "0px",
-              }}
-            />
-          </div>
-
-          {/* Body */}
-          <p
-            className="mt-8 leading-relaxed"
-            style={{
-              fontFamily: MONO,
-              fontSize: "11px",
-              letterSpacing: "1px",
-              color: INK,
-              lineHeight: 1.9,
-            }}
-          >
-            WE NOTICE WHEN FAMILIES DRIFT —
-            <br />
-            AND GENTLY NUDGE YOU BACK
-            <br />
-            TOGETHER. THE APP THAT PUTS
-            <br />
-            YOUR PHONE DOWN, AND YOUR
-            <br />
-            FAMILY FIRST.
-          </p>
-
-          {/* Dot markers */}
-          <div className="mt-8 flex gap-2">
-            <div className="h-[3px] w-[3px]" style={{ backgroundColor: INK, opacity: 0.5 }} />
-            <div className="h-[3px] w-[3px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-            <div className="h-[3px] w-[3px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-          </div>
-        </section>
-
-        {/* ── 03 Operating principles — ruled spec table ──────────── */}
-        <section className="mt-14">
-          <div className="mb-2 flex items-baseline justify-between">
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                color: INK,
-                textTransform: "uppercase",
-              }}
-            >
-              Operating Principles
-            </span>
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                color: INK,
-                opacity: 0.5,
-              }}
-            >
-              FIG. 01
-            </span>
-          </div>
-          <div style={{ borderTop: "1.5px solid #1A1A1A" }} />
-
-          {/* 01 — DETECT */}
-          <div className="py-4" style={{ borderBottom: "0.5px solid #1A1A1A" }}>
-            <div className="flex items-baseline gap-3">
-              <span
-                style={{
-                  fontFamily: MONO,
-                  fontSize: "10px",
-                  color: INK,
-                  opacity: 0.5,
-                }}
-              >
-                01
-              </span>
-              <span
-                style={{
-                  fontFamily: SANS,
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: INK,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Detect
-              </span>
-            </div>
-            <p
-              className="mt-2 pl-6"
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                color: INK,
-                opacity: 0.75,
-                lineHeight: 1.8,
-                letterSpacing: "0.02em",
-              }}
-            >
-              WE NOTICE THE SILENCE. 30+ DAYS WITHOUT A WORD,
-              THE RELATIONSHIP IS FLAGGED.
-            </p>
-          </div>
-
-          {/* 02 — NUDGE */}
-          <div className="py-4" style={{ borderBottom: "0.5px solid #1A1A1A" }}>
-            <div className="flex items-baseline gap-3">
-              <span
-                style={{
-                  fontFamily: MONO,
-                  fontSize: "10px",
-                  color: INK,
-                  opacity: 0.5,
-                }}
-              >
-                02
-              </span>
-              <span
-                style={{
-                  fontFamily: SANS,
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: INK,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Nudge
-              </span>
-            </div>
-            <p
-              className="mt-2 pl-6"
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                color: INK,
-                opacity: 0.75,
-                lineHeight: 1.8,
-                letterSpacing: "0.02em",
-              }}
-            >
-              A PRIVATE, GENTLE SIGNAL. ONE CLEAR PROMPT —
-              NEVER A NOTIFICATION STORM.
-            </p>
-          </div>
-
-          {/* 03 — RECONNECT */}
-          <div className="py-4" style={{ borderBottom: "0.5px solid #1A1A1A" }}>
-            <div className="flex items-baseline gap-3">
-              <span
-                style={{
-                  fontFamily: MONO,
-                  fontSize: "10px",
-                  color: INK,
-                  opacity: 0.5,
-                }}
-              >
-                03
-              </span>
-              <span
-                style={{
-                  fontFamily: SANS,
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: INK,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Reconnect
-              </span>
-            </div>
-            <p
-              className="mt-2 pl-6"
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                color: INK,
-                opacity: 0.75,
-                lineHeight: 1.8,
-                letterSpacing: "0.02em",
-              }}
-            >
-              YOU MAKE THE CALL. THE APP STEPS BACK,
-              THE BOND GROWS STRONGER.
-            </p>
-          </div>
-        </section>
-
-        {/* ── 04 Trust band — the anti-social-media promise ───────── */}
-        <section
-          className="mt-14 px-2 py-6 text-center"
-          style={{ borderTop: "0.5px solid #1A1A1A", borderBottom: "0.5px solid #1A1A1A" }}
-        >
-          <p
-            style={{
-              fontFamily: MONO,
-              fontSize: "9px",
-              letterSpacing: "0.1em",
-              color: INK,
-              textTransform: "uppercase",
-            }}
-          >
-            No feeds • No likes • No ads • No noise
-          </p>
-          <p
-            className="mt-2"
-            style={{
-              fontFamily: MONO,
-              fontSize: "9px",
-              letterSpacing: "0.06em",
-              color: INK,
-              opacity: 0.55,
-              textTransform: "uppercase",
-            }}
-          >
-            Metadata only — frequency, recency, initiation. Never content.
+          <SketchUnderline
+            className="mt-3"
+            color="var(--color-fh-highlight)"
+          />
+          <p className="fh-body mt-7 max-w-[34ch] text-left md:text-center">
+            A private little home for your family&apos;s connection. No feeds, no
+            likes — just gentle nudges to stay close, and the joy of real calls,
+            letters and visits.
           </p>
         </section>
 
-        {/* ── 05 Calls to action ──────────────────────────────────── */}
-        <section className="mt-14 flex flex-col items-center">
-          <Link
-            to="/sign-up"
-            className="flex items-center justify-center"
-            style={{
-              width: "100%",
-              height: "54px",
-              backgroundColor: ACCENT,
-              color: CANVAS,
-              fontFamily: SANS,
-              fontSize: "13px",
-              fontWeight: 700,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              border: "none",
-              textDecoration: "none",
-            }}
-          >
-            Get Started
+        {/* ── Warm album card ─────────────────────────────────────── */}
+        <section className="mt-10">
+          <AlbumIllustration />
+        </section>
+
+        {/* ── How it works ────────────────────────────────────────── */}
+        <section className="mt-9">
+          <div className="fh-card-soft">
+            <h2 className="fh-h2">How it works</h2>
+            <SketchUnderline className="mt-1.5" />
+            <ul className="mt-6 flex flex-col gap-6">
+              {HOW_IT_WORKS.map((step) => (
+                <li key={step.title} className="flex items-start gap-4">
+                  <span
+                    className="flex items-center justify-center rounded-full"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      backgroundColor: "var(--color-fh-surface-soft)",
+                      border: "1px solid var(--color-fh-border)",
+                    }}
+                  >
+                    <Icon name={step.icon} size={22} />
+                  </span>
+                  <div>
+                    <h3 className="fh-h4">{step.title}</h3>
+                    <p className="fh-body-sm mt-1" style={{ color: "var(--color-fh-muted)" }}>
+                      {step.body}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* ── Calls to action ─────────────────────────────────────── */}
+        <section className="mt-9 flex flex-col items-stretch gap-3">
+          <Link to="/sign-up" className="fh-btn fh-btn-primary w-full">
+            Create your family home
           </Link>
-          <p
-            className="mt-2"
-            style={{
-              fontFamily: MONO,
-              fontSize: "8px",
-              letterSpacing: "0.15em",
-              color: INK,
-              opacity: 0.55,
-              textTransform: "uppercase",
-            }}
-          >
-            Free tier — no card required
-          </p>
-          <Link
-            to="/join"
-            className="mt-5 flex items-center justify-center"
-            style={{
-              width: "100%",
-              height: "52px",
-              backgroundColor: "transparent",
-              color: INK,
-              fontFamily: SANS,
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: "0.25em",
-              textTransform: "uppercase",
-              border: "1.5px solid #1A1A1A",
-              textDecoration: "none",
-            }}
-          >
-            I Have An Invite
+          <Link to="/join" className="fh-btn fh-btn-secondary w-full">
+            I have an invite
           </Link>
+          <p className="fh-caption mt-1 text-center">
+            Free for your whole family — no card needed.
+          </p>
         </section>
 
-        {/* ── 06 Waitlist (subtle, at bottom) ─────────────────────── */}
-        <section className="mt-14">
-          <div className="mb-2 flex items-baseline justify-between">
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                letterSpacing: "0.2em",
-                color: INK,
-                textTransform: "uppercase",
-              }}
-            >
-              Join The Waitlist
-            </span>
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                color: INK,
-                opacity: 0.5,
-              }}
-            >
-              FORM 01
-            </span>
-          </div>
-          <div style={{ borderTop: "1.5px solid #1A1A1A" }} />
-          <div className="mt-5">
+        {/* ── The quiet promise ───────────────────────────────────── */}
+        <section className="mt-10 px-2 text-center">
+          <HandDivider className="mb-6" />
+          <p className="fh-body-sm" style={{ color: "var(--color-fh-body)" }}>
+            No feeds · No likes · No ads · No noise
+          </p>
+          <p className="fh-caption mx-auto mt-2 max-w-[30ch]">
+            Metadata only — frequency, recency, initiation. We never read your
+            messages. Never content.
+          </p>
+        </section>
+
+        {/* ── Waitlist — kept from the previous page, in a quieter tone ── */}
+        <section className="mt-10">
+          <div className="fh-card">
+            <h2 className="fh-h3">Not ready just yet?</h2>
+            <p className="fh-body-sm mt-2" style={{ color: "var(--color-fh-muted)" }}>
+              Leave your email and we&apos;ll write to you once — when Family
+              Core is ready for your family.
+            </p>
             {waitlistStatus === "success" ? (
-              <div
-                className="p-3 text-center"
-                style={{
-                  backgroundColor: SURFACE,
-                  border: "0.5px solid #1A1A1A",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: SANS,
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    color: INK,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  You&apos;re on the list
-                </p>
-                <p
-                  className="mt-1"
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: "9px",
-                    color: INK,
-                    opacity: 0.6,
-                  }}
-                >
-                  {waitlistMessage}
-                </p>
+              <div className="fh-note mt-4 flex items-start gap-3">
+                <Icon name="check" size={22} />
+                <p className="fh-body-sm">{waitlistMessage}</p>
               </div>
             ) : (
-              <form onSubmit={handleWaitlistSubmit} className="flex flex-col gap-2">
-                <div className="flex gap-2">
+              <form onSubmit={handleWaitlistSubmit} className="mt-4">
+                <label htmlFor="waitlist-email" className="fh-label mb-1.5 block">
+                  Your email
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <input
+                    id="waitlist-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="flex-1 px-3 py-2"
-                    style={{
-                      backgroundColor: SURFACE,
-                      border: "1.5px solid #1A1A1A",
-                      color: INK,
-                      fontFamily: MONO,
-                      fontSize: "11px",
-                      outline: "none",
-                    }}
+                    className="fh-input sm:flex-1"
                     required
                     disabled={waitlistStatus === "submitting"}
                   />
                   <button
                     type="submit"
                     disabled={waitlistStatus === "submitting"}
-                    className="px-4 py-2"
-                    style={{
-                      backgroundColor: waitlistStatus === "submitting" ? SURFACE : INK,
-                      color: waitlistStatus === "submitting" ? INK : CANVAS,
-                      border: "1.5px solid #1A1A1A",
-                      fontFamily: SANS,
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      cursor: waitlistStatus === "submitting" ? "default" : "pointer",
-                    }}
+                    className="fh-btn fh-btn-sand"
                   >
-                    {waitlistStatus === "submitting" ? "..." : "JOIN"}
+                    {waitlistStatus === "submitting" ? "Sending…" : "Join the list"}
                   </button>
                 </div>
                 {waitlistStatus === "error" && (
                   <p
-                    style={{
-                      fontFamily: MONO,
-                      fontSize: "9px",
-                      color: ACCENT,
-                    }}
+                    className="fh-body-sm mt-2"
+                    style={{ color: "var(--color-fh-status-error)" }}
                   >
                     {waitlistMessage}
                   </p>
@@ -557,77 +280,26 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* ── 07 Footer ───────────────────────────────────────────── */}
-        <footer className="mt-14 pb-10">
-          <div style={{ borderTop: "0.5px solid #1A1A1A" }} />
-          {/* Footer links */}
-          <div className="mt-5 flex items-center justify-center gap-2.5">
-            <Link
-              to="/privacy"
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                letterSpacing: "0.12em",
-                color: INK,
-                opacity: 0.7,
-                textTransform: "uppercase",
-                textDecoration: "none",
-              }}
-            >
+        {/* ── Footer ──────────────────────────────────────────────── */}
+        <footer className="mt-12">
+          <HandDivider className="mb-6" dot />
+          <nav className="flex items-center justify-center gap-5">
+            <Link to="/privacy" className="fh-body-sm fh-link" style={{ textDecoration: "none" }}>
               Privacy
             </Link>
-            <div className="h-[3px] w-[3px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-            <Link
-              to="/terms"
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                letterSpacing: "0.12em",
-                color: INK,
-                opacity: 0.7,
-                textTransform: "uppercase",
-                textDecoration: "none",
-              }}
-            >
+            <span aria-hidden="true" style={{ color: "var(--color-fh-line)" }}>
+              ·
+            </span>
+            <Link to="/terms" className="fh-body-sm fh-link" style={{ textDecoration: "none" }}>
               Terms
             </Link>
-            <div className="h-[3px] w-[3px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-            <Link
-              to="/sign-in"
-              style={{
-                fontFamily: MONO,
-                fontSize: "9px",
-                letterSpacing: "0.12em",
-                color: INK,
-                opacity: 0.7,
-                textTransform: "uppercase",
-                textDecoration: "none",
-              }}
-            >
-              Sign In
-            </Link>
-          </div>
-          {/* Dot indicators */}
-          <div className="mt-5 flex justify-center gap-1.5">
-            <div className="h-[6px] w-[6px]" style={{ backgroundColor: INK, opacity: 0.5 }} />
-            <div className="h-[6px] w-[6px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-            <div className="h-[6px] w-[6px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-            <div className="h-[6px] w-[6px]" style={{ backgroundColor: INK, opacity: 0.3 }} />
-          </div>
-          <p
-            className="mt-3 text-center"
-            style={{
-              fontFamily: MONO,
-              fontSize: "9px",
-              color: INK,
-              opacity: 0.5,
-              letterSpacing: "0.06em",
-            }}
-          >
-            FAMILY CORE &copy; {new Date().getFullYear()}
+          </nav>
+          <p className="fh-caption mt-4 text-center">
+            Family Core © {new Date().getFullYear()} — the app that puts your
+            phone down.
           </p>
         </footer>
       </main>
-    </div>
+    </PageTurn>
   );
 }

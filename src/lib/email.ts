@@ -50,7 +50,7 @@ export async function sendWaitlistConfirmation(
       subject: "You're on the Family Core waitlist!",
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
-          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
+          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;"></div>
           <h1 style="color: #92400e; text-align: center; font-size: 24px; margin: 0 0 8px;">
             You're on the list!
           </h1>
@@ -61,7 +61,7 @@ export async function sendWaitlistConfirmation(
           </p>
           <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
             <p style="color: #92400e; font-size: 14px; line-height: 1.5; margin: 0;">
-              <strong>📬 Stay tuned</strong><br/>
+              <strong> Stay tuned</strong><br/>
               In the meantime, tell your family about Family Core!
               The more people waiting, the better the launch.
             </p>
@@ -97,7 +97,7 @@ export async function sendPasswordReset(
       subject: "Reset your Family Core password",
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
-          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
+          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;"></div>
           <h1 style="color: #92400e; text-align: center; font-size: 24px; margin: 0 0 8px;">
             Reset your password
           </h1>
@@ -129,10 +129,10 @@ export async function sendPasswordReset(
 // ---------------------------------------------------------------------------
 
 const NUDGE_EMOJI: Record<string, string> = {
-  dormancy: "⏰",
-  cooling: "🌡️",
-  celebration: "🎉",
-  conversation_starter: "💬",
+  dormancy: "",
+  cooling: "",
+  celebration: "",
+  conversation_starter: "",
 };
 
 const NUDGE_LABEL: Record<string, string> = {
@@ -149,7 +149,7 @@ export async function sendNudgeEmail(
 ): Promise<{ success: boolean; error?: string }> {
   if (!hasResendKey()) return { success: false, error: "Email not configured" };
 
-  const emoji = NUDGE_EMOJI[nudge.nudge_type] ?? "💌";
+  const emoji = NUDGE_EMOJI[nudge.nudge_type] ?? "";
   const label = NUDGE_LABEL[nudge.nudge_type] ?? "A little nudge";
 
   try {
@@ -160,7 +160,7 @@ export async function sendNudgeEmail(
       subject: `${emoji} ${label} — from Family Core`,
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
-          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
+          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;"></div>
           <h1 style="color: #92400e; text-align: center; font-size: 24px; margin: 0 0 8px;">
             ${emoji} ${label}
           </h1>
@@ -176,7 +176,7 @@ export async function sendNudgeEmail(
              style="display: block; background: #d97706; color: white; text-align: center;
                     padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: 600;
                     text-decoration: none; margin-bottom: 24px;">
-            View on Dashboard →
+            View on Dashboard
           </a>
           <p style="color: #a8a29e; text-align: center; font-size: 12px; margin: 0;">
             Family Core — stay close to the people who matter, without social media.
@@ -231,7 +231,7 @@ export async function sendDigestEmail(
         (s) => `
           <div style="background: #f0fdf4; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
             <p style="color: #166534; font-size: 14px; line-height: 1.5; margin: 0;">
-              💬 ${s.text}
+               ${s.text}
             </p>
           </div>`,
       )
@@ -240,10 +240,10 @@ export async function sendDigestEmail(
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: memberEmail,
-      subject: `📋 Your Family Digest — ${weekLabel}`,
+      subject: ` Your Family Digest — ${weekLabel}`,
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px;">
-          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🏠</div>
+          <div style="font-size: 48px; text-align: center; margin-bottom: 16px;"></div>
           <h1 style="color: #92400e; text-align: center; font-size: 24px; margin: 0 0 8px;">
             Your Family Digest
           </h1>
@@ -256,7 +256,7 @@ export async function sendDigestEmail(
 
           ${snapshots.length > 0 ? `
           <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-            <h2 style="color: #92400e; font-size: 16px; margin: 0 0 12px;">💞 Connection Health</h2>
+            <h2 style="color: #92400e; font-size: 16px; margin: 0 0 12px;"> Connection Health</h2>
             <table style="width: 100%; border-collapse: collapse;">
               ${snapshotRows}
             </table>
@@ -265,14 +265,14 @@ export async function sendDigestEmail(
 
           ${starters.length > 0 ? `
           <div style="margin-bottom: 16px;">
-            <h2 style="color: #92400e; font-size: 16px; margin: 0 0 8px;">💬 Conversation Starters</h2>
+            <h2 style="color: #92400e; font-size: 16px; margin: 0 0 8px;"> Conversation Starters</h2>
             ${starterRows}
           </div>
           ` : ""}
 
           ${content.irlNudge ? `
           <div style="background: #ecfdf5; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-            <h2 style="color: #065f46; font-size: 16px; margin: 0 0 8px;">📍 Make It Real</h2>
+            <h2 style="color: #065f46; font-size: 16px; margin: 0 0 8px;"> Make It Real</h2>
             <p style="color: #065f46; font-size: 14px; line-height: 1.5; margin: 0;">
               ${content.irlNudge.activitySuggestion}
             </p>
@@ -283,7 +283,7 @@ export async function sendDigestEmail(
              style="display: block; background: #d97706; color: white; text-align: center;
                     padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: 600;
                     text-decoration: none; margin-bottom: 24px;">
-            View Full Digest →
+            View Full Digest
           </a>
           <p style="color: #a8a29e; text-align: center; font-size: 12px; margin: 0;">
             Family Core — stay close to the people who matter, without social media.

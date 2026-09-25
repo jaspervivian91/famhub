@@ -22,7 +22,7 @@ import { getAccountById } from "~/lib/auth";
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Coerce a database row to safe JSON types (dates → strings). */
+/** Coerce a database row to safe JSON types (dates  strings). */
 function coerceRow<T extends Record<string, unknown>>(row: T): T {
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(row)) {
@@ -383,31 +383,31 @@ function buildNudgeMessage(
           : daysSince > 60
             ? `It's been over ${daysSince} days`
             : `It's been ${daysSince} days`;
-      return `${time} since you connected with ${toName}. Send a quick hello! 👋`;
+      return `${time} since you connected with ${toName}. Send a quick hello! `;
     }
 
     case "cooling": {
-      return `${toName} might appreciate hearing from you this week — your connection has been quiet lately. 💛`;
+      return `${toName} might appreciate hearing from you this week — your connection has been quiet lately. `;
     }
 
     case "celebration": {
       const prompts = [
-        `You and ${toName} have been chatting more lately! Keep the momentum going 🎉`,
-        `Your connection with ${toName} is stronger than ever — celebrate with a quick message! 🥳`,
-        `It's a great time to reach out to ${toName} — your relationship has been growing! 🌱`,
+        `You and ${toName} have been chatting more lately! Keep the momentum going `,
+        `Your connection with ${toName} is stronger than ever — celebrate with a quick message! `,
+        `It's a great time to reach out to ${toName} — your relationship has been growing! `,
       ];
       return prompts[Math.floor(Math.random() * prompts.length)];
     }
 
     case "conversation_starter": {
       if (rel === "grandparent") {
-        return `It's been a while — ${toName} would love to hear from you. Try asking about a favorite memory! 💭`;
+        return `It's been a while — ${toName} would love to hear from you. Try asking about a favorite memory! `;
       }
-      return `Reconnect with ${toName} — share a photo or ask what they've been up to lately! 💬`;
+      return `Reconnect with ${toName} — share a photo or ask what they've been up to lately! `;
     }
 
     default:
-      return `Time to check in with ${toName}! 💌`;
+      return `Time to check in with ${toName}! `;
   }
 }
 
@@ -558,7 +558,7 @@ export const generateNudge = createServerFn({ method: "POST" })
         to_member_id: "mock-b",
         nudge_type: "dormancy",
         message_text:
-          "It's been a while since you connected with Grandma Sue. Send a quick hello! 👋",
+          "It's been a while since you connected with Grandma Sue. Send a quick hello! ",
         status: "pending",
         created_at: new Date().toISOString(),
         acknowledged_at: null,

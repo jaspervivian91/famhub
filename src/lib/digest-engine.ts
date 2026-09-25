@@ -67,10 +67,10 @@ export interface DigestIRLNudge {
 // ---------------------------------------------------------------------------
 
 const CATEGORY_EMOJI: Record<string, string> = {
-  thriving: "💚",
-  steady: "🟢",
-  cooling: "🟡",
-  dormant: "🔴",
+  thriving: "",
+  steady: "",
+  cooling: "",
+  dormant: "",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -104,14 +104,14 @@ function getWeekRange(): { start: string; end: string; label: string } {
 }
 
 const ACTIVITY_SUGGESTIONS: string[] = [
-  "How about inviting {name} for coffee this weekend? ☕",
-  "Plan a walk in the park with {name} — fresh air and conversation! 🌳",
-  "Invite {name} over for a home-cooked meal this week 🍲",
-  "Suggest a video call with {name} — just 10 minutes to catch up 📱",
-  "Send {name} a handwritten note or postcard — it means more than a text ✉️",
-  "Drop by {name}'s place with their favorite treat 🧁",
-  "Invite {name} to join you for a weekend outing 🚶",
-  "Schedule a regular coffee date with {name} — same time each week ☕",
+  "How about inviting {name} for coffee this weekend? ",
+  "Plan a walk in the park with {name} — fresh air and conversation! ",
+  "Invite {name} over for a home-cooked meal this week ",
+  "Suggest a video call with {name} — just 10 minutes to catch up ",
+  "Send {name} a handwritten note or postcard — it means more than a text ",
+  "Drop by {name}'s place with their favorite treat ",
+  "Invite {name} to join you for a weekend outing ",
+  "Schedule a regular coffee date with {name} — same time each week ",
 ];
 
 function pickIRLSuggestion(name: string): string {
@@ -204,31 +204,31 @@ function buildMockDigestContent(
   const moments: DigestMoment[] = [
     {
       type: "reconnection",
-      emoji: "🎉",
+      emoji: "",
       text: "Sarah and Michael reconnected this week after 45 days!",
       priority: 1,
     },
     {
       type: "appreciation",
-      emoji: "❤️",
-      text: "Grandma has been thinking of you — she sent 3 ❤️s this week",
+      emoji: "",
+      text: "Grandma has been thinking of you — she sent 3 s this week",
       priority: 2,
     },
     {
       type: "dormancy_alert",
-      emoji: "⏰",
+      emoji: "",
       text: "You haven't chatted with Uncle Joe in 3 weeks",
       priority: 3,
     },
     {
       type: "celebration",
-      emoji: "🌟",
+      emoji: "",
       text: "Your family group is growing — 12 interactions this week!",
       priority: 4,
     },
     {
       type: "appreciation",
-      emoji: "💬",
+      emoji: "",
       text: "Sarah started 3 conversations this week — she's reaching out!",
       priority: 5,
     },
@@ -367,7 +367,7 @@ export function generateDigest(
       const other = others.find((m) => m.id === otherId);
       moments.push({
         type: "reconnection",
-        emoji: "🎉",
+        emoji: "",
         text: `${memberName} and ${other?.display_name ?? "someone"} reconnected this week!`,
         priority: 1,
       });
@@ -387,7 +387,7 @@ export function generateDigest(
           : `${daysEstimate} days`;
       moments.push({
         type: "dormancy_alert",
-        emoji: "⏰",
+        emoji: "",
         text: `You haven't chatted with ${other?.display_name ?? "a family member"} in ${timeText}`,
         priority: 2,
       });
@@ -417,7 +417,7 @@ export function generateDigest(
     if (topSender) {
       moments.push({
         type: "appreciation",
-        emoji: "❤️",
+        emoji: "",
         text: `${topSender.display_name} has been thinking of you — they reached out ${receivedCount} time${receivedCount > 1 ? "s" : ""} this week`,
         priority: 3,
       });
@@ -431,7 +431,7 @@ export function generateDigest(
   if (totalWeekInteractions > 5) {
     moments.push({
       type: "celebration",
-      emoji: "🌟",
+      emoji: "",
       text: `Your family had ${totalWeekInteractions} interactions this week — staying connected!`,
       priority: 4,
     });
@@ -442,13 +442,13 @@ export function generateDigest(
     const fallbacks: DigestMoment[] = [
       {
         type: "celebration",
-        emoji: "💬",
+        emoji: "",
         text: "Every conversation counts — your family is building stronger bonds",
         priority: 5,
       },
       {
         type: "appreciation",
-        emoji: "🏠",
+        emoji: "",
         text: "Family Core is here to help you stay close — check back next week for more moments!",
         priority: 5,
       },

@@ -15,14 +15,20 @@ import {
 } from "~/lib/client-store";
 import { setUIMode } from "~/lib/ui-mode";
 import type { Nudge, FamilyMember } from "~/lib/types";
+import { Icon } from "~/components/Icon";
+import { Logo } from "~/components/Logo";
 
-// ── Brand constants (kept in sync with brand spec / app.css) ──────────
-const INK = "#1A1A1A";
-const WHITE = "#FFFFFF";
-const ACCENT = "#3A6B4A";
-const SURFACE = "#EBF0EC";
-const MONO = "'JetBrains Mono', 'SF Mono', 'Courier New', monospace";
-const SANS = "Inter, ui-sans-serif, system-ui, sans-serif";
+// ── Warm palette (kept in sync with app.css / design-system-warm.md) ──
+const CREAM = "var(--color-gp-bg)";
+const INK = "var(--color-gp-text)";
+const SAND = "var(--color-gp-surface)";
+const GREEN = "var(--color-gp-primary)";
+const BORDER = "var(--color-gp-border)";
+
+// ── Grandparent typography (nothing smaller than 23px) ───────────────
+const GP_BODY = "1.4375rem"; // 23px
+const GP_H1 = "2.25rem"; // 36px
+const GP_H2 = "2rem"; // 32px
 
 // ── Mock data for when no DB is connected ────────────────────────────
 
@@ -80,7 +86,7 @@ const MOCK_NUDGES: (Nudge & { from_name: string })[] = [
     to_member_id: "mock-gp",
     nudge_type: "dormancy",
     message_text:
-      "It's been 12 days since you connected with Grandma Sue. Send a quick hello!",
+      "It's been a little while, and Emma has been asking about you. She'd love to hear your voice.",
     status: "pending",
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     acknowledged_at: null,
@@ -107,7 +113,6 @@ const getGrandparentData = createServerFn({ method: "GET" })
   .validator((d: { memberId?: string; groupId?: string }) => d)
   .handler(async ({ data }) => {
     if (!data.memberId || !data.groupId) {
-      // Return mock data when no identity is stored
       return {
         group: null,
         member: null,
@@ -184,141 +189,39 @@ function getTimeGreeting(): string {
 }
 
 function getTodayLabel(): string {
-  return new Date()
-    .toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    })
-    .toUpperCase();
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 }
 
-function getNudgeTypeLabel(type: string): string {
-  if (type === "celebration") return "Celebration";
-  if (type === "dormancy") return "Dormancy signal";
-  return type.replace(/_/g, " ");
-}
-
-// Strip any emoji from nudge copy so the UI stays in the brand's
-// geometric language (DB-backed messages may still contain them).
-const EMOJI_RE = /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0F}\u{200D}]/gu;
+// Strip any emoji from nudge copy — DB-backed messages may still contain
+// them, and emoji are never used as UI in this product.
+const EMOJI_RE =
+  /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0F}\u{200D}]/gu;
 function stripEmoji(text: string): string {
-  return text
-    .replace(EMOJI_RE, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return text.replace(EMOJI_RE, "").replace(/\s+/g, " ").trim();
 }
 
-// ── Small brand primitives ──────────────────────────────────────────
-
-/** Square dot — the brand's ■ marker. Inherits current text color. */
-function Dot({ size = 10 }: { size?: number }) {
+/** Soft round avatar — sand circle, warm border, bold initials. */
+function Avatar({ name, size }: { name: string; size: number }) {
   return (
     <span
       aria-hidden="true"
-      className="shrink-0"
+      className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-gp)]"
       style={{
         width: size,
         height: size,
-        backgroundColor: "currentColor",
-      }}
-    />
-  );
-}
-
-/** Geometric avatar — square container, 2px ink border, neutral surface. */
-function Avatar({ name, size }: { name: string; size: number }) {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex shrink-0 items-center justify-center"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: SURFACE,
-        border: `2px solid ${INK}`,
-        fontFamily: SANS,
-        fontWeight: 700,
-        fontSize: Math.round(size * 0.36),
+        backgroundColor: CREAM,
+        border: `2px solid ${BORDER}`,
         color: INK,
+        fontWeight: 700,
+        fontSize: Math.round(size * 0.4),
       }}
     >
       {getInitials(name)}
-    </div>
-  );
-}
-
-/** Ruled-line arrow — straight strokes, square joins. */
-function ArrowMark() {
-  return (
-    <svg
-      width="26"
-      height="14"
-      viewBox="0 0 26 14"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M1 7 H22 M15 1 L23 7 L15 13"
-        stroke={INK}
-        strokeWidth="2.5"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
-      />
-    </svg>
-  );
-}
-
-/** Structural ruled line with square registration dots. */
-function RuleLine({ className = "" }: { className?: string }) {
-  return (
-    <div className={`relative ${className}`} style={{ borderTop: `2px solid ${INK}` }}>
-      <span
-        aria-hidden="true"
-        className="absolute"
-        style={{ width: "10px", height: "10px", backgroundColor: INK, top: "-6px", left: "0" }}
-      />
-      <span
-        aria-hidden="true"
-        className="absolute"
-        style={{ width: "10px", height: "10px", backgroundColor: INK, top: "-6px", right: "0" }}
-      />
-    </div>
-  );
-}
-
-/** Section heading — bold uppercase Inter + mono spec label + ruled rule. */
-function SectionHeading({ index, title }: { index: string; title: string }) {
-  return (
-    <div className="mb-6">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2
-          className="font-bold"
-          style={{
-            fontSize: "var(--gp-heading-size, 28px)",
-            color: INK,
-            textTransform: "uppercase",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {title}
-        </h2>
-        <span
-          style={{
-            fontFamily: MONO,
-            fontSize: "14px",
-            letterSpacing: "0.15em",
-            color: INK,
-            opacity: 0.55,
-            textTransform: "uppercase",
-            whiteSpace: "nowrap",
-          }}
-        >
-          SEC {index}
-        </span>
-      </div>
-      <RuleLine className="mt-3" />
-    </div>
+    </span>
   );
 }
 
@@ -331,7 +234,6 @@ function GrandparentDashboard() {
     visible: boolean;
   }>({ message: "", visible: false });
 
-  // Determine what to show
   const memberName =
     loaderData.member?.display_name ??
     loaderData.mockMemberName ??
@@ -342,44 +244,39 @@ function GrandparentDashboard() {
 
   const familyOthers: FamilyMember[] = loaderData.group?.members
     ? loaderData.group.members.filter((m) => m.id !== currentMemberId)
-    : loaderData.mockMembers ?? [];
+    : (loaderData.mockMembers ?? []);
 
   const pendingNudges: (Nudge & { from_name?: string })[] =
     loaderData.nudges.map((n) => ({
       ...n,
-      from_name: (n as unknown as Record<string, unknown>)
-        .from_name as string,
+      from_name: (n as unknown as Record<string, unknown>).from_name as string,
     }));
 
   async function handleSayHello(member: FamilyMember) {
     const currentId = getCurrentMemberId();
     const currentGroupId = getCurrentGroupId();
 
-    if (!currentId || !currentGroupId) {
-      showConfirmation(
-        `${member.display_name} will know you're thinking of them.`,
-      );
-      return;
+    if (currentId && currentGroupId) {
+      try {
+        await recordInteraction({
+          data: {
+            fromMemberId: currentId,
+            toMemberId: member.id,
+            groupId: currentGroupId,
+            interactionType: "nudge_acknowledged",
+            metadata: {
+              source: "grandparent_dashboard",
+              gesture: "say_hello",
+            },
+          },
+        });
+      } catch {
+        // best-effort
+      }
     }
-
-    try {
-      await recordInteraction({
-        data: {
-          fromMemberId: currentId,
-          toMemberId: member.id,
-          groupId: currentGroupId,
-          interactionType: "nudge_acknowledged",
-          metadata: { source: "grandparent_dashboard", gesture: "say_hello" },
-        },
-      });
-      showConfirmation(
-        `${member.display_name} will know you're thinking of them.`,
-      );
-    } catch {
-      showConfirmation(
-        `${member.display_name} will know you're thinking of them.`,
-      );
-    }
+    showConfirmation(
+      `${member.display_name} will know you're thinking of them.`,
+    );
   }
 
   async function handleNudgeResponse(
@@ -421,8 +318,7 @@ function GrandparentDashboard() {
       note: `${fromName} will know you sent a note.`,
     };
     showConfirmation(
-      messages[responseType] ??
-        `${fromName} will know you're thinking of them.`,
+      messages[responseType] ?? `${fromName} will know you're thinking of them.`,
     );
   }
 
@@ -439,231 +335,141 @@ function GrandparentDashboard() {
     <main
       className="gp-mode min-h-dvh px-6 py-8"
       style={{
-        backgroundColor: WHITE,
+        backgroundColor: CREAM,
         color: INK,
-        fontSize: "var(--gp-text-size, 20px)",
+        fontSize: GP_BODY,
         lineHeight: 1.6,
       }}
     >
-      <div className="mx-auto max-w-lg">
-        {/* Wordmark strip + today's date */}
-        <div
-          className="flex items-baseline justify-between gap-4"
-          style={{
-            fontFamily: MONO,
-            fontSize: "14px",
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: INK,
-          }}
-        >
-          <span className="font-bold">Family Core</span>
-          <span style={{ opacity: 0.6 }}>{getTodayLabel()}</span>
+      <div className="mx-auto max-w-[520px]">
+        {/* Wordmark + today's date — both at reading size, never tiny */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Logo variant="full" size="md" />
+          <span style={{ color: INK, opacity: 0.75 }}>{getTodayLabel()}</span>
         </div>
-        <RuleLine className="mt-3" />
+        <div
+          aria-hidden="true"
+          className="mt-4"
+          style={{ borderTop: `2px solid ${BORDER}`, opacity: 0.5 }}
+        />
 
         {/* Greeting */}
-        <h1
-          className="mt-10 mb-10 font-bold"
-          style={{
-            fontSize: "var(--gp-heading-size, 28px)",
-            color: INK,
-            textTransform: "uppercase",
-            letterSpacing: "0.04em",
-            lineHeight: 1.2,
-          }}
-        >
+        <h1 className="mt-9 mb-9" style={{ fontSize: GP_H1, fontWeight: 700 }}>
           {getTimeGreeting()}, {memberName}
         </h1>
 
-        {/* Confirmation toast */}
+        {/* Confirmation toast — fade only, never moves */}
         {confirmation.visible && (
           <div
             role="status"
             aria-live="polite"
-            className="gp-confirmation mb-10 flex items-start gap-4 p-5"
+            className="gp-confirmation mb-9 flex items-start gap-4 p-6"
             style={{
-              border: `2px solid ${INK}`,
-              backgroundColor: SURFACE,
+              backgroundColor: SAND,
+              border: `2px solid ${GREEN}`,
+              borderRadius: "var(--radius-card-soft)",
             }}
           >
-            <span
-              aria-hidden="true"
-              className="mt-1.5 shrink-0"
-              style={{ width: "14px", height: "14px", backgroundColor: ACCENT }}
-            />
-            <p
-              style={{
-                fontSize: "var(--gp-text-size, 20px)",
-                fontWeight: 600,
-                color: INK,
-                lineHeight: 1.4,
-              }}
-            >
-              {confirmation.message}
-            </p>
+            <Icon name="check" size={36} />
+            <p style={{ fontWeight: 700 }}>{confirmation.message}</p>
           </div>
         )}
 
-        {/* Your Family section */}
-        <section className="mb-12">
-          <SectionHeading index="01" title="Your family" />
+        {/* Your family */}
+        <section className="mb-10">
+          <h2 className="mb-5" style={{ fontSize: GP_H2, fontWeight: 700 }}>
+            Your family
+          </h2>
 
           {familyOthers.length > 0 ? (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {familyOthers.slice(0, 4).map((member) => (
                 <button
                   key={member.id}
                   onClick={() => handleSayHello(member)}
-                  className="gp-family-btn flex w-full items-center gap-5 border-2 p-5 text-left transition-colors"
+                  className="gp-family-btn flex w-full items-center gap-5 p-5 text-left"
                   style={{
-                    borderColor: INK,
-                    backgroundColor: WHITE,
-                    minHeight: "84px",
+                    minHeight: 96,
+                    backgroundColor: SAND,
+                    border: `2px solid ${BORDER}`,
+                    borderRadius: "var(--radius-card)",
+                    color: INK,
+                    fontSize: GP_BODY,
                   }}
                   aria-label={`Say hello to ${member.display_name}`}
                 >
-                  <Avatar name={member.display_name} size={72} />
-                  <div className="flex flex-col items-start gap-1">
-                    <span
-                      style={{
-                        fontSize: "var(--gp-text-size, 20px)",
-                        fontWeight: 600,
-                        color: INK,
-                      }}
-                    >
+                  <Avatar name={member.display_name} size={64} />
+                  <span className="flex flex-col items-start">
+                    <span style={{ fontWeight: 700 }}>
                       {member.display_name}
                     </span>
-                    <span
-                      style={{
-                        fontFamily: MONO,
-                        fontSize: "15px",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: INK,
-                        opacity: 0.6,
-                      }}
-                    >
+                    <span style={{ opacity: 0.75 }}>
                       {member.relationship.replace("_", " ")}
                     </span>
-                  </div>
-                  <span className="ml-auto" aria-hidden="true">
-                    <ArrowMark />
+                  </span>
+                  <span
+                    className="ml-auto shrink-0"
+                    style={{
+                      color: GREEN,
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Say hello
                   </span>
                 </button>
               ))}
             </div>
           ) : (
-            <p
-              style={{
-                fontSize: "18px",
-                color: INK,
-                opacity: 0.65,
-                lineHeight: 1.5,
-              }}
-            >
+            <p style={{ opacity: 0.8 }}>
               Your family will appear here once they join.
             </p>
           )}
         </section>
 
-        {/* They've been thinking of you section */}
-        <section className="mb-12">
-          <SectionHeading index="02" title="They've been thinking of you" />
+        {/* They've been thinking of you */}
+        <section className="mb-10">
+          <h2 className="mb-5" style={{ fontSize: GP_H2, fontWeight: 700 }}>
+            They&apos;ve been thinking of you
+          </h2>
 
           {pendingNudges.length > 0 ? (
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6">
               {pendingNudges.slice(0, 2).map((nudge) => {
                 const fromName = nudge.from_name ?? "Someone";
                 return (
                   <div
                     key={nudge.id}
-                    className="border-2 p-6"
-                    style={{
-                      borderColor: INK,
-                      backgroundColor: WHITE,
-                    }}
+                    className="gp-card"
+                    style={{ backgroundColor: SAND, borderColor: BORDER }}
                   >
                     <div className="mb-4 flex items-center gap-4">
-                      <Avatar name={fromName} size={52} />
-                      <div className="flex flex-col items-start gap-0.5">
-                        <span
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: 600,
-                            color: INK,
-                          }}
-                        >
-                          {fromName}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: MONO,
-                            fontSize: "13px",
-                            letterSpacing: "0.15em",
-                            textTransform: "uppercase",
-                            color: INK,
-                            opacity: 0.55,
-                          }}
-                        >
-                          {getNudgeTypeLabel(nudge.nudge_type)}
-                        </span>
-                      </div>
+                      <Avatar name={fromName} size={56} />
+                      <span style={{ fontWeight: 700 }}>{fromName}</span>
                     </div>
-                    <p
-                      className="mb-5"
-                      style={{
-                        fontSize: "18px",
-                        color: INK,
-                        opacity: 0.85,
-                        lineHeight: 1.5,
-                      }}
-                    >
+                    <p className="mb-6" style={{ opacity: 0.9 }}>
                       {stripEmoji(nudge.message_text)}
                     </p>
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-4">
                       <button
-                        onClick={() =>
-                          handleNudgeResponse(nudge, "thinking")
-                        }
-                        className="gp-response-btn flex w-full items-center gap-4 px-6 py-4 text-left font-semibold transition-colors"
-                        style={{
-                          minHeight: "64px",
-                          fontSize: "var(--gp-text-size, 20px)",
-                          backgroundColor: ACCENT,
-                          color: WHITE,
-                          border: `2px solid ${ACCENT}`,
-                        }}
+                        onClick={() => handleNudgeResponse(nudge, "thinking")}
+                        className="gp-response-btn gp-btn gp-btn-primary gp-tap-lg"
+                        style={{ justifyContent: "center" }}
                       >
-                        <Dot />
                         Thinking of you too
                       </button>
                       <button
                         onClick={() => handleNudgeResponse(nudge, "call")}
-                        className="gp-response-btn flex w-full items-center gap-4 px-6 py-4 text-left font-semibold transition-colors"
-                        style={{
-                          minHeight: "64px",
-                          fontSize: "var(--gp-text-size, 20px)",
-                          backgroundColor: WHITE,
-                          color: INK,
-                          border: `2px solid ${INK}`,
-                        }}
+                        className="gp-response-btn gp-btn gp-tap"
+                        style={{ justifyContent: "center", backgroundColor: CREAM }}
                       >
-                        <Dot />
                         Call me?
                       </button>
                       <button
                         onClick={() => handleNudgeResponse(nudge, "note")}
-                        className="gp-response-btn flex w-full items-center gap-4 px-6 py-4 text-left font-semibold transition-colors"
-                        style={{
-                          minHeight: "64px",
-                          fontSize: "var(--gp-text-size, 20px)",
-                          backgroundColor: WHITE,
-                          color: INK,
-                          border: `2px solid ${INK}`,
-                        }}
+                        className="gp-response-btn gp-btn gp-tap"
+                        style={{ justifyContent: "center", backgroundColor: CREAM }}
                       >
-                        <Dot />
                         Send a note
                       </button>
                     </div>
@@ -672,36 +478,27 @@ function GrandparentDashboard() {
               })}
             </div>
           ) : (
-            <p
-              style={{
-                fontSize: "18px",
-                color: INK,
-                opacity: 0.65,
-                lineHeight: 1.5,
-              }}
-            >
-              No new messages right now. Your family is staying in touch!
+            <p style={{ opacity: 0.8 }}>
+              No new messages right now. Your family is staying in touch.
             </p>
           )}
         </section>
 
-        {/* Back to standard dashboard */}
-        <footer className="mt-10">
-          <div style={{ borderTop: `2px solid ${INK}` }} />
+        {/* Back to standard view */}
+        <footer className="mt-10 flex flex-col gap-5">
+          <div
+            aria-hidden="true"
+            className="h-0"
+            style={{ borderTop: `2px solid ${BORDER}`, opacity: 0.5 }}
+          />
           <a
-            href="/"
-            className="gp-back-link inline-flex min-h-[56px] w-full items-center gap-4 font-medium"
-            style={{
-              fontSize: "18px",
-              color: INK,
-              textDecoration: "underline",
-              textUnderlineOffset: "5px",
-            }}
+            href="/digest"
+            className="gp-btn"
+            style={{ justifyContent: "center", backgroundColor: CREAM }}
           >
-            <Dot />
-            Back to Family Core
+            <Icon name="checklist" size={32} />
+            Read this week&apos;s letter
           </a>
-          <div style={{ borderTop: `2px solid ${INK}` }} />
           <a
             href="/"
             onClick={(e) => {
@@ -709,15 +506,11 @@ function GrandparentDashboard() {
               setUIMode("standard");
               window.location.href = "/";
             }}
-            className="inline-flex min-h-[56px] w-full items-center gap-4 font-medium"
-            style={{
-              fontSize: "16px",
-              color: INK,
-              opacity: 0.75,
-            }}
+            className="gp-btn"
+            style={{ justifyContent: "center", backgroundColor: CREAM }}
           >
-            <Dot size={8} />
-            Switch to standard view
+            <Icon name="talk" size={32} />
+            Back to the regular view
           </a>
         </footer>
       </div>

@@ -3,12 +3,27 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import appCss from "~/styles/app.css?url";
 import { getUIMode, setUIMode } from "~/lib/ui-mode";
+
+/**
+ * The "Larger text" mode switch belongs to the app, not to the marketing
+ * pages: a signed-out visitor reading the landing / sign-up / sign-in / join
+ * / legal pages never sees it. Anything on this allow-list (and only this
+ * allow-list) shows the pill.
+ */
+const APP_ROUTE_PREFIXES = ["/dashboard", "/digest", "/grandparent", "/group"];
+
+function isAppRoute(pathname: string): boolean {
+  return APP_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -21,8 +36,8 @@ export const Route = createRootRoute({
         content:
           "A private, AI-powered connection platform that strengthens family relationships — the opposite of social media.",
       },
-      // PWA / mobile
-      { name: "theme-color", content: "#1A1A1A" },
+      // PWA / mobile — warm cream chrome, never stark black
+      { name: "theme-color", content: "#F5F0EB" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "Family Core" },
@@ -50,9 +65,9 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: () => (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-fh-bg">
-      <h1 className="text-2xl font-bold text-fh-ember">Page not found</h1>
-      <a href="/" className="text-fh-tide underline">
+    <div className="fh-page-turn flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
+      <h1 className="fh-h2">We couldn&apos;t find that page</h1>
+      <a href="/" className="fh-link fh-body">
         Back to Family Core
       </a>
     </div>
@@ -78,11 +93,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   // Register PWA service worker
   useEffect(() => {
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .catch((err) => {
-          console.error("Service worker registration failed:", err);
-        });
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.error("Service worker registration failed:", err);
+      });
     }
   }, []);
 
@@ -99,6 +112,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   }
 
   const isGrandparent = mode === "grandparent";
+  // Public marketing / auth / legal pages carry no mode switch at all.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showModeSwitch = isAppRoute(pathname);
 
   return (
     <html lang="en" className={isGrandparent ? "gp-mode-active" : ""}>
@@ -107,60 +123,55 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body
         className={`min-h-dvh antialiased ${
-          isGrandparent
-            ? "gp-body"
-            : "bg-fh-bg text-fh-body"
+          isGrandparent ? "gp-body" : "bg-fh-bg text-fh-body"
         }`}
       >
-        {/* Mode Toggle Bar */}
-        <div
-          className={`flex items-center justify-end px-4 py-2 ${
-            isGrandparent
-              ? "border-b-2"
-              : "border-b border-fh-border bg-white"
-          }`}
-          style={
-            isGrandparent
-              ? {
-                  borderColor: "#1A1A1A",
-                  backgroundColor: "#FFFFFF",
-                }
-              : {}
-          }
-        >
-          <button
-            role="switch"
-            aria-checked={isGrandparent}
-            aria-label={
-              isGrandparent
-                ? "Switch to standard mode"
-                : "Switch to simplified mode"
-            }
-            onClick={handleToggle}
-            className={`flex items-center gap-2 rounded-none px-4 py-2 text-sm font-medium transition-colors ${
-              isGrandparent
-                ? "border-2 bg-white text-fh-body hover:bg-gp-surface"
-                : "text-fh-muted hover:bg-fh-surface hover:text-fh-body"
-            }`}
-            style={{
-              minHeight: isGrandparent ? "56px" : "44px",
-              ...(isGrandparent ? { borderColor: "#1A1A1A" } : {}),
-            }}
+        {/* ── Warm mode switch — a quiet corner control, never a toolbar.
+               Inside the app only; never on the public pages. ── */}
+        {showModeSwitch && (
+          <div
+            className="flex items-center justify-end px-5 pt-4 pb-1"
+            style={{ backgroundColor: "var(--color-fh-bg)" }}
           >
-            <span
-              aria-hidden="true"
-              className="shrink-0"
+            <button
+              role="switch"
+              aria-checked={isGrandparent}
+              aria-label={
+                isGrandparent
+                  ? "Switch to standard mode"
+                  : "Switch to simplified mode"
+              }
+              onClick={handleToggle}
+              className={`inline-flex items-center gap-2 rounded-full border font-[family-name:var(--font-body)] transition-colors ${
+                isGrandparent
+                  ? "px-5 py-3 text-[1.125rem] font-bold"
+                  : "px-3 py-1.5 text-[0.8125rem]"
+              }`}
               style={{
-                width: isGrandparent ? 10 : 8,
-                height: isGrandparent ? 10 : 8,
+                minHeight: isGrandparent ? 60 : 44,
                 backgroundColor: isGrandparent
-                  ? "#1A1A1A"
-                  : "rgba(26, 26, 26, 0.3)",
+                  ? "var(--color-fh-surface-soft)"
+                  : "transparent",
+                borderColor: "var(--color-fh-line)",
+                color: isGrandparent
+                  ? "var(--color-fh-body)"
+                  : "var(--color-fh-muted)",
+                transitionDuration: "200ms",
               }}
-            />
-            {isGrandparent ? "Standard mode" : "Simplified mode"}
-          </button>
-        </div>
+            >
+              <span
+                aria-hidden="true"
+                className="shrink-0 rounded-full"
+                style={{
+                  width: isGrandparent ? 12 : 8,
+                  height: isGrandparent ? 12 : 8,
+                  backgroundColor: "var(--color-fh-accent)",
+                }}
+              />
+              {isGrandparent ? "Standard text" : "Larger text"}
+            </button>
+          </div>
+        )}
 
         {children}
         <Scripts />
