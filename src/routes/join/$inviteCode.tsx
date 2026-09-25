@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { getGroupByInviteCode, joinFamilyGroup } from "~/lib/api";
 import { Logo } from "~/components/Logo";
+import { Icon } from "~/components/Icon";
+import { PageTurn } from "~/components/Warm";
 
 const lookupGroup = createServerFn({ method: "GET" })
   .validator((d: { inviteCode: string }) => d)
@@ -78,119 +80,129 @@ function JoinPage() {
 
   if (notFound) {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-6 px-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-dusk/20 text-3xl">
-          🔍
-        </div>
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl text-fh-heading">
-          Group not found
-        </h1>
-        <p className="text-center text-fh-muted">
-          The invite code{" "}
-          <code className="rounded bg-fh-surface px-1 font-mono">
-            {inviteCode}
-          </code>{" "}
-          doesn&apos;t match any family group. Double-check the code or ask
-          your family to send a new invite.
-        </p>
-        <a href="/" className="text-fh-tide underline">
-          Go to Family Core &rarr;
-        </a>
-      </main>
+      <PageTurn className="min-h-dvh">
+        <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col items-center justify-center px-5 py-12 text-center">
+          <Icon name="idea" size={52} />
+          <h1 className="fh-h2 mt-5">We couldn&apos;t find that invite</h1>
+          <p
+            className="fh-body-sm mt-2 max-w-[34ch]"
+            style={{ color: "var(--color-fh-muted)" }}
+          >
+            The invite code{" "}
+            <span className="fh-chip font-[family-name:var(--font-body)]">
+              {inviteCode}
+            </span>{" "}
+            doesn&apos;t match any family home. Double-check the code, or ask
+            your family to send a fresh invite.
+          </p>
+          <Link to="/join" className="fh-btn fh-btn-secondary mt-7">
+            Try another code
+          </Link>
+        </main>
+      </PageTurn>
     );
   }
 
   if (joined) {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-4 px-6 py-12">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-tide/20 text-3xl">
-          🎉
-        </div>
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl text-fh-heading">
-          Welcome to the family!
-        </h1>
-        <p className="text-center text-fh-muted">
-          You&apos;re all set. Head to your dashboard to start connecting.
-        </p>
-        <a
-          href="/dashboard"
-          className="rounded-lg bg-fh-ember px-4 py-3 font-semibold text-white hover:bg-fh-ember/90"
-        >
-          Go to Dashboard →
-        </a>
-      </main>
+      <PageTurn className="min-h-dvh">
+        <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col items-center justify-center px-5 py-12 text-center">
+          <Icon name="celebration" size={52} />
+          <h1 className="fh-h2 mt-5">Welcome to the family</h1>
+          <p
+            className="fh-body-sm mt-2 max-w-[32ch]"
+            style={{ color: "var(--color-fh-muted)" }}
+          >
+            You&apos;re all set. Your family home is ready — go and see who&apos;s
+            there.
+          </p>
+          <Link to="/dashboard" className="fh-btn fh-btn-primary mt-7">
+            Go to your family home
+          </Link>
+        </main>
+      </PageTurn>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-6 px-6 py-12">
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fh-tide/20">
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 py-10 md:max-w-[520px] md:px-10">
+        <div className="flex justify-center">
           <Logo variant="icon" size="lg" />
         </div>
-        <h1 className="font-[family-name:var(--font-heading)] text-2xl text-fh-heading">
-          Join {group?.name ?? "Family Core"}
+
+        <h1 className="fh-h2 mt-6 text-center">
+          Join {group?.name ?? "your family"}
         </h1>
-        <p className="mt-2 text-fh-muted">
-          You&apos;ve been invited to connect with family &mdash; not social media.
+        <p
+          className="fh-body-sm mt-2 text-center"
+          style={{ color: "var(--color-fh-muted)" }}
+        >
+          You&apos;ve been invited to connect with family — not social media.
         </p>
-      </div>
-      {error && (
-        <div className="w-full rounded-lg bg-rose-50 p-3 text-sm text-rose-700">
-          {error}
-        </div>
-      )}
-      <form
-        onSubmit={handleJoin}
-        className="w-full rounded-xl border border-fh-border bg-white p-6 shadow-sm"
-      >
-        <label
-          htmlFor="display-name"
-          className="mb-1 block text-sm font-medium text-fh-body"
+
+        <form onSubmit={handleJoin} className="mt-7">
+          <div className="fh-card flex flex-col gap-5">
+            {error && (
+              <p className="fh-alert-error" role="alert">
+                {error}
+              </p>
+            )}
+
+            <div>
+              <label htmlFor="display-name" className="fh-label mb-1.5 block">
+                What should your family call you?
+              </label>
+              <input
+                id="display-name"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Grandma Sue or Uncle Joe"
+                className="fh-input"
+                required
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label htmlFor="relationship" className="fh-label mb-1.5 block">
+                Your relationship
+              </label>
+              <select
+                id="relationship"
+                value={relationship}
+                onChange={(e) => setRelationship(e.target.value)}
+                className="fh-input"
+              >
+                <option value="grandparent">Grandparent</option>
+                <option value="parent">Parent</option>
+                <option value="child">Child</option>
+                <option value="aunt_uncle">Aunt / Uncle</option>
+                <option value="cousin">Cousin</option>
+                <option value="family">Family</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="fh-btn fh-btn-primary w-full"
+            >
+              <Icon name="members" size={20} />
+              {busy ? "Joining…" : "Join the family"}
+            </button>
+          </div>
+        </form>
+
+        <p
+          className="fh-caption mt-6 flex items-center justify-center gap-2 text-center"
         >
-          Your display name
-        </label>
-        <input
-          id="display-name"
-          type="text"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="e.g. Grandma Sue or Uncle Joe"
-          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body placeholder-fh-muted focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
-          required
-          autoFocus
-        />
-        <label
-          htmlFor="relationship"
-          className="mb-1 mt-4 block text-sm font-medium text-fh-body"
-        >
-          Your relationship
-        </label>
-        <select
-          id="relationship"
-          value={relationship}
-          onChange={(e) => setRelationship(e.target.value)}
-          className="w-full rounded-lg border border-fh-border px-4 py-3 text-fh-body focus:border-fh-tide focus:outline-none focus:ring-2 focus:ring-fh-tide/20"
-        >
-          <option value="grandparent">Grandparent</option>
-          <option value="parent">Parent</option>
-          <option value="child">Child</option>
-          <option value="aunt_uncle">Aunt / Uncle</option>
-          <option value="cousin">Cousin</option>
-          <option value="family">Family</option>
-          <option value="other">Other</option>
-        </select>
-        <button
-          type="submit"
-          disabled={busy}
-          className="mt-6 w-full rounded-lg bg-fh-tide px-4 py-3 font-semibold text-white hover:bg-fh-tide/90 focus:outline-none focus:ring-2 focus:ring-fh-tide/30 disabled:opacity-50"
-        >
-          {busy ? "Joining..." : "Join the Family Core"}
-        </button>
-      </form>
-      <p className="text-xs text-fh-muted">
-        Family Core is private. No feeds, no ads &mdash; just connection.
-      </p>
-    </main>
+          <Icon name="heart" size={18} />
+          Family Core is private — no feeds, no ads, just connection.
+        </p>
+      </main>
+    </PageTurn>
   );
 }

@@ -1,35 +1,69 @@
 /* ── Google Fonts (must precede all other rules) ────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap');
 
 @import "tailwindcss";
 
-/* ── Tailwind v4 Theme ──────────────────────────────────────────────── */
+/* ── Tailwind v4 Theme — Family Core Warm Design System v4 ──────────── */
+/* Canonical source: /home/team/shared/design/design-system-warm.md       */
 @theme {
   /* ── Font families ──────────────────────────────────────────────── */
-  --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-gp: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Atkinson Hyperlegible", "Trebuchet MS", ui-sans-serif, system-ui, sans-serif;
+  --font-gp: "Atkinson Hyperlegible", "Trebuchet MS", ui-sans-serif, system-ui, sans-serif;
 
-  /* ── Primary brand colors (brutalist palette) ────────────────────── */
-  --color-fh-bg: #F5F0EB;
-  --color-fh-surface: #EBF0EC;
-  --color-fh-border: #1A1A1A;
-  --color-fh-muted: rgba(26, 26, 26, 0.3);
-  --color-fh-body: #1A1A1A;
+  /* ── Standard palette ───────────────────────────────────────────── */
+  --color-fh-bg: #F5F0EB;              /* warm cream canvas */
+  --color-fh-surface: #E8D5C0;         /* warm sandy beige — cards */
+  --color-fh-surface-soft: #F0E4D3;    /* nested surface inside a card */
+  --color-fh-body: #1A1A1A;            /* soft charcoal — the only black */
   --color-fh-heading: #1A1A1A;
-  --color-fh-accent: #3A6B4A;
-  --color-fh-structural: #1A1A1A;
+  --color-fh-accent: #3A6B4A;          /* forest green */
+  --color-fh-highlight: #D4845A;       /* terracotta — warmth only */
+  --color-fh-line: #D8C6AF;            /* hand-drawn divider ink */
+  --color-fh-border: #C2A98C;          /* card borders */
+  --color-fh-border-strong: #96785A;   /* inputs, must-be-seen borders */
+  --color-fh-muted: #6E5D4D;           /* muted secondary text */
+  --color-fh-soft-ink: rgba(26, 26, 26, 0.32);
+  --color-fh-status-ok: #3A6B4A;
+  --color-fh-status-warn: #A6633F;
+  --color-fh-status-error: #A63D2F;
 
-  /* ── Grandparent Mode ───────────────────────────────────────────── */
-  --color-gp-bg: #FFFFFF;
+  /* ── Grandparent palette ────────────────────────────────────────── */
+  --color-gp-bg: #F5F0EB;              /* warm cream — NEVER #FFFFFF */
   --color-gp-text: #1A1A1A;
+  --color-gp-surface: #E8D5C0;
   --color-gp-primary: #3A6B4A;
-  --color-gp-accent: #3A6B4A;
-  --color-gp-surface: #EBF0EC;
-  --color-gp-border: #1A1A1A;
+  --color-gp-border: #96785A;
+  --color-gp-highlight: #D4845A;
 
-  /* ── Transitions (mechanical, stepped) ───────────────────────────── */
-  --ease-mechanical: cubic-bezier(0.25, 0.1, 0.25, 1);
+  /* ── Radius — soft, organic ─────────────────────────────────────── */
+  --radius-card: 20px;
+  --radius-card-soft: 24px;
+  --radius-button: 14px;
+  --radius-input: 12px;
+  --radius-chip: 999px;
+
+  /* ── Shadows — warm, low alpha, never stark ─────────────────────── */
+  --shadow-soft: 0 2px 10px rgba(74, 53, 30, 0.07), 0 10px 28px rgba(74, 53, 30, 0.05);
+  --shadow-lift: 0 6px 20px rgba(74, 53, 30, 0.10), 0 20px 56px rgba(74, 53, 30, 0.10);
+
+  /* ── Motion — like turning a page, never a mechanical snap ──────── */
+  --ease-gentle: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --duration-page: 380ms;
+  --duration-card: 420ms;
+  --duration-fade: 200ms;
+
+  /* ── Spacing scale (generous) ───────────────────────────────────── */
+  --spacing-fh-1: 4px;
+  --spacing-fh-2: 8px;
+  --spacing-fh-3: 12px;
+  --spacing-fh-4: 16px;
+  --spacing-fh-5: 20px;
+  --spacing-fh-6: 24px;
+  --spacing-fh-7: 32px;
+  --spacing-fh-8: 40px;
+  --spacing-fh-9: 48px;
+  --spacing-fh-10: 64px;
 }
 
 /* ── Base styles ────────────────────────────────────────────────────── */
@@ -39,32 +73,309 @@
     background-color: var(--color-fh-bg);
     color: var(--color-fh-body);
     font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Warm serif headings, mixed case, never aggressive */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    font-weight: 800;
+    font-weight: 500;
     color: var(--color-fh-heading);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.2;
+  }
+
+  ::selection {
+    background-color: rgba(212, 132, 90, 0.28);
+    color: var(--color-fh-body);
+  }
+
+  /* Warm focus ring — visible for every age */
+  :focus-visible {
+    outline: 3px solid var(--color-fh-accent);
+    outline-offset: 3px;
   }
 }
 
-/* ── Grandparent Mode Design Tokens ─────────────────────────────────── */
-:root {
-  --gp-text-size: 20px;
-  --gp-heading-size: 28px;
+/* ── Type scale (mobile-first, spec §3.3 / desktop §3.3) ────────────── */
+@layer components {
+  .fh-hero {
+    font-family: var(--font-heading);
+    font-size: 2.375rem; /* 38px */
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--color-fh-heading);
+  }
+  .fh-h2 {
+    font-family: var(--font-heading);
+    font-size: 1.75rem; /* 28px */
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--color-fh-heading);
+  }
+  .fh-h3 {
+    font-family: var(--font-heading);
+    font-size: 1.375rem; /* 22px */
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-fh-heading);
+  }
+  .fh-h4 {
+    font-family: var(--font-body);
+    font-size: 1.125rem; /* 18px */
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-fh-heading);
+  }
+  .fh-body {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.65;
+    color: var(--color-fh-body);
+  }
+  .fh-body-sm {
+    font-family: var(--font-body);
+    font-size: 0.9375rem; /* 15px */
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-fh-body);
+  }
+  .fh-caption {
+    font-family: var(--font-body);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--color-fh-muted);
+  }
+  .fh-label {
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--color-fh-body);
+  }
+  .fh-muted {
+    color: var(--color-fh-muted);
+  }
+  .fh-link {
+    color: var(--color-fh-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    transition: color var(--duration-fade) ease-out;
+  }
+  .fh-link:hover {
+    color: #2E5639;
+  }
+
+  @media (min-width: 768px) {
+    .fh-hero { font-size: 3.5rem; }  /* 56px */
+    .fh-h2   { font-size: 2.25rem; } /* 36px */
+    .fh-h3   { font-size: 1.5rem; }  /* 24px */
+  }
 }
 
-/* ── Grandparent Mode Body Styles ───────────────────────────────────── */
+/* ── Surfaces ───────────────────────────────────────────────────────── */
+@layer components {
+  /* Warm sandy card — replaces every white card from the old direction */
+  .fh-card {
+    background-color: var(--color-fh-surface);
+    border: 1px solid var(--color-fh-border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+  }
+  .fh-card-soft {
+    background-color: var(--color-fh-surface);
+    border: 1px solid var(--color-fh-border);
+    border-radius: var(--radius-card-soft);
+    padding: 24px;
+  }
+  /* Nested surface inside a card — reads as recessed */
+  .fh-nested {
+    background-color: var(--color-fh-surface-soft);
+    border: 1px solid rgba(194, 169, 140, 0.6);
+    border-radius: var(--radius-input);
+  }
+  .fh-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--color-fh-surface-soft);
+    border: 1px solid var(--color-fh-border);
+    border-radius: var(--radius-chip);
+    padding: 4px 12px;
+    font-size: 0.8125rem;
+    color: var(--color-fh-muted);
+  }
+  .fh-floating {
+    box-shadow: var(--shadow-soft);
+  }
+  .fh-sheet {
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* ── Buttons & inputs ───────────────────────────────────────────────── */
+@layer components {
+  .fh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+    border-radius: var(--radius-button);
+    padding: 15px 22px;
+    min-height: 54px;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: background-color var(--duration-fade) ease-out,
+                border-color var(--duration-fade) ease-out,
+                color var(--duration-fade) ease-out;
+  }
+  .fh-btn-primary {
+    background-color: var(--color-fh-accent);
+    color: #F5F0EB;
+  }
+  .fh-btn-primary:hover { background-color: #2E5639; }
+  .fh-btn-secondary {
+    background-color: transparent;
+    color: var(--color-fh-body);
+    border-color: var(--color-fh-border-strong);
+  }
+  .fh-btn-secondary:hover { background-color: rgba(232, 213, 192, 0.55); }
+  .fh-btn-sand {
+    background-color: var(--color-fh-surface);
+    color: var(--color-fh-body);
+    border-color: var(--color-fh-border);
+  }
+  .fh-btn-sand:hover { background-color: var(--color-fh-surface-soft); }
+  .fh-btn-quiet {
+    background-color: transparent;
+    color: var(--color-fh-muted);
+    border-color: transparent;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-weight: 400;
+  }
+  .fh-btn-quiet:hover { color: var(--color-fh-body); background-color: rgba(232, 213, 192, 0.5); }
+  .fh-btn:disabled { opacity: 0.55; cursor: default; }
+
+  .fh-input {
+    width: 100%;
+    background-color: var(--color-fh-surface-soft);
+    border: 1.5px solid var(--color-fh-border-strong);
+    border-radius: var(--radius-input);
+    color: var(--color-fh-body);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: 13px 16px;
+    min-height: 52px;
+    outline: none;
+    transition: border-color var(--duration-fade) ease-out,
+                box-shadow var(--duration-fade) ease-out;
+  }
+  .fh-input::placeholder { color: var(--color-fh-soft-ink); }
+  .fh-input:focus {
+    border-color: var(--color-fh-accent);
+    box-shadow: 0 0 0 3px rgba(58, 107, 74, 0.18);
+  }
+
+  .fh-alert-error {
+    background-color: rgba(166, 61, 47, 0.09);
+    border: 1.5px solid var(--color-fh-status-error);
+    border-radius: var(--radius-input);
+    color: var(--color-fh-status-error);
+    padding: 12px 16px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .fh-note {
+    background-color: var(--color-fh-surface-soft);
+    border: 1px solid var(--color-fh-border);
+    border-radius: var(--radius-input);
+    padding: 14px 16px;
+  }
+}
+
+/* ── Motion — page turns and gentle reveals (spec §5) ───────────────── */
+@keyframes fh-page-turn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fh-card-reveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fh-sheet-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fh-backdrop-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fh-page-turn {
+  animation: fh-page-turn var(--duration-page) var(--ease-gentle) both;
+}
+.fh-reveal {
+  animation: fh-card-reveal var(--duration-card) var(--ease-gentle) both;
+}
+/* Only the first three items stagger; the rest arrive together */
+.fh-reveal-1 { animation-delay: 0ms; }
+.fh-reveal-2 { animation-delay: 60ms; }
+.fh-reveal-3 { animation-delay: 120ms; }
+.fh-sheet {
+  animation: fh-sheet-rise 400ms var(--ease-gentle) both;
+}
+.fh-backdrop {
+  animation: fh-backdrop-fade 250ms ease-out both;
+  background-color: rgba(26, 26, 26, 0.35);
+}
+
+/* ── prefers-reduced-motion (mandatory, spec §5.1) ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* Route changes become a plain 150ms crossfade, no drift */
+  .fh-page-turn {
+    animation: fh-backdrop-fade 150ms linear both !important;
+    animation-duration: 150ms !important;
+  }
+  .fh-reveal, .fh-sheet {
+    animation: fh-backdrop-fade 150ms linear both !important;
+    animation-delay: 0ms !important;
+    animation-duration: 150ms !important;
+  }
+  .fh-backdrop { animation-duration: 0.01ms !important; }
+}
+
+/* ── Grandparent Mode (spec §9) ─────────────────────────────────────── */
+:root {
+  --gp-text-size: 23px;
+  --gp-heading-size: 36px;
+  --gp-touch-target: 60px;
+}
+
 .gp-body {
   background-color: var(--color-gp-bg);
   color: var(--color-gp-text);
+  font-family: var(--font-gp);
   font-size: var(--gp-text-size);
   line-height: 1.6;
-  font-family: var(--font-gp);
 }
 
 .gp-body h1,
@@ -75,65 +386,89 @@
 .gp-body h6 {
   font-family: var(--font-gp);
   color: var(--color-gp-text);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.gp-body h1 { font-size: 2.25rem; }  /* 36px */
+.gp-body h2 { font-size: 2rem; }     /* 32px */
+.gp-body h3 { font-size: 1.75rem; }  /* 28px */
+
+/* Nothing smaller than 23px anywhere in GP mode */
+.gp-body p,
+.gp-body span,
+.gp-body li,
+.gp-body label,
+.gp-body button,
+.gp-body a {
+  font-size: var(--gp-text-size);
+}
+.gp-body .gp-small { font-size: 1.4375rem; }
+
+/* Large, full-width, one-tap controls */
+.gp-tap {
+  min-height: var(--gp-touch-target); /* 60px */
+}
+.gp-tap-lg {
+  min-height: 72px;
+}
+.gp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: var(--gp-touch-target);
+  padding: 16px 24px;
+  border-radius: var(--radius-card);
+  border: 2px solid var(--color-gp-border);
+  background-color: var(--color-gp-surface);
+  color: var(--color-gp-text);
+  font-family: var(--font-gp);
+  font-size: var(--gp-text-size);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fade) ease-out;
+}
+.gp-btn-primary {
+  background-color: var(--color-gp-primary);
+  border-color: var(--color-gp-primary);
+  color: #F5F0EB;
+}
+.gp-btn-primary:hover { background-color: #2E5639; border-color: #2E5639; }
+.gp-card {
+  background-color: var(--color-gp-surface);
+  border: 2px solid var(--color-gp-border);
+  border-radius: var(--radius-card-soft);
+  padding: 28px;
 }
 
-/* ── Reduced Motion ─────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .gp-mode *,
-  .gp-body * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* ── Grandparent Mode: no animations by default ─────────────────────── */
-.gp-mode {
+/* GP mode: no animation at all except the confirmation toast fade */
+.gp-mode,
+.gp-mode * {
   animation: none !important;
+}
+.gp-mode {
   transition: none !important;
 }
-
-/* Only allow fade transitions on confirmation messages */
 .gp-mode .gp-confirmation {
+  animation: none !important;
   transition: opacity 0.5s ease-in-out !important;
 }
 
-/* ── Grandparent Mode: Interactive Elements ─────────────────────────── */
-.gp-response-btn:hover {
-  filter: brightness(0.95);
+@media (prefers-reduced-motion: reduce) {
+  /* fade-only stays acceptable for the GP toast */
+  .gp-confirmation { transition-duration: 200ms !important; }
 }
 
-.gp-response-btn:focus-visible {
-  outline: 3px solid #3A6B4A;
-  outline-offset: 3px;
-}
+.gp-response-btn:hover { background-color: rgba(240, 228, 211, 0.9); }
+.gp-family-btn:hover { background-color: var(--color-fh-surface-soft) !important; }
+.gp-back-link:hover { text-decoration-thickness: 3px; }
 
-.gp-family-btn:hover {
-  background-color: #EBF0EC !important;
-}
-
-.gp-family-btn:focus-visible {
-  outline: 3px solid #3A6B4A;
-  outline-offset: 3px;
-}
-
-.gp-back-link:hover {
-  text-decoration-thickness: 3px;
-}
-
-.gp-back-link:focus-visible {
-  outline: 3px solid #3A6B4A;
-  outline-offset: 3px;
-}
-
-/* ── Accessible focus styles for all interactive elements ───────────── */
-.gp-mode button:focus-visible,
-.gp-mode a:focus-visible {
-  outline: 3px solid #3A6B4A;
-  outline-offset: 2px;
-}
-
-/* ── Ensure text contrast ───────────────────────────────────────────── */
-.gp-mode {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ── Decorative hand-drawn touches ──────────────────────────────────── */
+.fh-underline-sketch {
+  display: block;
+  height: 10px;
+  width: 56px;
 }

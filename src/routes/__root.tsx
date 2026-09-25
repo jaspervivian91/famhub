@@ -21,8 +21,8 @@ export const Route = createRootRoute({
         content:
           "A private, AI-powered connection platform that strengthens family relationships — the opposite of social media.",
       },
-      // PWA / mobile
-      { name: "theme-color", content: "#1A1A1A" },
+      // PWA / mobile — warm cream chrome, never stark black
+      { name: "theme-color", content: "#F5F0EB" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "Family Core" },
@@ -50,9 +50,9 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: () => (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-fh-bg">
-      <h1 className="text-2xl font-bold text-fh-ember">Page not found</h1>
-      <a href="/" className="text-fh-tide underline">
+    <div className="fh-page-turn flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
+      <h1 className="fh-h2">We couldn&apos;t find that page</h1>
+      <a href="/" className="fh-link fh-body">
         Back to Family Core
       </a>
     </div>
@@ -78,11 +78,9 @@ function RootDocument({ children }: { children: ReactNode }) {
   // Register PWA service worker
   useEffect(() => {
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .catch((err) => {
-          console.error("Service worker registration failed:", err);
-        });
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.error("Service worker registration failed:", err);
+      });
     }
   }, []);
 
@@ -107,26 +105,13 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body
         className={`min-h-dvh antialiased ${
-          isGrandparent
-            ? "gp-body"
-            : "bg-fh-bg text-fh-body"
+          isGrandparent ? "gp-body" : "bg-fh-bg text-fh-body"
         }`}
       >
-        {/* Mode Toggle Bar */}
+        {/* ── Warm mode switch — a quiet corner control, never a toolbar ── */}
         <div
-          className={`flex items-center justify-end px-4 py-2 ${
-            isGrandparent
-              ? "border-b-2"
-              : "border-b border-fh-border bg-white"
-          }`}
-          style={
-            isGrandparent
-              ? {
-                  borderColor: "#1A1A1A",
-                  backgroundColor: "#FFFFFF",
-                }
-              : {}
-          }
+          className="flex items-center justify-end px-5 pt-4 pb-1"
+          style={{ backgroundColor: "var(--color-fh-bg)" }}
         >
           <button
             role="switch"
@@ -137,28 +122,29 @@ function RootDocument({ children }: { children: ReactNode }) {
                 : "Switch to simplified mode"
             }
             onClick={handleToggle}
-            className={`flex items-center gap-2 rounded-none px-4 py-2 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-full border font-[family-name:var(--font-body)] transition-colors ${
               isGrandparent
-                ? "border-2 bg-white text-fh-body hover:bg-gp-surface"
-                : "text-fh-muted hover:bg-fh-surface hover:text-fh-body"
+                ? "px-5 py-3 text-[1.125rem] font-bold"
+                : "px-3.5 py-2 text-[0.875rem]"
             }`}
             style={{
-              minHeight: isGrandparent ? "56px" : "44px",
-              ...(isGrandparent ? { borderColor: "#1A1A1A" } : {}),
+              minHeight: isGrandparent ? 60 : 44,
+              backgroundColor: "var(--color-fh-surface-soft)",
+              borderColor: "var(--color-fh-border)",
+              color: "var(--color-fh-body)",
+              transitionDuration: "200ms",
             }}
           >
             <span
               aria-hidden="true"
-              className="shrink-0"
+              className="shrink-0 rounded-full"
               style={{
-                width: isGrandparent ? 10 : 8,
-                height: isGrandparent ? 10 : 8,
-                backgroundColor: isGrandparent
-                  ? "#1A1A1A"
-                  : "rgba(26, 26, 26, 0.3)",
+                width: isGrandparent ? 12 : 8,
+                height: isGrandparent ? 12 : 8,
+                backgroundColor: "var(--color-fh-accent)",
               }}
             />
-            {isGrandparent ? "Standard mode" : "Simplified mode"}
+            {isGrandparent ? "Standard text" : "Larger text"}
           </button>
         </div>
 

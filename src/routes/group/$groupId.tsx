@@ -10,10 +10,12 @@ import {
   getPairScores,
   getConversationStarters,
 } from "~/lib/api";
-import type { Nudge, PairScore, ConversationStarter } from "~/lib/types";
+import type { Nudge, ConversationStarter } from "~/lib/types";
 import { getCurrentMemberId } from "~/lib/client-store";
 import { NudgeCard, ConversationStarterPanel } from "~/components/NudgeCard";
 import { ConnectionHealth } from "~/components/ConnectionHealth";
+import { Icon } from "~/components/Icon";
+import { HandDivider, PageTurn, SketchUnderline } from "~/components/Warm";
 
 const loadGroupData = createServerFn({ method: "GET" })
   .validator((d: { groupId: string; memberId?: string }) => d)
@@ -26,9 +28,7 @@ const loadGroupData = createServerFn({ method: "GET" })
 
     let nudges: Awaited<ReturnType<typeof getPendingNudges>> = [];
     if (data.memberId) {
-      nudges = await getPendingNudges({
-        data: { memberId: data.memberId },
-      });
+      nudges = await getPendingNudges({ data: { memberId: data.memberId } });
     }
 
     return { group, relationships, scores, nudges };
@@ -42,12 +42,13 @@ export const Route = createFileRoute("/group/$groupId")({
 function GroupPage() {
   const { groupId } = Route.useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState<
-    Awaited<ReturnType<typeof loadGroupData>> | null
-  >(null);
+  const [data, setData] = useState<Awaited<
+    ReturnType<typeof loadGroupData>
+  > | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Conversation starter modal
+  // Conversation starter sheet
   const [starterNudge, setStarterNudge] = useState<Nudge | null>(null);
   const [starters, setStarters] = useState<ConversationStarter[]>([]);
   const [starterLoading, setStarterLoading] = useState(false);
@@ -96,7 +97,11 @@ function GroupPage() {
     try {
       const toName = (nudge as Record<string, unknown>).to_name as string;
       const daysEstimate =
-        nudge.nudge_type === "dormancy" ? 45 : nudge.nudge_type === "cooling" ? 21 : 10;
+        nudge.nudge_type === "dormancy"
+          ? 45
+          : nudge.nudge_type === "cooling"
+            ? 21
+            : 10;
 
       const result = await getConversationStarters({
         data: {
@@ -113,254 +118,302 @@ function GroupPage() {
     }
   }
 
+  function handleCopyInvite(code: string) {
+    const link = `${window.location.origin}/join/${code}`;
+    navigator.clipboard.writeText(link).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+
   const { group, relationships, scores, nudges } = data ?? {};
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6">
-      <button
-        onClick={() => navigate({ to: "/" })}
-        className="mb-4 flex items-center gap-1 text-sm text-stone-400 hover:text-stone-600"
-      >
-        &larr; Back to Dashboard
-      </button>
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto w-full max-w-[480px] px-5 pt-2 pb-14 md:max-w-[700px] md:px-10">
+        <button
+          onClick={() => navigate({ to: "/dashboard" })}
+          className="fh-body-sm fh-link inline-flex items-center"
+          style={{ textDecoration: "none", color: "var(--color-fh-muted)" }}
+        >
+          ← Back to my family home
+        </button>
 
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-2xl">
-          &#x1F3E0;
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-amber-900">
-            {group?.name ?? "Family Group"}
-          </h1>
-          <p className="text-sm text-stone-500">
-            {group?.members?.length ?? 0} member
-            {(group?.members?.length ?? 0) !== 1 ? "s" : ""}
-          </p>
-        </div>
-      </div>
-
-      {!group && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Database not connected. Connect DATABASE_URL and run the migration to get started.
-        </div>
-      )}
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Members */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-stone-800">
-            &#x1F465; Members
-          </h2>
-          {group?.members && group.members.length > 0 ? (
-            <ul className="space-y-2">
-              {group.members.map((m) => (
-                <li
-                  key={m.id}
-                  className="flex items-center gap-3 rounded-lg bg-stone-50 p-3"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-200 text-sm font-bold text-amber-800">
-                    {m.display_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-medium text-stone-800">
-                      {m.display_name}
-                    </p>
-                    <p className="text-xs text-stone-400 capitalize">
-                      {m.relationship.replace("_", " ")} &middot; {m.timezone}
-                    </p>
-                  </div>
-                  {m.preferences?.ui_mode === "grandparent" && (
-                    <span className="ml-auto rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-600">
-                      &#x1F474;
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-stone-400">
-              No members in this group yet.
-            </p>
-          )}
-        </div>
-
-        {/* Invite */}
-        <div className="rounded-xl border border-teal-200 bg-teal-50/50 p-5 shadow-sm">
-          <h2 className="mb-2 text-lg font-semibold text-teal-800">
-            &#x1F4CB; Invite Family
-          </h2>
-          {group && (
-            <>
-              <p className="mb-3 text-sm text-teal-700">
-                Share this invite code with your family:
+        <header className="mt-6">
+          <div className="flex items-center gap-4">
+            <Icon name="members" size={32} />
+            <div>
+              <h1 className="fh-h2">{group?.name ?? "Your family"}</h1>
+              <p className="fh-caption">
+                {group?.members?.length ?? 0} member
+                {(group?.members?.length ?? 0) !== 1 ? "s" : ""}
               </p>
-              <div className="mb-3 rounded-lg bg-white px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-teal-800">
-                {group.invite_code}
-              </div>
-              <button
-                onClick={() => {
-                  const link = `${window.location.origin}/join/${group.invite_code}`;
-                  navigator.clipboard.writeText(link);
-                  alert("Invite link copied!");
-                }}
-                className="w-full rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
-              >
-                Copy invite link
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Connection Health (with scores) */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <h2 className="mb-4 text-lg font-semibold text-stone-800">
-            &#x1F49E; Connection Health
-          </h2>
-          {scores && scores.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {scores.map((s) => {
-                const memberA = group?.members?.find(
-                  (m) => m.id === s.fromMemberId,
-                );
-                const memberB = group?.members?.find(
-                  (m) => m.id === s.toMemberId,
-                );
-                const nameA = memberA?.display_name ?? "Member A";
-                const nameB = memberB?.display_name ?? "Member B";
-                return (
-                  <ConnectionHealth
-                    key={`${s.fromMemberId}-${s.toMemberId}`}
-                    score={s}
-                    nameA={nameA}
-                    nameB={nameB}
-                  />
-                );
-              })}
             </div>
-          ) : (
-            <p className="text-sm text-stone-400">
-              No connection data yet. Generate nudges to start tracking relationships.
-            </p>
-          )}
-
-          {/* Legacy relationships display (fallback when scores aren't available) */}
-          {(!scores || scores.length === 0) && relationships && relationships.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs font-medium text-stone-500">
-                Last contact (raw data):
-              </p>
-              {relationships.map((r, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-stone-50 p-3"
-                >
-                  <span className="text-sm font-medium text-stone-700">
-                    {r.names[0]} &harr; {r.names[1]}
-                  </span>
-                  <span
-                    className={`rounded-full px-3 py-0.5 text-xs font-medium ${
-                      r.daysSince === null
-                        ? "bg-stone-200 text-stone-600"
-                        : r.daysSince > 30
-                          ? "bg-rose-100 text-rose-700"
-                          : r.daysSince > 14
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-teal-100 text-teal-700"
-                    }`}
-                  >
-                    {r.daysSince === null
-                      ? "Never"
-                      : r.daysSince === 0
-                        ? "Today"
-                        : r.daysSince === 1
-                          ? "Yesterday"
-                          : `${r.daysSince}d ago`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Nudge Suggestions */}
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm md:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-stone-800">
-              &#x1F48C; Nudge Suggestions
-            </h2>
-            <button
-              onClick={handleGenerateNudge}
-              disabled={busy}
-              className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
-            >
-              {busy ? "Checking..." : "Check for dormant links"}
-            </button>
           </div>
+          <HandDivider className="mt-4" dot />
+        </header>
 
-          {nudges && nudges.length > 0 ? (
-            <ul className="space-y-4">
-              {nudges.map((nudge) => {
-                const matchingScore = scores?.find(
-                  (s) =>
-                    (s.fromMemberId === nudge.from_member_id &&
-                      s.toMemberId === nudge.to_member_id) ||
-                    (s.fromMemberId === nudge.to_member_id &&
-                      s.toMemberId === nudge.from_member_id),
-                );
-                const fromName =
-                  (nudge as Record<string, unknown>).from_name as string;
-                const toName =
-                  (nudge as Record<string, unknown>).to_name as string;
-
-                return (
-                  <NudgeCard
-                    key={nudge.id}
-                    nudge={nudge}
-                    score={matchingScore}
-                    fromName={fromName}
-                    toName={toName}
-                    onAcknowledge={handleAcknowledge}
-                    onDismiss={handleDismiss}
-                    onGenerateStarters={handleGenerateStarters}
-                  />
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="text-sm text-stone-400">
-              All connections look healthy. Nudges will appear here when
-              someone hasn&apos;t been in touch for a while.
+        {!group && (
+          <div className="fh-card mt-6 flex items-start gap-3">
+            <Icon name="reminder" size={24} />
+            <p className="fh-body-sm">
+              Your family&apos;s data store isn&apos;t connected yet. Once it is,
+              everyone will appear here.
             </p>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* Conversation Starter Modal */}
-      {starterNudge && (
-        <>
-          {starterLoading ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-              <div className="rounded-2xl bg-white p-6 shadow-xl">
-                <p className="text-sm text-stone-500">
-                  Generating conversation starters...
+        <div className="mt-7 flex flex-col gap-7">
+          {/* Members */}
+          <section className="fh-card">
+            <h2 className="fh-h3 flex items-center gap-2.5">
+              <Icon name="members" size={24} />
+              Everyone
+            </h2>
+            <SketchUnderline className="mt-1.5" />
+            {group?.members && group.members.length > 0 ? (
+              <ul className="mt-5 flex flex-col gap-3">
+                {group.members.map((m) => (
+                  <li key={m.id} className="fh-nested flex items-center gap-3 p-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-body)] font-bold"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        backgroundColor: "var(--color-fh-surface)",
+                        border: "1px solid var(--color-fh-border)",
+                        fontSize: "1rem",
+                      }}
+                    >
+                      {m.display_name.charAt(0).toUpperCase()}
+                    </span>
+                    <div>
+                      <p className="fh-body-sm font-bold">{m.display_name}</p>
+                      <p className="fh-caption capitalize">
+                        {m.relationship.replace("_", " ")} · {m.timezone}
+                      </p>
+                    </div>
+                    {m.preferences?.ui_mode === "grandparent" && (
+                      <span className="fh-chip ml-auto">
+                        <Icon name="heart" size={16} />
+                        Large text
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                No one has joined yet. Share the invite code below.
+              </p>
+            )}
+          </section>
+
+          {/* Invite */}
+          <section className="fh-card">
+            <h2 className="fh-h3 flex items-center gap-2.5">
+              <Icon name="nudge" size={24} />
+              Invite your family
+            </h2>
+            <SketchUnderline className="mt-1.5" />
+            {group ? (
+              <>
+                <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                  Share this invite code — it&apos;s how your family comes inside.
                 </p>
+                <p
+                  className="mt-4 py-4 text-center font-[family-name:var(--font-heading)]"
+                  style={{
+                    backgroundColor: "var(--color-fh-surface-soft)",
+                    border: "1px solid var(--color-fh-border)",
+                    borderRadius: "var(--radius-input)",
+                    fontSize: "1.75rem",
+                    letterSpacing: "0.12em",
+                    fontWeight: 600,
+                    color: "var(--color-fh-body)",
+                  }}
+                >
+                  {group.invite_code}
+                </p>
+                <button
+                  onClick={() => handleCopyInvite(group.invite_code)}
+                  className="fh-btn fh-btn-primary mt-4 w-full"
+                >
+                  <Icon name={copied ? "check" : "members"} size={20} />
+                  {copied ? "Invite link copied" : "Copy the invite link"}
+                </button>
+              </>
+            ) : (
+              <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                An invite code will appear here once your family home is set up.
+              </p>
+            )}
+          </section>
+
+          {/* Connection health */}
+          <section className="fh-card">
+            <h2 className="fh-h3 flex items-center gap-2.5">
+              <Icon name="heart" size={24} />
+              How we&apos;re doing
+            </h2>
+            <SketchUnderline className="mt-1.5" />
+            {scores && scores.length > 0 ? (
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {scores.map((s) => {
+                  const memberA = group?.members?.find(
+                    (m) => m.id === s.fromMemberId,
+                  );
+                  const memberB = group?.members?.find(
+                    (m) => m.id === s.toMemberId,
+                  );
+                  return (
+                    <ConnectionHealth
+                      key={`${s.fromMemberId}-${s.toMemberId}`}
+                      score={s}
+                      nameA={memberA?.display_name ?? "Member A"}
+                      nameB={memberB?.display_name ?? "Member B"}
+                    />
+                  );
+                })}
               </div>
+            ) : (
+              <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                No connection history yet. A gentle nudge is a good place to
+                begin.
+              </p>
+            )}
+
+            {/* Fallback: raw last-contact data */}
+            {(!scores || scores.length === 0) &&
+              relationships &&
+              relationships.length > 0 && (
+                <div className="mt-5">
+                  <p className="fh-caption">Last time you spoke</p>
+                  <ul className="mt-3 flex flex-col gap-2.5">
+                    {relationships.map((r, i) => (
+                      <li
+                        key={i}
+                        className="fh-nested flex items-center justify-between gap-3 p-3"
+                      >
+                        <span className="fh-body-sm">
+                          {r.names[0]} ↔ {r.names[1]}
+                        </span>
+                        <span
+                          className="fh-caption"
+                          style={{
+                            color:
+                              r.daysSince === null || r.daysSince > 30
+                                ? "var(--color-fh-status-error)"
+                                : r.daysSince > 14
+                                  ? "var(--color-fh-status-warn)"
+                                  : "var(--color-fh-status-ok)",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {r.daysSince === null
+                            ? "Never"
+                            : r.daysSince === 0
+                              ? "Today"
+                              : r.daysSince === 1
+                                ? "Yesterday"
+                                : `${r.daysSince} days ago`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+          </section>
+
+          {/* Nudges */}
+          <section>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="fh-h3 flex items-center gap-2.5">
+                <Icon name="nudge" size={24} />
+                Gentle nudges
+              </h2>
+              <button
+                onClick={handleGenerateNudge}
+                disabled={busy}
+                className="fh-btn fh-btn-sand"
+                style={{ minHeight: 48 }}
+              >
+                <Icon name="bell" size={20} />
+                {busy ? "Looking…" : "Look for quiet links"}
+              </button>
             </div>
-          ) : starters.length > 0 ? (
-            <ConversationStarterPanel
-              starters={starters}
-              memberName={
-                ((starterNudge as Record<string, unknown>).to_name as string) ??
-                "them"
-              }
-              onClose={() => {
-                setStarterNudge(null);
-                setStarters([]);
-              }}
-            />
-          ) : null}
-        </>
-      )}
-    </main>
+
+            {nudges && nudges.length > 0 ? (
+              <ul className="mt-5 flex flex-col gap-5">
+                {nudges.map((nudge) => {
+                  const matchingScore = scores?.find(
+                    (s) =>
+                      (s.fromMemberId === nudge.from_member_id &&
+                        s.toMemberId === nudge.to_member_id) ||
+                      (s.fromMemberId === nudge.to_member_id &&
+                        s.toMemberId === nudge.from_member_id),
+                  );
+                  const fromName = (nudge as Record<string, unknown>)
+                    .from_name as string;
+                  const toName = (nudge as Record<string, unknown>)
+                    .to_name as string;
+
+                  return (
+                    <li key={nudge.id}>
+                      <NudgeCard
+                        nudge={nudge}
+                        score={matchingScore}
+                        fromName={fromName}
+                        toName={toName}
+                        onAcknowledge={handleAcknowledge}
+                        onDismiss={handleDismiss}
+                        onGenerateStarters={handleGenerateStarters}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="fh-body-sm mt-4" style={{ color: "var(--color-fh-muted)" }}>
+                Everyone looks well connected right now. Nudges will appear here
+                when a relationship has gone quiet for a while.
+              </p>
+            )}
+          </section>
+        </div>
+
+        <footer className="mt-12">
+          <HandDivider className="mb-5" />
+          <p className="fh-caption text-center">
+            Every connection here is private — metadata only, never messages.
+          </p>
+        </footer>
+
+        {/* Conversation starter sheet */}
+        {starterNudge && (
+          <>
+            {starterLoading ? (
+              <div className="fh-backdrop fixed inset-0 z-50 flex items-center justify-center">
+                <div className="fh-sheet fh-card-soft">
+                  <p className="fh-body-sm">Gathering a few gentle ideas…</p>
+                </div>
+              </div>
+            ) : starters.length > 0 ? (
+              <ConversationStarterPanel
+                starters={starters}
+                memberName={
+                  ((starterNudge as Record<string, unknown>).to_name as
+                    | string) ?? "them"
+                }
+                onClose={() => {
+                  setStarterNudge(null);
+                  setStarters([]);
+                }}
+              />
+            ) : null}
+          </>
+        )}
+      </main>
+    </PageTurn>
   );
 }

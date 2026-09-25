@@ -9,7 +9,7 @@ function TermsPage() {
   return (
     <div className="min-h-dvh bg-fh-bg">
       {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="border-b border-fh-border bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="sticky top-0 z-50" style={{ backgroundColor: "var(--color-fh-bg)", borderBottom: "1px solid var(--color-fh-line)" }}>
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Logo variant="icon" size="md" />
@@ -18,13 +18,13 @@ function TermsPage() {
           <div className="flex items-center gap-3">
             <Link
               to="/sign-in"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-fh-body hover:bg-fh-surface hover:text-fh-heading"
+              className="fh-btn fh-btn-quiet"
             >
               Sign In
             </Link>
             <Link
               to="/sign-up"
-              className="rounded-lg bg-fh-ember px-4 py-2 text-sm font-semibold text-white hover:bg-fh-ember/90"
+              className="fh-btn fh-btn-primary" style={{ minHeight: 44, padding: "10px 18px" }}
             >
               Get Started
             </Link>
@@ -34,17 +34,17 @@ function TermsPage() {
 
       {/* ── Content ──────────────────────────────────────────── */}
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <h1 className="font-[family-name:var(--font-heading)] text-3xl tracking-tight text-fh-heading sm:text-4xl">
+        <h1 className="fh-h2">
           Terms of Service
         </h1>
         <p className="mt-2 text-fh-muted">
           Last updated: July 2026
         </p>
 
-        <div className="mt-10 space-y-10 text-fh-body leading-relaxed">
+        <div className="fh-body mt-10 flex flex-col gap-10">
           {/* Acceptance */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Acceptance of terms
             </h2>
             <p>
@@ -57,7 +57,7 @@ function TermsPage() {
 
           {/* Accounts */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">Accounts</h2>
+            <h2 className="fh-h3 mb-4">Accounts</h2>
             <p className="mb-3">
               You&apos;re responsible for keeping your account secure. Use a
               strong password, don&apos;t share your credentials, and let us know
@@ -72,7 +72,7 @@ function TermsPage() {
 
           {/* Acceptable use */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Acceptable use
             </h2>
             <p className="mb-3">
@@ -105,7 +105,7 @@ function TermsPage() {
 
           {/* Privacy-first values */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Our privacy-first commitment
             </h2>
             <p>
@@ -116,7 +116,7 @@ function TermsPage() {
               our{" "}
               <Link
                 to="/privacy"
-                className="text-fh-tide underline hover:text-fh-tide/80"
+                className="fh-link"
               >
                 Privacy Policy
               </Link>{" "}
@@ -126,7 +126,7 @@ function TermsPage() {
 
           {/* AI nudges */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               AI nudges — suggestions, not commands
             </h2>
             <p>
@@ -142,7 +142,7 @@ function TermsPage() {
 
           {/* Service availability */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Service availability
             </h2>
             <p>
@@ -155,7 +155,7 @@ function TermsPage() {
 
           {/* Limitation of liability */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Limitation of liability
             </h2>
             <p className="mb-3">
@@ -186,7 +186,7 @@ function TermsPage() {
 
           {/* Termination */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Account termination
             </h2>
             <p className="mb-3">
@@ -203,7 +203,7 @@ function TermsPage() {
 
           {/* Changes */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">
+            <h2 className="fh-h3 mb-4">
               Changes to these terms
             </h2>
             <p>
@@ -216,12 +216,12 @@ function TermsPage() {
 
           {/* Contact */}
           <section>
-            <h2 className="mb-4 font-[family-name:var(--font-heading)] text-xl text-fh-heading">Contact</h2>
+            <h2 className="fh-h3 mb-4">Contact</h2>
             <p>
               Questions about these terms? Reach out at{" "}
               <a
                 href="mailto:hello@familyhub.app"
-                className="text-fh-tide underline hover:text-fh-tide/80"
+                className="fh-link"
               >
                 hello@familyhub.app
               </a>
@@ -231,10 +231,10 @@ function TermsPage() {
         </div>
 
         {/* Back link */}
-        <div className="mt-12 border-t border-fh-border pt-8">
+        <div className="mt-12" style={{ borderTop: "1px solid var(--color-fh-line)", paddingTop: 32 }}>
           <Link
             to="/"
-            className="text-fh-tide underline hover:text-fh-tide/80 font-medium"
+            className="fh-link"
           >
             ← Back to Family Core
           </Link>
@@ -242,7 +242,7 @@ function TermsPage() {
       </main>
 
       {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="border-t border-fh-border bg-fh-surface py-10">
+      <footer className="py-10" style={{ backgroundColor: "var(--color-fh-surface)", borderTop: "1px solid var(--color-fh-border)" }}>
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
           <div className="flex items-center gap-2">
             <Logo variant="icon" size="sm" />
@@ -253,19 +253,19 @@ function TermsPage() {
           <div className="flex items-center gap-6">
             <Link
               to="/privacy"
-              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
+              className="fh-body-sm fh-link" style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
             >
               Privacy
             </Link>
             <Link
               to="/terms"
-              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
+              className="fh-body-sm fh-link" style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
             >
               Terms
             </Link>
             <a
               href="mailto:hello@familyhub.app"
-              className="text-sm text-fh-muted hover:text-fh-body transition-colors"
+              className="fh-body-sm fh-link" style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
             >
               Contact
             </a>

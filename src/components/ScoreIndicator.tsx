@@ -1,5 +1,6 @@
 /**
  * Visual indicators and helpers for relationship health scores.
+ * Warm design system v4 — no emoji, warm palette only.
  */
 import type { ScoreCategory } from "~/lib/types";
 
@@ -13,42 +14,43 @@ export interface ScoreIndicatorProps {
 
 const CATEGORY_CONFIG: Record<
   ScoreCategory,
-  { color: string; ring: string; bg: string; label: string; emoji: string }
+  {
+    ring: string;
+    dot: string;
+    text: string;
+    label: string;
+  }
 > = {
   dormant: {
-    color: "text-rose-600",
-    ring: "stroke-rose-500",
-    bg: "bg-rose-100",
+    ring: "stroke-[#A63D2F]",
+    dot: "#A63D2F",
+    text: "#A63D2F",
     label: "Needs attention",
-    emoji: "🔴",
   },
   cooling: {
-    color: "text-amber-600",
-    ring: "stroke-amber-500",
-    bg: "bg-amber-100",
+    ring: "stroke-[#A6633F]",
+    dot: "#A6633F",
+    text: "#A6633F",
     label: "Cooling down",
-    emoji: "🟡",
   },
   steady: {
-    color: "text-teal-600",
-    ring: "stroke-teal-500",
-    bg: "bg-teal-100",
+    ring: "stroke-[#96785A]",
+    dot: "#96785A",
+    text: "#6E5D4D",
     label: "Steady",
-    emoji: "🟢",
   },
   thriving: {
-    color: "text-emerald-600",
-    ring: "stroke-emerald-500",
-    bg: "bg-emerald-100",
+    ring: "stroke-[#3A6B4A]",
+    dot: "#3A6B4A",
+    text: "#3A6B4A",
     label: "Thriving",
-    emoji: "💚",
   },
 };
 
 const SIZE_MAP = {
-  sm: { ring: 32, stroke: 3, text: "text-xs" },
-  md: { ring: 48, stroke: 4, text: "text-sm" },
-  lg: { ring: 64, stroke: 5, text: "text-base" },
+  sm: { ring: 32, stroke: 3, font: 11 },
+  md: { ring: 48, stroke: 4, font: 15 },
+  lg: { ring: 64, stroke: 5, font: 19 },
 } as const;
 
 export function ScoreRing({
@@ -65,7 +67,7 @@ export function ScoreRing({
   const offset = circumference * (1 - score / 100);
 
   return (
-    <div
+    <span
       className={`inline-flex items-center gap-2 ${className}`}
       role="img"
       aria-label={`Connection health: ${score} out of 100 — ${config.label}`}
@@ -77,15 +79,14 @@ export function ScoreRing({
         className="shrink-0"
         aria-hidden="true"
       >
-        {/* Background ring */}
+        {/* Background ring — warm sand, never grey */}
         <circle
           cx={dims.ring / 2}
           cy={dims.ring / 2}
           r={radius}
           fill="none"
-          stroke="currentColor"
+          stroke="#D8C6AF"
           strokeWidth={dims.stroke}
-          className="text-stone-200"
         />
         {/* Score ring */}
         <circle
@@ -100,31 +101,35 @@ export function ScoreRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           transform={`rotate(-90 ${dims.ring / 2} ${dims.ring / 2})`}
-          style={{
-            transition: "stroke-dashoffset 0.6s ease",
-          }}
+          style={{ transition: "stroke-dashoffset 400ms ease-out" }}
         />
-        {/* Center text */}
+        {/* Score */}
         <text
           x={dims.ring / 2}
           y={dims.ring / 2}
           textAnchor="middle"
           dominantBaseline="central"
-          className={`fill-stone-700 font-semibold ${dims.text}`}
+          fontFamily="var(--font-body)"
+          fontWeight="700"
+          fontSize={dims.font}
+          fill="#1A1A1A"
         >
           {score}
         </text>
       </svg>
       {showLabel && (
-        <span className={`font-medium ${config.color} text-sm`}>
-          {config.emoji} {config.label}
+        <span
+          className="fh-body-sm"
+          style={{ color: config.text, fontWeight: 700 }}
+        >
+          {config.label}
         </span>
       )}
-    </div>
+    </span>
   );
 }
 
-/** Simple colored dot indicator for compact displays. */
+/** Simple warm dot indicator for compact displays. */
 export function ScoreDot({
   category,
   className = "",
@@ -135,14 +140,15 @@ export function ScoreDot({
   const config = CATEGORY_CONFIG[category];
   return (
     <span
-      className={`inline-block h-3 w-3 rounded-full ${config.bg} border-2 ${config.ring.replace("stroke", "border")} ${className}`}
+      className={`inline-block h-3 w-3 shrink-0 rounded-full ${className}`}
+      style={{ backgroundColor: config.dot, border: `1.5px solid ${config.dot}` }}
       role="img"
       aria-label={`Connection: ${config.label}`}
     />
   );
 }
 
-/** Trend arrow indicator. */
+/** Trend indicator — hand-drawn arrows in the warm palette. */
 export function TrendArrow({
   trend,
   className = "",
@@ -152,22 +158,75 @@ export function TrendArrow({
 }) {
   if (trend >= 65) {
     return (
-      <span className={`text-emerald-600 ${className}`} aria-label="Trending up">
-        ↗
-      </span>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        className={`inline-block ${className}`}
+        role="img"
+        aria-label="Trending up"
+      >
+        <path
+          d="M3 12 C 6 9, 9 6.5, 13 3.5"
+          stroke="#3A6B4A"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9.5 3.2 L 13.2 3.2 L 13 6.8"
+          stroke="#3A6B4A"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     );
   }
   if (trend <= 35) {
     return (
-      <span className={`text-rose-600 ${className}`} aria-label="Trending down">
-        ↘
-      </span>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        className={`inline-block ${className}`}
+        role="img"
+        aria-label="Trending down"
+      >
+        <path
+          d="M3 3.5 C 6 6.5, 9 9, 13 12"
+          stroke="#A6633F"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9.5 12.8 L 13.2 12.8 L 13 9.2"
+          stroke="#A6633F"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     );
   }
   return (
-    <span className={`text-stone-400 ${className}`} aria-label="Trending steady">
-      →
-    </span>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      className={`inline-block ${className}`}
+      role="img"
+      aria-label="Trending steady"
+    >
+      <path
+        d="M2.5 9 C 5 7.5, 8 8.5, 10.5 7.5 C 12 6.9, 13.5 8, 13.5 8"
+        stroke="#96785A"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

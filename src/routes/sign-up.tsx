@@ -1,7 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { signUp } from "~/lib/auth-api";
 import { Logo } from "~/components/Logo";
+import { Icon } from "~/components/Icon";
+import { HandDivider, PageTurn, Sprig } from "~/components/Warm";
 
 export const Route = createFileRoute("/sign-up")({
   component: SignUpPage,
@@ -28,7 +30,6 @@ function SignUpPage() {
           displayName: displayName.trim(),
         },
       });
-      // Redirect to dashboard
       navigate({ to: "/dashboard" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -38,230 +39,113 @@ function SignUpPage() {
   }
 
   return (
-    <div className="relative min-h-dvh" style={{ backgroundColor: "#F5F0EB" }}>
-      {/* ── Structural grid lines ────────────────────────────── */}
-      <div
-        className="pointer-events-none fixed inset-y-0 z-0"
-        style={{
-          left: "24px",
-          width: "0",
-          borderLeft: "0.5px dashed #EBF0EC",
-        }}
-      />
-      <div
-        className="pointer-events-none fixed inset-y-0 z-0"
-        style={{
-          right: "24px",
-          width: "0",
-          borderRight: "0.5px dashed #EBF0EC",
-        }}
-      />
-
-      {/* ── Main content ─────────────────────────────────────── */}
-      <main className="relative z-10 mx-auto flex min-h-dvh max-w-[327px] flex-col justify-center px-0 py-12">
-        {/* Logo */}
-        <div className="mb-10 flex justify-center">
-          <Logo variant="icon" size="xl" />
+    <PageTurn className="min-h-dvh">
+      <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 py-10 md:max-w-[520px] md:px-10">
+        <div className="relative flex justify-center">
+          <Sprig className="absolute -top-1 left-1" />
+          <Logo variant="icon" size="lg" />
         </div>
 
-        {/* Heading */}
-        <h1
-          className="mb-2 text-center"
-          style={{
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            fontSize: "26px",
-            fontWeight: 800,
-            color: "#1A1A1A",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
+        <h1 className="fh-h2 mt-6 text-center">Create your family home</h1>
+        <p
+          className="fh-body-sm mt-2 text-center"
+          style={{ color: "var(--color-fh-muted)" }}
         >
-          CREATE ACCOUNT
-        </h1>
+          A quiet, private place for the people you love.
+        </p>
 
-        {/* Ruled line */}
-        <div className="mb-8 w-full" style={{ borderTop: "0.5px solid #1A1A1A" }} />
+        <form onSubmit={handleSubmit} className="mt-7">
+          <div className="fh-card flex flex-col gap-5">
+            {error && (
+              <p className="fh-alert-error" role="alert">
+                {error}
+              </p>
+            )}
 
-        {/* Error */}
-        {error && (
-          <div
-            className="mb-6 p-3"
-            style={{
-              backgroundColor: "#EBF0EC",
-              border: "1.5px solid #3A6B4A",
-              fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
-              fontSize: "10px",
-              color: "#3A6B4A",
-              letterSpacing: "0.03em",
-            }}
-          >
-            {error}
+            <div>
+              <label htmlFor="display-name" className="fh-label mb-1.5 block">
+                Your name
+              </label>
+              <input
+                id="display-name"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Sarah Johnson"
+                className="fh-input"
+                required
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="fh-label mb-1.5 block">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="fh-input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="fh-label mb-1.5 block">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={8}
+                className="fh-input"
+                required
+              />
+              <p className="fh-caption mt-2">
+                At least 8 characters — take your time.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="fh-btn fh-btn-primary mt-1 w-full"
+            >
+              {busy ? "Creating your home…" : "Create account"}
+            </button>
           </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Display name */}
-          <label
-            htmlFor="display-name"
-            className="mb-1 block"
-            style={{
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "10px",
-              fontWeight: 700,
-              color: "#1A1A1A",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            NAME
-          </label>
-          <input
-            id="display-name"
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
-            className="mb-5 w-full px-4 py-3"
-            style={{
-              backgroundColor: "#EBF0EC",
-              border: "1.5px solid #1A1A1A",
-              color: "#1A1A1A",
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "14px",
-              outline: "none",
-            }}
-            required
-            autoFocus
-          />
-
-          {/* Email */}
-          <label
-            htmlFor="email"
-            className="mb-1 block"
-            style={{
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "10px",
-              fontWeight: 700,
-              color: "#1A1A1A",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            EMAIL
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="mb-5 w-full px-4 py-3"
-            style={{
-              backgroundColor: "#EBF0EC",
-              border: "1.5px solid #1A1A1A",
-              color: "#1A1A1A",
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "14px",
-              outline: "none",
-            }}
-            required
-          />
-
-          {/* Password */}
-          <label
-            htmlFor="password"
-            className="mb-1 block"
-            style={{
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "10px",
-              fontWeight: 700,
-              color: "#1A1A1A",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            PASSWORD
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 8 characters"
-            minLength={8}
-            className="mb-6 w-full px-4 py-3"
-            style={{
-              backgroundColor: "#EBF0EC",
-              border: "1.5px solid #1A1A1A",
-              color: "#1A1A1A",
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "14px",
-              outline: "none",
-            }}
-            required
-          />
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full"
-            style={{
-              height: "50px",
-              backgroundColor: busy ? "#EBF0EC" : "#3A6B4A",
-              color: busy ? "#1A1A1A" : "#F5F0EB",
-              border: "none",
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "13px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.3em",
-              cursor: busy ? "default" : "pointer",
-            }}
-          >
-            {busy ? "CREATING ACCOUNT…" : "CREATE ACCOUNT"}
-          </button>
         </form>
 
-        {/* Link to sign-in */}
-        <div className="mt-6 text-center">
-          <a
-            href="/sign-in"
-            style={{
-              fontFamily: "'JetBrains Mono', 'SF Mono', 'Courier New', monospace",
-              fontSize: "10px",
-              color: "#1A1A1A",
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-              textDecoration: "none",
-              borderBottom: "1px solid #1A1A1A",
-              paddingBottom: "2px",
-            }}
-          >
-            ALREADY HAVE AN ACCOUNT? SIGN IN
-          </a>
+        <div className="mt-8 flex items-center gap-4">
+          <HandDivider className="flex-1" />
+          <span className="fh-caption">or</span>
+          <HandDivider className="flex-1" />
         </div>
 
-        {/* ── Bottom heading with ruled line ────────────────── */}
-        <div className="mt-auto pt-12">
-          <div className="mb-3 w-full" style={{ borderTop: "0.5px solid #1A1A1A" }} />
-          <h2
-            className="text-center"
-            style={{
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              fontSize: "18px",
-              fontWeight: 800,
-              color: "#1A1A1A",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              opacity: 0.15,
-            }}
-          >
-            CREATE ACCOUNT
-          </h2>
-        </div>
+        <p className="fh-body-sm mt-5 text-center">
+          Already have an account?{" "}
+          <Link to="/sign-in" className="fh-link">
+            Sign in
+          </Link>
+        </p>
+        <p className="fh-caption mt-2 text-center">
+          Free tier · your whole family · no card needed
+        </p>
+
+        <p
+          className="fh-body-sm mt-8 flex items-center justify-center gap-2 text-center"
+          style={{ color: "var(--color-fh-muted)" }}
+        >
+          <Icon name="heart" size={20} />
+          We only ever see how often you connect — never what you say.
+        </p>
       </main>
-    </div>
+    </PageTurn>
   );
 }

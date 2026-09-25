@@ -220,10 +220,10 @@ interface StarterInput {
  * type and how long it's been since the last contact.
  *
  * The selection algorithm simulates AI reasoning:
- * - Long gaps (>30d) → prioritize memory/photo (reconnection)
- * - Medium gaps (7-30d) → mix of all categories
- * - Short gaps (<7d) → prioritize activity/question (momentum)
- * - No prior contact → memory (ice-breaking)
+ * - Long gaps (>30d)  prioritize memory/photo (reconnection)
+ * - Medium gaps (7-30d)  mix of all categories
+ * - Short gaps (<7d)  prioritize activity/question (momentum)
+ * - No prior contact  memory (ice-breaking)
  */
 export function generateConversationStarters(
   input: StarterInput,
@@ -304,10 +304,10 @@ export function generateConversationStarters(
 
 export const CATEGORY_EMOJI: Record<ConversationStarter["category"], string> =
   {
-    memory: "📖",
-    photo: "📸",
-    question: "💭",
-    activity: "🎯",
+    memory: "",
+    photo: "",
+    question: "",
+    activity: "",
   };
 
 export const CATEGORY_LABEL: Record<ConversationStarter["category"], string> = {

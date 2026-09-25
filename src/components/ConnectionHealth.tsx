@@ -1,6 +1,6 @@
 /**
  * Connection health display — shows relationship score with visual
- * indicator and insights for a member pair.
+ * indicator and insights for a member pair. Warm design system v4.
  */
 import type { PairScore } from "~/lib/types";
 import { ScoreRing, ScoreDot, TrendArrow } from "~/components/ScoreIndicator";
@@ -13,6 +13,13 @@ export interface ConnectionHealthProps {
   className?: string;
 }
 
+/* Warm bar colours — forest green, sand-umber, terracotta, burnt sienna */
+const BAR_COLOURS = {
+  recency: "#3A6B4A",
+  frequency: "#D4845A",
+  balance: "#96785A",
+};
+
 export function ConnectionHealth({
   score,
   nameA,
@@ -20,89 +27,65 @@ export function ConnectionHealth({
   compact = false,
   className = "",
 }: ConnectionHealthProps) {
-  const interactionCount = estimateInteractionCount(score);
-
   if (compact) {
     return (
       <div
-        className={`flex items-center justify-between rounded-lg bg-stone-50 p-3 ${className}`}
+        className={`fh-nested flex items-center justify-between gap-3 p-3 ${className}`}
       >
-        <div className="flex items-center gap-2">
+        <span className="flex items-center gap-2.5">
           <ScoreDot category={score.category} />
-          <span className="text-sm font-medium text-stone-700">
+          <span className="fh-body-sm">
             {nameA} ↔ {nameB}
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-stone-500">{score.score}</span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="fh-caption font-bold tabular-nums" style={{ color: "var(--color-fh-body)" }}>
+            {score.score}
+          </span>
           <TrendArrow trend={score.factors.trend} />
-        </div>
+        </span>
       </div>
     );
   }
 
   return (
     <div
-      className={`rounded-xl border border-stone-200 bg-white p-4 shadow-sm ${className}`}
+      className={`fh-card ${className}`}
       role="region"
       aria-label={`Connection health between ${nameA} and ${nameB}`}
     >
-      <div className="flex items-center gap-3">
-        <ScoreRing score={score.score} category={score.category} size="md" showLabel={false} />
+      <div className="flex items-center gap-4">
+        <ScoreRing
+          score={score.score}
+          category={score.category}
+          size="md"
+          showLabel={false}
+        />
         <div>
-          <h3 className="font-semibold text-stone-800">
-            {nameA} & {nameB}
+          <h3 className="fh-h4">
+            {nameA} &amp; {nameB}
           </h3>
-          <p className="text-sm text-stone-500">
+          <p className="fh-caption mt-0.5 capitalize">
             {score.score}/100 — {score.category}
           </p>
         </div>
       </div>
 
       {/* Insights */}
-      <div className="mt-3 space-y-1.5 rounded-lg bg-stone-50 p-3 text-xs text-stone-600">
-        <div className="flex items-center gap-2">
-          <span className="w-16 font-medium text-stone-500">Recency</span>
-          <div className="h-1.5 flex-1 rounded-full bg-stone-200">
-            <div
-              className="h-1.5 rounded-full bg-teal-500"
-              style={{ width: `${score.factors.recency}%` }}
-            />
-          </div>
-          <span className="w-8 text-right tabular-nums">
-            {score.factors.recency}%
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-16 font-medium text-stone-500">Freq</span>
-          <div className="h-1.5 flex-1 rounded-full bg-stone-200">
-            <div
-              className="h-1.5 rounded-full bg-amber-500"
-              style={{ width: `${score.factors.frequency}%` }}
-            />
-          </div>
-          <span className="w-8 text-right tabular-nums">
-            {score.factors.frequency}%
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-16 font-medium text-stone-500">Balance</span>
-          <div className="h-1.5 flex-1 rounded-full bg-stone-200">
-            <div
-              className="h-1.5 rounded-full bg-violet-500"
-              style={{ width: `${score.factors.initiationBalance}%` }}
-            />
-          </div>
-          <span className="w-8 text-right tabular-nums">
-            {score.factors.initiationBalance}%
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-16 font-medium text-stone-500">Trend</span>
+      <div className="fh-nested mt-4 flex flex-col gap-2.5 p-3">
+        <FactorBar label="Recency" value={score.factors.recency} colour={BAR_COLOURS.recency} />
+        <FactorBar label="Frequency" value={score.factors.frequency} colour={BAR_COLOURS.frequency} />
+        <FactorBar
+          label="Balance"
+          value={score.factors.initiationBalance}
+          colour={BAR_COLOURS.balance}
+        />
+        <div className="flex items-center gap-3">
+          <span className="fh-caption w-20">Trend</span>
           <span className="flex-1">
             <TrendArrow trend={score.factors.trend} />
           </span>
-          <span className="w-8 text-right tabular-nums">
+          <span className="fh-caption w-10 text-right tabular-nums">
             {score.factors.trend}%
           </span>
         </div>
@@ -111,8 +94,32 @@ export function ConnectionHealth({
   );
 }
 
-/** Rough estimate of interaction count from frequency score. */
-function estimateInteractionCount(score: PairScore): number {
-  // frequency is 0-100 mapped from 0-5 per week → ~0-65 over 90 days
-  return Math.round((score.factors.frequency / 100) * 65);
+function FactorBar({
+  label,
+  value,
+  colour,
+}: {
+  label: string;
+  value: number;
+  colour: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="fh-caption w-20">{label}</span>
+      <span
+        className="h-2 flex-1 overflow-hidden rounded-full"
+        style={{ backgroundColor: "var(--color-fh-surface)" }}
+      >
+        <span
+          className="block h-2 rounded-full"
+          style={{
+            width: `${value}%`,
+            backgroundColor: colour,
+            transition: "width 420ms var(--ease-gentle)",
+          }}
+        />
+      </span>
+      <span className="fh-caption w-10 text-right tabular-nums">{value}%</span>
+    </div>
+  );
 }
