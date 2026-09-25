@@ -408,8 +408,12 @@ function GrandparentDashboard() {
                     </span>
                   </span>
                   <span
-                    className="ml-auto"
-                    style={{ color: GREEN, fontWeight: 700 }}
+                    className="ml-auto shrink-0"
+                    style={{
+                      color: GREEN,
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}
                   >
                     Say hello
                   </span>

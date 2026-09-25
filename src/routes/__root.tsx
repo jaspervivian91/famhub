@@ -125,13 +125,17 @@ function RootDocument({ children }: { children: ReactNode }) {
             className={`inline-flex items-center gap-2 rounded-full border font-[family-name:var(--font-body)] transition-colors ${
               isGrandparent
                 ? "px-5 py-3 text-[1.125rem] font-bold"
-                : "px-3.5 py-2 text-[0.875rem]"
+                : "px-3 py-1.5 text-[0.8125rem]"
             }`}
             style={{
               minHeight: isGrandparent ? 60 : 44,
-              backgroundColor: "var(--color-fh-surface-soft)",
-              borderColor: "var(--color-fh-border)",
-              color: "var(--color-fh-body)",
+              backgroundColor: isGrandparent
+                ? "var(--color-fh-surface-soft)"
+                : "transparent",
+              borderColor: "var(--color-fh-line)",
+              color: isGrandparent
+                ? "var(--color-fh-body)"
+                : "var(--color-fh-muted)",
               transitionDuration: "200ms",
             }}
           >
