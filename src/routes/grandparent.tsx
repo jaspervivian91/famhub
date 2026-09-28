@@ -179,6 +179,10 @@ function NoFamilyYet() {
           </p>
         </div>
 
+        {/* Only actions that can actually work for someone with no family yet:
+            they can add one. There is no family home to visit and no letter
+            to read, so we offer neither — a door that leads nowhere is the
+            same dishonesty as inventing a family. */}
         <div className="mt-8 flex flex-col gap-5">
           <a
             href="/dashboard"
@@ -186,17 +190,14 @@ function NoFamilyYet() {
             style={{ justifyContent: "center" }}
           >
             <Icon name="members" size={32} />
-            Go to my family home
-          </a>
-          <a
-            href="/digest"
-            className="gp-btn gp-tap"
-            style={{ justifyContent: "center", backgroundColor: CREAM }}
-          >
-            <Icon name="checklist" size={32} />
-            Read this week&apos;s letter
+            Add my family
           </a>
         </div>
+
+        <p className="mt-6" style={{ opacity: 0.9, fontSize: GP_BODY }}>
+          Your family has an invite code — eight letters and numbers. Ask them
+          for it, and you can put it in here.
+        </p>
 
         <p className="mt-8" style={{ opacity: 0.75, fontSize: GP_BODY }}>
           Every connection here is private — metadata only, never content.
