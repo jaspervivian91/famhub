@@ -16,27 +16,12 @@ import {
 import { generateConversationStarters } from "~/lib/conversation-starters";
 import { sendNudgeEmail } from "~/lib/email";
 import { getAccountById } from "~/lib/auth";
+// Shape-preserving row coercion (keeps jsonb arrays as arrays).
+import { coerceRow } from "~/lib/coerce-row";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** Coerce a database row to safe JSON types (dates  strings). */
-function coerceRow<T extends Record<string, unknown>>(row: T): T {
-  const out: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(row)) {
-    if (val instanceof Date) {
-      out[key] = val.toISOString();
-    } else if (typeof val === "bigint") {
-      out[key] = String(val);
-    } else if (val !== null && typeof val === "object") {
-      out[key] = coerceRow(val as Record<string, unknown>);
-    } else {
-      out[key] = val;
-    }
-  }
-  return out as T;
-}
 
 /** Wraps a DB query so the site builds even without DATABASE_URL. */
 async function safeQuery<T>(

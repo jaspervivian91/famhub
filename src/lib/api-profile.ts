@@ -22,22 +22,15 @@ import {
 import { sendNudgeEmail } from "~/lib/email";
 import { getAccountById } from "~/lib/auth";
 import type { FamilyMember, Interaction, Nudge, PairScore } from "~/lib/types";
+// Shape-preserving row coercion (keeps jsonb arrays as arrays).
+import { coerceRow } from "~/lib/coerce-row";
 
 // ---------------------------------------------------------------------------
-// Helpers (same shape as src/lib/api.ts)
+// Helpers
 // ---------------------------------------------------------------------------
 
-function coerceRow<T extends Record<string, unknown>>(row: T): T {
-  const out: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(row)) {
-    if (val instanceof Date) out[key] = val.toISOString();
-    else if (typeof val === "bigint") out[key] = String(val);
-    else if (val !== null && typeof val === "object") {
-      out[key] = coerceRow(val as Record<string, unknown>);
-    } else out[key] = val;
-  }
-  return out as T;
-}
+// coerceRow comes from ~/lib/coerce-row — the shared shape-preserving row
+// coercion. It keeps jsonb arrays (e.g. a group's `members`) as arrays.
 
 // ---------------------------------------------------------------------------
 // Types

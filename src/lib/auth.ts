@@ -1,5 +1,7 @@
 import { sql, hasDatabaseURL } from "~/db";
 import type { Account, Session } from "~/lib/types";
+// Shape-preserving row coercion (keeps jsonb arrays as arrays).
+import { coerceRow } from "~/lib/coerce-row";
 
 // Dynamic import for bcryptjs — it's a Node-only module and must not be bundled
 // into the client bundle. TanStack Start tree-shakes server functions, but
@@ -173,19 +175,3 @@ export async function getAccountFromRequest(
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function coerceRow<T extends Record<string, unknown>>(row: T): T {
-  const out: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(row)) {
-    if (val instanceof Date) {
-      out[key] = val.toISOString();
-    } else if (typeof val === "bigint") {
-      out[key] = String(val);
-    } else if (val !== null && typeof val === "object") {
-      out[key] = coerceRow(val as Record<string, unknown>);
-    } else {
-      out[key] = val;
-    }
-  }
-  return out as T;
-}
