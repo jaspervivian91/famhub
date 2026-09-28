@@ -5,8 +5,11 @@
  * conversation-worthy moments, and icebreakers into a single summary
  * designed to spark real-world connection — not app engagement.
  *
- * The engine works with both live DB interactions and mock data so
- * the UI always renders, even without a database connection.
+ * The engine only ever writes about people who really exist: it is handed the
+ * real members and interactions of a group, and returns `null` when there is
+ * nothing real to write about. It never invents a family. The one exception is
+ * `buildDemoDigestContent`, which builds a sample letter from the opt-in demo
+ * data in src/lib/demo-data.ts and is never reached without `?demo=1`.
  */
 
 import type {
@@ -19,9 +22,9 @@ import type {
 import {
   computeAllPairScores,
   categorizeScore,
-  generateMockInteractions,
 } from "~/lib/relationship-engine";
 import { generateConversationStarters } from "~/lib/conversation-starters";
+import { DEMO_DIGEST_MEMBERS } from "~/lib/demo-data";
 
 // ---------------------------------------------------------------------------
 // Digest content type
@@ -121,63 +124,23 @@ function pickIRLSuggestion(name: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Mock data for development
+// Demo data — opt-in only (see src/lib/demo-data.ts)
 // ---------------------------------------------------------------------------
 
-const MOCK_MEMBERS: FamilyMember[] = [
-  {
-    id: "mock-a",
-    group_id: "mock-group",
-    display_name: "Sarah",
-    relationship: "parent",
-    avatar_url: null,
-    timezone: "America/New_York",
-    created_at: "2026-01-15T00:00:00Z",
-  },
-  {
-    id: "mock-b",
-    group_id: "mock-group",
-    display_name: "Michael",
-    relationship: "sibling",
-    avatar_url: null,
-    timezone: "America/Chicago",
-    created_at: "2026-01-15T00:00:00Z",
-  },
-  {
-    id: "mock-c",
-    group_id: "mock-group",
-    display_name: "Grandma Sue",
-    relationship: "grandparent",
-    avatar_url: null,
-    timezone: "America/Los_Angeles",
-    created_at: "2026-01-15T00:00:00Z",
-    preferences: {
-      id: "pref-c",
-      member_id: "mock-c",
-      ui_mode: "grandparent",
-      notifications_enabled: true,
-      digest_frequency: "weekly",
-    },
-  },
-  {
-    id: "mock-d",
-    group_id: "mock-group",
-    display_name: "Uncle Joe",
-    relationship: "aunt_uncle",
-    avatar_url: null,
-    timezone: "America/Denver",
-    created_at: "2026-01-15T00:00:00Z",
-  },
-];
-
-function buildMockDigestContent(
+/**
+ * Build a sample letter from the opt-in demo family. ONLY called when a screen
+ * was opened with `?demo=1` and the deployment allows demo data — never as a
+ * fallback for a real account. A real account with nothing to show gets an
+ * empty state instead (see src/lib/api-digest.ts).
+ */
+function buildDemoDigestContent(
   memberId: string,
   _interactions: Interaction[],
 ): DigestContent {
   const week = getWeekRange();
   const member =
-    MOCK_MEMBERS.find((m) => m.id === memberId) ?? MOCK_MEMBERS[0];
-  const others = MOCK_MEMBERS.filter((m) => m.id !== memberId);
+    DEMO_DIGEST_MEMBERS.find((m) => m.id === memberId) ?? DEMO_DIGEST_MEMBERS[0];
+  const others = DEMO_DIGEST_MEMBERS.filter((m) => m.id !== memberId);
 
   // Build connection snapshots
   const snapshots: DigestPairSnapshot[] = others.map((other, i) => {
@@ -285,36 +248,35 @@ function buildMockDigestContent(
 /**
  * Generate a personalized digest for one member.
  *
+ * Writes only about people who are really in the group. Returns `null` when
+ * there is nothing real to write about — a member who is not in this group, or
+ * a group with no recorded interactions at all. Callers show an honest empty
+ * state in that case; they must never substitute an invented family.
+ *
  * @param groupId    - The family group ID
  * @param memberId   - The member to generate a digest for
- * @param interactions - Array of interactions (real or mock)
- * @param members    - Array of group members (real or mock)
- * @returns A Digest object with content populated
+ * @param interactions - Interactions recorded for the group (metadata only)
+ * @param members    - The group's real members
+ * @returns A Digest with content populated, or null if there is nothing to say
  */
 export function generateDigest(
   groupId: string,
   memberId: string,
   interactions: Interaction[],
   members: FamilyMember[],
-): Digest {
+): Digest | null {
   const member = members.find((m) => m.id === memberId);
   const others = members.filter((m) => m.id !== memberId);
 
-  // If no real data, fall back to mock
-  if (members.length === 0 || interactions.length === 0) {
-    const content = buildMockDigestContent(memberId, interactions);
-    return {
-      id: `digest-mock-${Date.now()}`,
-      group_id: groupId,
-      member_id: memberId,
-      content: content as unknown as Record<string, unknown>,
-      sent_at: null,
-      opened_at: null,
-    };
+  // Nothing real to write about: this member isn't part of this group, or the
+  // family hasn't connected yet. Never invent one — the caller shows the empty
+  // state ("nothing to gather yet") instead.
+  if (!member || members.length < 2 || interactions.length === 0) {
+    return null;
   }
 
   const week = getWeekRange();
-  const memberName = member?.display_name ?? "You";
+  const memberName = member.display_name;
 
   // --- Connection snapshot ---
   const memberIds = members.map((m) => m.id);
@@ -525,16 +487,17 @@ export function generateDigest(
 
 /**
  * Generate digests for all members in a group.
- * Returns an array of Digest objects, one per member.
+ * Returns one Digest per member who has something real to write about —
+ * an empty array means the group has no data yet (never invented content).
  */
 export function generateAllDigests(
   groupId: string,
   interactions: Interaction[],
   members: FamilyMember[],
 ): Digest[] {
-  return members.map((member) =>
-    generateDigest(groupId, member.id, interactions, members),
-  );
+  return members
+    .map((member) => generateDigest(groupId, member.id, interactions, members))
+    .filter((digest): digest is Digest => digest !== null);
 }
 
 /**
@@ -567,4 +530,7 @@ export function getLatestDigest(
 // Exports for use by API layer
 // ---------------------------------------------------------------------------
 
-export { MOCK_MEMBERS, buildMockDigestContent, getWeekRange };
+// Demo-only helper. Reachable exclusively through the `?demo=1` opt-in path in
+// src/lib/api-digest.ts — never as a fallback for a real account. The sample
+// members live in src/lib/demo-data.ts (DEMO_DIGEST_MEMBERS).
+export { buildDemoDigestContent, getWeekRange };

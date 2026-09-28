@@ -11,7 +11,6 @@ import type {
 } from "~/lib/types";
 import {
   computeAllPairScores,
-  generateMockInteractions,
   categorizeScore,
 } from "~/lib/relationship-engine";
 import { generateConversationStarters } from "~/lib/conversation-starters";
@@ -122,57 +121,78 @@ export const joinFamilyGroup = createServerFn({ method: "POST" })
     },
   );
 
+/**
+ * The real read behind `getFamilyGroup`. Throws if the database is unreachable
+ * or the query fails — that is what lets a trust-critical screen tell
+ * "there is no such family" apart from "the lookup failed".
+ */
+async function loadFamilyGroup(
+  db: ReturnType<typeof sql>,
+  groupId: string,
+): Promise<GroupWithMembers | null> {
+  const groups = await db`
+    select id, name, created_at, plan, invite_code
+    from family_groups
+    where id = ${groupId}
+    limit 1
+  `;
+  if (groups.length === 0) return null;
+
+  const group = coerceRow(groups[0] as unknown as FamilyGroup);
+
+  const members = await db`
+    select m.id, m.group_id, m.display_name, m.relationship,
+           m.avatar_url, m.timezone, m.created_at,
+           p.id as pref_id, p.member_id as pref_member_id,
+           p.ui_mode, p.notifications_enabled, p.digest_frequency
+    from family_members m
+    left join member_preferences p on p.member_id = m.id
+    where m.group_id = ${group.id}
+    order by m.created_at
+  `;
+
+  const memberList = members.map((m: Record<string, unknown>) => {
+    const member = coerceRow({
+      id: m.id,
+      group_id: m.group_id,
+      display_name: m.display_name,
+      relationship: m.relationship,
+      avatar_url: m.avatar_url,
+      timezone: m.timezone,
+      created_at: m.created_at,
+    } as unknown as FamilyMember);
+
+    if (m.pref_id) {
+      member.preferences = coerceRow({
+        id: m.pref_id,
+        member_id: m.pref_member_id,
+        ui_mode: m.ui_mode,
+        notifications_enabled: m.notifications_enabled,
+        digest_frequency: m.digest_frequency,
+      });
+    }
+
+    return member;
+  });
+
+  return { ...group, members: memberList };
+}
+
 export const getFamilyGroup = createServerFn({ method: "GET" })
   .validator((d: { groupId: string }) => d)
   .handler(async ({ data }): Promise<GroupWithMembers | null> => {
-    return safeQuery(async (db) => {
-      const groups = await db`
-        select id, name, created_at, plan, invite_code
-        from family_groups
-        where id = ${data.groupId}
-        limit 1
-      `;
-      if (groups.length === 0) return null;
+    return safeQuery((db) => loadFamilyGroup(db, data.groupId), null);
+  });
 
-      const group = coerceRow(groups[0] as unknown as FamilyGroup);
-
-      const members = await db`
-        select m.id, m.group_id, m.display_name, m.relationship,
-               m.avatar_url, m.timezone, m.created_at,
-               p.id as pref_id, p.member_id as pref_member_id,
-               p.ui_mode, p.notifications_enabled, p.digest_frequency
-        from family_members m
-        left join member_preferences p on p.member_id = m.id
-        where m.group_id = ${group.id}
-        order by m.created_at
-      `;
-
-      const memberList = members.map((m: Record<string, unknown>) => {
-        const member = coerceRow({
-          id: m.id,
-          group_id: m.group_id,
-          display_name: m.display_name,
-          relationship: m.relationship,
-          avatar_url: m.avatar_url,
-          timezone: m.timezone,
-          created_at: m.created_at,
-        } as unknown as FamilyMember);
-
-        if (m.pref_id) {
-          member.preferences = coerceRow({
-            id: m.pref_id,
-            member_id: m.pref_member_id,
-            ui_mode: m.ui_mode,
-            notifications_enabled: m.notifications_enabled,
-            digest_frequency: m.digest_frequency,
-          });
-        }
-
-        return member;
-      });
-
-      return { ...group, members: memberList };
-    }, null);
+/**
+ * Same read as `getFamilyGroup`, except a database failure throws instead of
+ * quietly looking like "no family". Use this wherever an empty state caused by
+ * a failed lookup would be a lie — /grandparent and /digest.
+ */
+export const getFamilyGroupStrict = createServerFn({ method: "GET" })
+  .validator((d: { groupId: string }) => d)
+  .handler(async ({ data }): Promise<GroupWithMembers | null> => {
+    return loadFamilyGroup(sql(), data.groupId);
   });
 
 export const getGroupByInviteCode = createServerFn({ method: "GET" })
@@ -288,29 +308,47 @@ export const getMemberInteractions = createServerFn({ method: "GET" })
     }, []);
   });
 
+/**
+ * The real read behind `getAllGroupInteractions` — throws if the database is
+ * unreachable (see `getAllGroupInteractionsStrict`).
+ */
+async function loadAllGroupInteractions(
+  db: ReturnType<typeof sql>,
+  groupId: string,
+  days: number,
+): Promise<Interaction[]> {
+  const rows = await db`
+    select id, from_member_id, to_member_id, group_id,
+           interaction_type, metadata, created_at
+    from interactions
+    where group_id = ${groupId}
+      and created_at >= now() - make_interval(days => ${days})
+    order by created_at desc
+    limit 500
+  `;
+  return rows.map((r: unknown) => coerceRow(r as unknown as Interaction));
+}
+
 export const getAllGroupInteractions = createServerFn({ method: "GET" })
   .validator((d: { groupId: string; days?: number }) => d)
   .handler(async ({ data }): Promise<Interaction[]> => {
-    return safeQuery(async (db) => {
-      const days = data.days ?? 90;
-      const rows = await db`
-        select id, from_member_id, to_member_id, group_id,
-               interaction_type, metadata, created_at
-        from interactions
-        where group_id = ${data.groupId}
-          and created_at >= now() - make_interval(days => ${days})
-        order by created_at desc
-        limit 500
-      `;
-      return rows.map(
-        (r: unknown) => coerceRow(r as unknown as Interaction),
-      );
-    }, []);
+    return safeQuery(
+      (db) => loadAllGroupInteractions(db, data.groupId, data.days ?? 90),
+      [],
+    );
   });
 
-// ---------------------------------------------------------------------------
-// Relationship scoring
-// ---------------------------------------------------------------------------
+/**
+ * Same read as `getAllGroupInteractions`, except a database failure throws
+ * instead of looking like "this family has never connected". Used by /digest,
+ * where the difference decides between an honest empty state and a lie.
+ */
+export const getAllGroupInteractionsStrict = createServerFn({ method: "GET" })
+  .validator((d: { groupId: string; days?: number }) => d)
+  .handler(async ({ data }): Promise<Interaction[]> => {
+    return loadAllGroupInteractions(sql(), data.groupId, data.days ?? 90);
+  });
+
 
 export const getPairScores = createServerFn({ method: "GET" })
   .validator((d: { groupId: string }) => d)
@@ -349,13 +387,10 @@ export const getPairScores = createServerFn({ method: "GET" })
 
         return computeAllPairScores(memberIds, interactions);
       },
-      // Fallback: return mock data so the UI always works
-      (() => {
-        // Generate deterministic mock member IDs
-        const mockMemberIds = ["mock-a", "mock-b", "mock-c", "mock-d"];
-        const mockInteractions = generateMockInteractions(mockMemberIds);
-        return computeAllPairScores(mockMemberIds, mockInteractions);
-      })(),
+      // Fallback: no scores at all. Connecting a database is the honest fix;
+      // inventing connection scores for a real family is not. (Screens handle
+      // an empty list — see the "connect a database" notes on the dashboard.)
+      [],
     );
   });
 
@@ -550,19 +585,9 @@ export const generateNudge = createServerFn({ method: "POST" })
         return nudge;
       },
 
-      // Fallback: return a mock nudge so the UI works without a DB
-      {
-        id: `mock-nudge-${Date.now()}`,
-        group_id: data.groupId,
-        from_member_id: "mock-a",
-        to_member_id: "mock-b",
-        nudge_type: "dormancy",
-        message_text:
-          "It's been a while since you connected with Grandma Sue. Send a quick hello! ",
-        status: "pending",
-        created_at: new Date().toISOString(),
-        acknowledged_at: null,
-      } as Nudge,
+      // Fallback: no nudge. A nudge is a message from a real relative; if the
+      // database is unavailable there is nothing honest to show.
+      null,
     );
   });
 
@@ -614,35 +639,55 @@ export const acknowledgeNudge = createServerFn({ method: "POST" })
     return coerceRow(rows[0] as unknown as Nudge);
   });
 
+/**
+ * The real read behind `getPendingNudges` — throws if the database is
+ * unreachable (see `getPendingNudgesStrict`).
+ */
+async function loadPendingNudges(
+  db: ReturnType<typeof sql>,
+  memberId: string,
+): Promise<Nudge[]> {
+  const rows = await db`
+    select n.id, n.group_id, n.from_member_id, n.to_member_id,
+           n.nudge_type, n.message_text, n.status, n.created_at, n.acknowledged_at,
+           fm.display_name as from_name,
+           tm.display_name as to_name
+    from nudges n
+    join family_members fm on fm.id = n.from_member_id
+    join family_members tm on tm.id = n.to_member_id
+    where n.to_member_id = ${memberId}
+      and n.status = 'pending'
+    order by n.created_at desc
+    limit 20
+  `;
+  return rows.map((r: Record<string, unknown>) => {
+    const nudge = coerceRow(
+      r as unknown as Nudge & { from_name: string; to_name: string },
+    );
+    return nudge;
+  });
+}
+
 export const getPendingNudges = createServerFn({ method: "GET" })
   .validator((d: { memberId: string }) => d)
   .handler(async ({ data }): Promise<Nudge[]> => {
-    return safeQuery(async (db) => {
-      const rows = await db`
-        select n.id, n.group_id, n.from_member_id, n.to_member_id,
-               n.nudge_type, n.message_text, n.status, n.created_at, n.acknowledged_at,
-               fm.display_name as from_name,
-               tm.display_name as to_name
-        from nudges n
-        join family_members fm on fm.id = n.from_member_id
-        join family_members tm on tm.id = n.to_member_id
-        where n.to_member_id = ${data.memberId}
-          and n.status = 'pending'
-        order by n.created_at desc
-        limit 20
-      `;
-      return rows.map((r: Record<string, unknown>) => {
-        const nudge = coerceRow(
-          r as unknown as Nudge & { from_name: string; to_name: string },
-        );
-        return nudge;
-      });
-    }, []);
+    // A database that can't be reached shows no nudges. It never shows one we
+    // made up — an invented message from a relative is the one thing this
+    // product must never do.
+    return safeQuery((db) => loadPendingNudges(db, data.memberId), []);
   });
 
-// ---------------------------------------------------------------------------
-// Conversation starters (server function)
-// ---------------------------------------------------------------------------
+/**
+ * Same read as `getPendingNudges`, except a database failure throws instead of
+ * looking like "no messages". Used by /grandparent so a failed lookup reads as
+ * a failure the user can retry.
+ */
+export const getPendingNudgesStrict = createServerFn({ method: "GET" })
+  .validator((d: { memberId: string }) => d)
+  .handler(async ({ data }): Promise<Nudge[]> => {
+    return loadPendingNudges(sql(), data.memberId);
+  });
+
 
 export const getConversationStarters = createServerFn({ method: "POST" })
   .validator(

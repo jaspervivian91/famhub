@@ -1,22 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import {
-  getPendingNudges,
-  getFamilyGroup,
-  recordInteraction,
-  acknowledgeNudge,
-  getMemberById,
-} from "~/lib/api";
-import {
-  getCurrentMemberId,
-  getCurrentGroupId,
-  getCurrentMemberName,
-} from "~/lib/client-store";
+import { useEffect, useState } from "react";
+import { recordInteraction, acknowledgeNudge } from "~/lib/api";
+import { getCurrentMemberId, getCurrentGroupId } from "~/lib/client-store";
 import { setUIMode } from "~/lib/ui-mode";
+import { getGrandparentScreen } from "~/lib/api-grandparent";
 import type { Nudge, FamilyMember } from "~/lib/types";
+import { DEMO_NOTICE } from "~/lib/demo-data";
 import { Icon } from "~/components/Icon";
 import { Logo } from "~/components/Logo";
+
+// ── Grandparent mode ────────────────────────────────────────────────
+//
+// This is the screen we hand to an elderly parent, so it shows exactly what
+// the database knows: the real family, an honest empty state when there is no
+// family yet, or a calm retry when the lookup failed. It never shows an
+// invented household — see src/lib/api-grandparent.ts. Demo data is available
+// only with an explicit `?demo=1` (src/lib/demo-data.ts), and always carries a
+// "sample family" notice when it is.
+//
+// METADATA ONLY: names, relationships, timestamps and app-written nudge text.
+// Never the content of anything a family said.
 
 // ── Warm palette (kept in sync with app.css / design-system-warm.md) ──
 const CREAM = "var(--color-gp-bg)";
@@ -30,142 +33,25 @@ const GP_BODY = "1.4375rem"; // 23px
 const GP_H1 = "2.25rem"; // 36px
 const GP_H2 = "2rem"; // 32px
 
-// ── Mock data for when no DB is connected ────────────────────────────
-
-const MOCK_MEMBERS: FamilyMember[] = [
-  {
-    id: "mock-gp",
-    group_id: "mock-group",
-    display_name: "Grandma Sue",
-    relationship: "grandparent",
-    avatar_url: null,
-    timezone: "America/Chicago",
-    created_at: new Date().toISOString(),
-    preferences: {
-      id: "mock-pref",
-      member_id: "mock-gp",
-      ui_mode: "grandparent",
-      notifications_enabled: true,
-      digest_frequency: "weekly",
-    },
-  },
-  {
-    id: "mock-a",
-    group_id: "mock-group",
-    display_name: "Sarah",
-    relationship: "child",
-    avatar_url: null,
-    timezone: "America/New_York",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "mock-b",
-    group_id: "mock-group",
-    display_name: "Michael",
-    relationship: "child",
-    avatar_url: null,
-    timezone: "America/Denver",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "mock-c",
-    group_id: "mock-group",
-    display_name: "Little Emma",
-    relationship: "grandchild",
-    avatar_url: null,
-    timezone: "America/New_York",
-    created_at: new Date().toISOString(),
-  },
-];
-
-const MOCK_NUDGES: (Nudge & { from_name: string })[] = [
-  {
-    id: "mock-nudge-1",
-    group_id: "mock-group",
-    from_member_id: "mock-a",
-    to_member_id: "mock-gp",
-    nudge_type: "dormancy",
-    message_text:
-      "It's been a little while, and Emma has been asking about you. She'd love to hear your voice.",
-    status: "pending",
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    acknowledged_at: null,
-    from_name: "Sarah",
-  },
-  {
-    id: "mock-nudge-2",
-    group_id: "mock-group",
-    from_member_id: "mock-c",
-    to_member_id: "mock-gp",
-    nudge_type: "celebration",
-    message_text:
-      "Little Emma has been asking about you! She'd love to hear from Grandma.",
-    status: "pending",
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    acknowledged_at: null,
-    from_name: "Little Emma",
-  },
-];
-
-// ── Server: load grandparent data ───────────────────────────────────
-
-const getGrandparentData = createServerFn({ method: "GET" })
-  .validator((d: { memberId?: string; groupId?: string }) => d)
-  .handler(async ({ data }) => {
-    if (!data.memberId || !data.groupId) {
-      return {
-        group: null,
-        member: null,
-        nudges: MOCK_NUDGES,
-        mockMembers: MOCK_MEMBERS.filter((m) => m.id !== "mock-gp"),
-        mockGroupName: "The Johnson Family",
-        mockMemberName: "Grandma",
-      };
-    }
-
-    try {
-      const [group, member, nudges] = await Promise.all([
-        getFamilyGroup({ data: { groupId: data.groupId } }),
-        getMemberById({ data: { memberId: data.memberId } }),
-        getPendingNudges({ data: { memberId: data.memberId } }),
-      ]);
-
-      if (group) {
-        return {
-          group,
-          member,
-          nudges,
-          mockMembers: null,
-          mockGroupName: null,
-          mockMemberName: null,
-        };
-      }
-    } catch {
-      // fall through to mock
-    }
-
-    return {
-      group: null,
-      member: null,
-      nudges: MOCK_NUDGES,
-      mockMembers: MOCK_MEMBERS.filter((m) => m.id !== "mock-gp"),
-      mockGroupName: "The Johnson Family",
-      mockMemberName: "Grandma",
-    };
-  });
-
 // ── Route ───────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/grandparent")({
-  loader: async () => {
+  // `?demo=1` is the explicit opt-in for the sample family. Without it this
+  // screen only ever shows real data (or an honest empty/error state).
+  validateSearch: (search: Record<string, unknown>): { demo?: "1" } =>
+    search.demo === "1" || search.demo === 1 ? { demo: "1" } : {},
+  loaderDeps: ({ search }) => ({ demo: search.demo === "1" }),
+  loader: async ({ deps }) => {
     const memberId = getCurrentMemberId();
     const groupId = getCurrentGroupId();
 
-    const result = await getGrandparentData({
-      data: { memberId: memberId ?? undefined, groupId: groupId ?? undefined },
+    return getGrandparentScreen({
+      data: {
+        memberId: memberId ?? undefined,
+        groupId: groupId ?? undefined,
+        demo: deps.demo,
+      },
     });
-
-    return result;
   },
   component: GrandparentDashboard,
 });
@@ -225,53 +111,267 @@ function Avatar({ name, size }: { name: string; size: number }) {
   );
 }
 
+/** Header shared by every state of the screen: wordmark + today's date. */
+function GrandparentHeader() {
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Logo variant="full" size="md" />
+        <span style={{ color: INK, opacity: 0.75 }}>{getTodayLabel()}</span>
+      </div>
+      <div
+        aria-hidden="true"
+        className="mt-4"
+        style={{ borderTop: `2px solid ${BORDER}`, opacity: 0.5 }}
+      />
+    </>
+  );
+}
+
+/** Shown whenever the screen is displaying sample (demo) data. */
+function DemoNotice() {
+  return (
+    <p
+      role="status"
+      className="mt-6 flex items-start gap-3 p-4"
+      style={{
+        backgroundColor: CREAM,
+        border: `2px dashed var(--color-gp-highlight)`,
+        borderRadius: "var(--radius-card-soft)",
+        color: INK,
+        fontSize: GP_BODY,
+        fontWeight: 700,
+      }}
+    >
+      <Icon name="idea" size={32} />
+      {DEMO_NOTICE}
+    </p>
+  );
+}
+
+/** Truthful empty state: no family group yet. One sentence, one next step. */
+function NoFamilyYet() {
+  return (
+    <main
+      className="gp-mode min-h-dvh px-6 py-8"
+      style={{
+        backgroundColor: CREAM,
+        color: INK,
+        fontSize: GP_BODY,
+        lineHeight: 1.6,
+      }}
+    >
+      <div className="mx-auto max-w-[520px]">
+        <GrandparentHeader />
+
+        <h1 className="mt-9" style={{ fontSize: GP_H1, fontWeight: 700 }}>
+          {getTimeGreeting()}
+        </h1>
+
+        <div
+          className="gp-card mt-7"
+          style={{ backgroundColor: SAND, borderColor: BORDER }}
+        >
+          <p style={{ fontWeight: 700 }}>Nobody is here yet</p>
+          <p className="mt-4" style={{ opacity: 0.9 }}>
+            Ask your family to send you an invite, and they will appear right
+            here.
+          </p>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-5">
+          <a
+            href="/dashboard"
+            className="gp-btn gp-btn-primary gp-tap-lg"
+            style={{ justifyContent: "center" }}
+          >
+            <Icon name="members" size={32} />
+            Go to my family home
+          </a>
+          <a
+            href="/digest"
+            className="gp-btn gp-tap"
+            style={{ justifyContent: "center", backgroundColor: CREAM }}
+          >
+            <Icon name="checklist" size={32} />
+            Read this week&apos;s letter
+          </a>
+        </div>
+
+        <p className="mt-8" style={{ opacity: 0.75, fontSize: GP_BODY }}>
+          Every connection here is private — metadata only, never content.
+        </p>
+
+        <footer className="mt-8">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              setUIMode("standard");
+              window.location.href = "/";
+            }}
+            className="gp-btn"
+            style={{ justifyContent: "center", backgroundColor: CREAM }}
+          >
+            <Icon name="talk" size={32} />
+            Back to the regular view
+          </a>
+        </footer>
+      </div>
+    </main>
+  );
+}
+
+/** A failed lookup — a failure the user can retry, never invented content. */
+function CouldNotOpen({ onRetry }: { onRetry: () => void }) {
+  return (
+    <main
+      className="gp-mode min-h-dvh px-6 py-8"
+      style={{
+        backgroundColor: CREAM,
+        color: INK,
+        fontSize: GP_BODY,
+        lineHeight: 1.6,
+      }}
+    >
+      <div className="mx-auto max-w-[520px]">
+        <GrandparentHeader />
+
+        <h1 className="mt-9" style={{ fontSize: GP_H1, fontWeight: 700 }}>
+          We can&apos;t open this just now
+        </h1>
+
+        <div
+          className="gp-card mt-7"
+          style={{ backgroundColor: SAND, borderColor: BORDER }}
+        >
+          <p style={{ opacity: 0.9 }}>
+            Something on our side is not working. Nothing has been lost. Please
+            try again in a moment.
+          </p>
+        </div>
+
+        <div className="mt-8">
+          <button
+            onClick={onRetry}
+            className="gp-btn gp-btn-primary gp-tap-lg w-full"
+            style={{ justifyContent: "center" }}
+          >
+            <Icon name="reconnect" size={32} />
+            Try again
+          </button>
+        </div>
+
+        <p className="mt-8" style={{ opacity: 0.75, fontSize: GP_BODY }}>
+          Every connection here is private — metadata only, never content.
+        </p>
+
+        <footer className="mt-8">
+          <a
+            href="/"
+            className="gp-btn"
+            style={{ justifyContent: "center", backgroundColor: CREAM }}
+          >
+            <Icon name="talk" size={32} />
+            Back to the regular view
+          </a>
+        </footer>
+      </div>
+    </main>
+  );
+}
+
 // ── Main Component ──────────────────────────────────────────────────
 
 function GrandparentDashboard() {
   const loaderData = Route.useLoaderData();
+  const { demo } = Route.useSearch();
+  const wantsDemo = demo === "1";
+
+  // The loader above runs during server rendering, where there is no
+  // localStorage to read the device's identity from. So the first client paint
+  // re-asks the same server function with the identity this device holds. The
+  // loader result stands in until that answers.
+  const [data, setData] = useState(loaderData);
+
+  useEffect(() => {
+    let cancelled = false;
+    const memberId = getCurrentMemberId();
+    const groupId = getCurrentGroupId();
+    getGrandparentScreen({
+      data: {
+        memberId: memberId ?? undefined,
+        groupId: groupId ?? undefined,
+        demo: wantsDemo,
+      },
+    })
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .catch(() => {
+        if (!cancelled) setData({ status: "error" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [confirmation, setConfirmation] = useState<{
     message: string;
     visible: boolean;
   }>({ message: "", visible: false });
 
+  const isDemo = data.status === "demo";
+
+  // The name we greet them by, and the people we show, always come from the
+  // server read above — never from a guess.
   const memberName =
-    loaderData.member?.display_name ??
-    loaderData.mockMemberName ??
-    getCurrentMemberName() ??
-    "there";
+    data.status === "ok"
+      ? data.member.display_name
+      : data.status === "demo"
+        ? data.memberName
+        : null;
 
-  const currentMemberId = getCurrentMemberId();
-
-  const familyOthers: FamilyMember[] = loaderData.group?.members
-    ? loaderData.group.members.filter((m) => m.id !== currentMemberId)
-    : (loaderData.mockMembers ?? []);
+  const familyOthers: FamilyMember[] =
+    data.status === "ok"
+      ? data.group.members.filter((m) => m.id !== data.member.id)
+      : data.status === "demo"
+        ? data.members
+        : [];
 
   const pendingNudges: (Nudge & { from_name?: string })[] =
-    loaderData.nudges.map((n) => ({
-      ...n,
-      from_name: (n as unknown as Record<string, unknown>).from_name as string,
-    }));
+    data.status === "ok" || data.status === "demo" ? data.nudges : [];
+
+  function showConfirmation(message: string) {
+    setConfirmation({ message, visible: true });
+    setTimeout(() => {
+      setConfirmation((prev) => ({ ...prev, visible: false }));
+    }, 5000);
+  }
 
   async function handleSayHello(member: FamilyMember) {
-    const currentId = getCurrentMemberId();
-    const currentGroupId = getCurrentGroupId();
+    // Sample data is for looking at, not for writing interactions.
+    if (!isDemo) {
+      const currentId = getCurrentMemberId();
+      const currentGroupId = getCurrentGroupId();
 
-    if (currentId && currentGroupId) {
-      try {
-        await recordInteraction({
-          data: {
-            fromMemberId: currentId,
-            toMemberId: member.id,
-            groupId: currentGroupId,
-            interactionType: "nudge_acknowledged",
-            metadata: {
-              source: "grandparent_dashboard",
-              gesture: "say_hello",
+      if (currentId && currentGroupId) {
+        try {
+          await recordInteraction({
+            data: {
+              fromMemberId: currentId,
+              toMemberId: member.id,
+              groupId: currentGroupId,
+              interactionType: "nudge_acknowledged",
+              metadata: {
+                source: "grandparent_dashboard",
+                gesture: "say_hello",
+              },
             },
-          },
-        });
-      } catch {
-        // best-effort
+          });
+        } catch {
+          // best-effort
+        }
       }
     }
     showConfirmation(
@@ -283,32 +383,32 @@ function GrandparentDashboard() {
     nudge: Nudge & { from_name?: string },
     responseType: string,
   ) {
-    const currentId = getCurrentMemberId();
-    const currentGroupId = getCurrentGroupId();
-
     const fromName = nudge.from_name ?? "Your family";
 
-    if (currentId && currentGroupId) {
-      try {
-        await recordInteraction({
-          data: {
-            fromMemberId: currentId,
-            toMemberId: nudge.from_member_id,
-            groupId: currentGroupId,
-            interactionType: "nudge_acknowledged",
-            metadata: {
-              source: "grandparent_dashboard",
-              response: responseType,
-              nudgeId: nudge.id,
-            },
-          },
-        });
+    if (!isDemo) {
+      const currentId = getCurrentMemberId();
+      const currentGroupId = getCurrentGroupId();
 
-        if (!nudge.id.startsWith("mock-")) {
+      if (currentId && currentGroupId) {
+        try {
+          await recordInteraction({
+            data: {
+              fromMemberId: currentId,
+              toMemberId: nudge.from_member_id,
+              groupId: currentGroupId,
+              interactionType: "nudge_acknowledged",
+              metadata: {
+                source: "grandparent_dashboard",
+                response: responseType,
+                nudgeId: nudge.id,
+              },
+            },
+          });
+
           await acknowledgeNudge({ data: { nudgeId: nudge.id } });
+        } catch {
+          // best-effort
         }
-      } catch {
-        // best-effort
       }
     }
 
@@ -322,11 +422,12 @@ function GrandparentDashboard() {
     );
   }
 
-  function showConfirmation(message: string) {
-    setConfirmation({ message, visible: true });
-    setTimeout(() => {
-      setConfirmation((prev) => ({ ...prev, visible: false }));
-    }, 5000);
+  // ── Truthful states, in order of what we actually know ─────────────
+
+  if (data.status === "no-family") return <NoFamilyYet />;
+
+  if (data.status === "error") {
+    return <CouldNotOpen onRetry={() => window.location.reload()} />;
   }
 
   // ── Render ─────────────────────────────────────────────────────────
@@ -343,15 +444,9 @@ function GrandparentDashboard() {
     >
       <div className="mx-auto max-w-[520px]">
         {/* Wordmark + today's date — both at reading size, never tiny */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Logo variant="full" size="md" />
-          <span style={{ color: INK, opacity: 0.75 }}>{getTodayLabel()}</span>
-        </div>
-        <div
-          aria-hidden="true"
-          className="mt-4"
-          style={{ borderTop: `2px solid ${BORDER}`, opacity: 0.5 }}
-        />
+        <GrandparentHeader />
+
+        {isDemo && <DemoNotice />}
 
         {/* Greeting */}
         <h1 className="mt-9 mb-9" style={{ fontSize: GP_H1, fontWeight: 700 }}>
