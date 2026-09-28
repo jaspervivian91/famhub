@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import {
@@ -173,32 +173,52 @@ function GroupPage() {
             {group?.members && group.members.length > 0 ? (
               <ul className="mt-5 flex flex-col gap-3">
                 {group.members.map((m) => (
-                  <li key={m.id} className="fh-nested flex items-center gap-3 p-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-body)] font-bold"
+                  <li key={m.id}>
+                    <Link
+                      to="/group/$groupId/member/$memberId"
+                      params={{ groupId, memberId: m.id }}
+                      className="fh-nested flex items-center gap-3 p-3"
                       style={{
-                        width: 40,
-                        height: 40,
-                        backgroundColor: "var(--color-fh-surface)",
-                        border: "1px solid var(--color-fh-border)",
-                        fontSize: "1rem",
+                        minHeight: 56,
+                        color: "inherit",
+                        textDecoration: "none",
                       }}
+                      aria-label={`Open ${m.display_name}'s relationship profile`}
                     >
-                      {m.display_name.charAt(0).toUpperCase()}
-                    </span>
-                    <div>
-                      <p className="fh-body-sm font-bold">{m.display_name}</p>
-                      <p className="fh-caption capitalize">
-                        {m.relationship.replace("_", " ")} · {m.timezone}
-                      </p>
-                    </div>
-                    {m.preferences?.ui_mode === "grandparent" && (
-                      <span className="fh-chip ml-auto">
-                        <Icon name="heart" size={16} />
-                        Large text
+                      <span
+                        aria-hidden="true"
+                        className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-body)] font-bold"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          backgroundColor: "var(--color-fh-surface)",
+                          border: "1px solid var(--color-fh-border)",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {m.display_name.charAt(0).toUpperCase()}
                       </span>
-                    )}
+                      <div>
+                        <p className="fh-body-sm font-bold">{m.display_name}</p>
+                        <p className="fh-caption capitalize">
+                          {m.relationship.replace("_", " ")} · {m.timezone}
+                        </p>
+                      </div>
+                      <span className="ml-auto flex shrink-0 items-center gap-2">
+                        {m.preferences?.ui_mode === "grandparent" && (
+                          <span className="fh-chip">
+                            <Icon name="heart" size={16} />
+                            Large text
+                          </span>
+                        )}
+                        <span
+                          className="fh-caption"
+                          style={{ color: "var(--color-fh-accent)" }}
+                        >
+                          Open
+                        </span>
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
