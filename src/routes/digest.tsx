@@ -69,15 +69,10 @@ function DigestPage() {
 
   async function loadDigest() {
     if (!memberId || !groupId) {
-      setLoading(true);
-      try {
-        const result = await generateMyDigest({
-          data: { groupId: "preview", memberId: "preview-user" },
-        });
-        setDigest(result ?? null);
-      } catch {
-        // Will fall through to empty state
-      }
+      // Not part of a family yet, so there is nothing to write a letter about.
+      // There is deliberately no preview/placeholder letter: the weekly letter
+      // only ever describes the family that really exists.
+      setDigest(null);
       setLoading(false);
       return;
     }
@@ -521,7 +516,8 @@ function GrandparentEmptyState({
         Your weekly letter
       </h1>
       <p className="mt-4">
-        Your first letter is being written. Check back soon.
+        There is nothing to write about yet. Once your family joins you here,
+        your first letter will appear.
       </p>
       <button
         onClick={onGenerate}
@@ -550,7 +546,8 @@ function StandardEmptyState({
         <Icon name="checklist" size={56} className="mx-auto" />
         <h1 className="fh-h2 mt-6">Your weekly letter</h1>
         <p className="fh-body mt-3" style={{ color: "var(--color-fh-muted)" }}>
-          Your first letter is being written. Check back soon.
+          There is nothing to write about yet. Once your family has a few
+          moments together, your first letter will appear here.
         </p>
         <p className="fh-caption mx-auto mt-3 max-w-[36ch]">
           Each letter gathers your family&apos;s small moments into something
