@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "check:coerce-row": "bun run scripts/check-coerce-row.ts",
     "db:migrate": "bun run scripts/migrate.ts",
-    "db:status": "bun run scripts/db-status.ts"
+    "db:status": "bun run scripts/db-status.ts",
+    "check:email-send": "bun run scripts/check-email-send-result.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
