@@ -187,6 +187,50 @@ export function hasResendKey(): boolean {
   );
 }
 
+/**
+ * Resend does **not** throw when it rejects a message — it resolves with
+ * `{ data: null, error: {…} }` (an unverified sending domain, a suppressed
+ * recipient and a malformed address all arrive this way). Awaiting the call
+ * and ignoring the result therefore reports `success: true` for an email
+ * that never left the building, and callers such as the digest sender go on
+ * to mark the digest as sent. Every sender must inspect `error`.
+ */
+type ResendFailure = {
+  success: false;
+  error: string;
+};
+
+/** Turn a Resend API error into the sender's `{ success: false, error }`. */
+function resendFailure(error: unknown): ResendFailure {
+  const failure = error as {
+    name?: string;
+    message?: string;
+    statusCode?: number | null;
+  } | null;
+  const name = failure?.name ?? "send_failed";
+  const status =
+    typeof failure?.statusCode === "number" ? ` (${failure.statusCode})` : "";
+  const message =
+    failure?.message ?? "The email provider rejected this message.";
+  return { success: false, error: `${name}${status}: ${message}` };
+}
+
+/** Send one message and report the provider's answer truthfully. */
+async function sendViaResend(
+  payload: Parameters<Resend["emails"]["send"]>[0],
+): Promise<{ success: boolean; error?: string }> {
+  const resend = getResend();
+  const { data, error } = await resend.emails.send(payload);
+  if (error) return resendFailure(error);
+  if (!data?.id) {
+    return {
+      success: false,
+      error: "The email provider did not confirm the send.",
+    };
+  }
+  return { success: true };
+}
+
 // ---------------------------------------------------------------------------
 // Waitlist
 // ---------------------------------------------------------------------------
@@ -216,8 +260,7 @@ export async function sendWaitlistConfirmation(
   ].join("\n");
 
   try {
-    const resend = getResend();
-    await resend.emails.send({
+    return await sendViaResend({
       from: FROM_ADDRESS,
       to: email,
       subject: "You're on the Family Core waitlist!",
@@ -229,7 +272,6 @@ export async function sendWaitlistConfirmation(
       }),
       text,
     });
-    return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, error: message };
@@ -262,8 +304,7 @@ export async function sendPasswordReset(
   ].join("\n");
 
   try {
-    const resend = getResend();
-    await resend.emails.send({
+    return await sendViaResend({
       from: FROM_ADDRESS,
       to: email,
       subject: "Reset your Family Core password",
@@ -276,7 +317,6 @@ export async function sendPasswordReset(
       }),
       text,
     });
-    return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, error: message };
@@ -324,8 +364,7 @@ export async function sendNudgeEmail(
   ].join("\n");
 
   try {
-    const resend = getResend();
-    await resend.emails.send({
+    return await sendViaResend({
       from: FROM_ADDRESS,
       to: memberEmail,
       subject: `${label} — from Family Core`,
@@ -336,7 +375,6 @@ export async function sendNudgeEmail(
       }),
       text,
     });
-    return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, error: message };
@@ -356,11 +394,22 @@ export async function sendDigestEmail(
 
   const content = digest.content as DigestContent;
   const weekLabel = content.weekLabel ?? "This week";
+  const moments = content.momentsToMention?.slice(0, 3) ?? [];
   const snapshots = content.connectionSnapshot?.slice(0, 3) ?? [];
   const starters = content.conversationStarters?.slice(0, 2) ?? [];
 
   try {
-    const resend = getResend();
+    // The moments the letter opens with — the same rows the dashboard card and
+    // /digest show. Without this section the emailed letter carried only the
+    // scores and the starters, never the part that says what actually happened.
+    const momentRows = moments
+      .map(
+        (m) => `
+            ${warmNote(
+              `<p style="margin:0; font-family:${SANS}; font-size:15px; line-height:1.6; color:${WARM.ink};">${INK_DOT}&nbsp; ${esc(m.text)}</p>`,
+            )}`,
+      )
+      .join("");
 
     // Build connection health rows
     const snapshotRows = snapshots
@@ -393,6 +442,16 @@ export async function sendDigestEmail(
       ${warmPara(esc(weekLabel), `text-align:center; font-size:17px; margin-bottom:4px;`)}
       ${warmPara(`A private summary for ${esc(memberLine)}`, `text-align:center; font-size:14px; color:${WARM.muted}; margin-bottom:22px;`)}
 
+      ${
+        moments.length > 0
+          ? `
+      <div style="margin:0 0 20px;">
+        ${warmSectionHeading("Moments worth mentioning")}
+        ${momentRows}
+      </div>
+      `
+          : ""
+      }
       ${
         snapshots.length > 0
           ? `
@@ -439,6 +498,13 @@ export async function sendDigestEmail(
       `A private summary for ${memberLine}`,
       "",
     ];
+    if (moments.length > 0) {
+      textSections.push("Moments worth mentioning");
+      for (const m of moments) {
+        textSections.push(`  ${m.text}`);
+      }
+      textSections.push("");
+    }
     if (snapshots.length > 0) {
       textSections.push("Connection health");
       for (const s of snapshots) {
@@ -460,7 +526,7 @@ export async function sendDigestEmail(
     }
     textSections.push(`Read your digest: ${APP_URL}/digest`, "", TAGLINE);
 
-    await resend.emails.send({
+    return await sendViaResend({
       from: FROM_ADDRESS,
       to: memberEmail,
       subject: `Your Family Digest — ${weekLabel}`,
@@ -471,7 +537,6 @@ export async function sendDigestEmail(
       }),
       text: textSections.join("\n"),
     });
-    return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, error: message };
