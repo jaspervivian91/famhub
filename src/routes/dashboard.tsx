@@ -536,33 +536,48 @@ function Dashboard() {
               {group?.members && group.members.length > 0 ? (
                 <ul className="mt-5 flex flex-col gap-3">
                   {group.members.map((m) => (
-                    <li
-                      key={m.id}
-                      className="fh-nested flex items-center gap-3 p-3"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-body)] font-bold"
+                    <li key={m.id}>
+                      <Link
+                        to="/group/$groupId/member/$memberId"
+                        params={{ groupId: group.id, memberId: m.id }}
+                        className="fh-nested flex items-center gap-3 p-3"
                         style={{
-                          width: 40,
-                          height: 40,
-                          backgroundColor: "var(--color-fh-surface)",
-                          border: "1px solid var(--color-fh-border)",
-                          color: "var(--color-fh-body)",
-                          fontSize: "1rem",
+                          minHeight: 56,
+                          color: "inherit",
+                          textDecoration: "none",
                         }}
+                        aria-label={`Open ${m.display_name}'s relationship profile`}
                       >
-                        {m.display_name.charAt(0).toUpperCase()}
-                      </span>
-                      <div>
-                        <p className="fh-body-sm font-bold">
-                          {m.display_name}
-                          {m.id === member?.id ? " (you)" : ""}
-                        </p>
-                        <p className="fh-caption capitalize">
-                          {m.relationship.replace("_", " ")}
-                        </p>
-                      </div>
+                        <span
+                          aria-hidden="true"
+                          className="flex shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-body)] font-bold"
+                          style={{
+                            width: 40,
+                            height: 40,
+                            backgroundColor: "var(--color-fh-surface)",
+                            border: "1px solid var(--color-fh-border)",
+                            color: "var(--color-fh-body)",
+                            fontSize: "1rem",
+                          }}
+                        >
+                          {m.display_name.charAt(0).toUpperCase()}
+                        </span>
+                        <div>
+                          <p className="fh-body-sm font-bold">
+                            {m.display_name}
+                            {m.id === member?.id ? " (you)" : ""}
+                          </p>
+                          <p className="fh-caption capitalize">
+                            {m.relationship.replace("_", " ")}
+                          </p>
+                        </div>
+                        <span
+                          className="fh-caption ml-auto shrink-0"
+                          style={{ color: "var(--color-fh-accent)" }}
+                        >
+                          Open
+                        </span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
