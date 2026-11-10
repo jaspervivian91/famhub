@@ -67,29 +67,42 @@ function LandingPage() {
   return (
     <>
       {/* ── Hero ───────────────────────────────────────────────────── */}
-      <section className="hs-wrap pt-14 pb-12 md:pt-24 md:pb-20">
-        <p className="hs-label">A permanent history page for a home</p>
-        <h1 className="hs-display mt-5 max-w-[16ch]">
-          Every home has a story.
-        </h1>
-        <p className="hs-lede mt-6 max-w-[54ch]">
-          A brass plaque beside the front door. A permanent page for the house —
-          the records that exist, the people who have lived in it, and the
-          chapter you add. When the house changes hands, the story passes with
-          it.
-        </p>
-        <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <a href="#pricing" className="hs-btn hs-btn-brass">
-            Start your home’s page
-          </a>
-          <a href="#example" className="hs-btn hs-btn-ink">
-            See an example page
-          </a>
+      <section className="hs-wrap pt-10 pb-12 md:pt-24 md:pb-20">
+        <div className="flex flex-col gap-9 md:grid md:grid-cols-12 md:items-center md:gap-14">
+          <div className="aspect-[4/3] overflow-hidden md:order-2 md:col-span-5 md:aspect-[3/4]">
+            <img
+              src="/images/hero-house.jpg"
+              alt="A Victorian brick terrace house at golden hour, its bay window and dark green front door catching the low sun, with the street running away behind it."
+              className="h-full w-full object-cover object-center"
+              decoding="async"
+            />
+          </div>
+
+          <div className="md:order-1 md:col-span-7">
+            <p className="hs-label">A permanent history page for a home</p>
+            <h1 className="hs-display mt-5 max-w-[16ch]">
+              Every home has a story.
+            </h1>
+            <p className="hs-lede mt-6 max-w-[54ch]">
+              A brass plaque beside the front door. A permanent page for the
+              house — the records that exist, the people who have lived in it,
+              and the chapter you add. When the house changes hands, the story
+              passes with it.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a href="#pricing" className="hs-btn hs-btn-brass">
+                Start your home’s page
+              </a>
+              <a href="#example" className="hs-btn hs-btn-ink">
+                See an example page
+              </a>
+            </div>
+            <p className="hs-caption mt-7 max-w-[48ch]">
+              Most visitors arrive by scanning the plaque at the door, on a
+              phone. There is nothing to install.
+            </p>
+          </div>
         </div>
-        <p className="hs-caption mt-7 max-w-[48ch]">
-          Most visitors arrive by scanning the plaque at the door, on a phone.
-          There is nothing to install.
-        </p>
       </section>
 
       <hr className="hs-rule-brass" />
@@ -117,6 +130,17 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* ── Plaque band ────────────────────────────────────────────── */}
+      <div className="h-[240px] w-full overflow-hidden md:h-[420px] lg:h-[480px]">
+        <img
+          src="/images/plaque-door.jpg"
+          alt="A brushed brass plaque engraved with a QR code, mounted on the rendered wall beside a dark green front door."
+          className="h-full w-full object-cover object-center"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+
       <hr className="hs-rule" />
 
       {/* ── Example page preview ───────────────────────────────────── */}
@@ -138,41 +162,53 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="px-5 py-8 md:px-10 md:py-10">
-            <p className="font-display text-2xl italic text-hs-muted md:text-3xl">
-              Your address, here
-            </p>
-            <p className="hs-caption mt-2">
-              The page lives at a permanent web address that never changes.
-            </p>
-
-            <hr className="hs-rule mt-8" />
-
-            <div className="mt-8 grid gap-7 md:grid-cols-3 md:gap-8">
-              {SAMPLE_SECTIONS.map((section) => (
-                <div key={section.title}>
-                  <h3 className="hs-h3">{section.title}</h3>
-                  <p className="hs-body mt-2">{section.body}</p>
-                </div>
-              ))}
+          <div className="grid gap-8 px-5 py-8 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] md:items-start md:gap-10 md:px-10 md:py-10">
+            <div className="aspect-[4/3] overflow-hidden sm:aspect-[16/10] md:aspect-[3/4]">
+              <img
+                src="/images/interior-bay.jpg"
+                alt="A sitting room in a period house: a cushioned window seat in a tall bay window, built-in shelves of clothbound books, and an armchair beside an open fireplace."
+                className="h-full w-full object-cover object-center"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
 
-            <hr className="hs-rule mt-8" />
-
-            <div className="mt-8">
-              <p className="hs-label">Ask your house</p>
-              <div className="mt-3 flex items-center justify-between gap-4 border border-hs-rule px-4 py-3">
-                <p className="font-body text-sm italic text-hs-muted">
-                  Who lived here in 1940?
-                </p>
-                <span className="hs-caption shrink-0" aria-hidden="true">
-                  →
-                </span>
-              </div>
-              <p className="hs-caption mt-3 max-w-[48ch]">
-                Where no records or model are connected, the page says so
-                plainly rather than answering from guesswork.
+            <div>
+              <p className="font-display text-2xl italic text-hs-muted md:text-3xl">
+                Your address, here
               </p>
+              <p className="hs-caption mt-2">
+                The page lives at a permanent web address that never changes.
+              </p>
+
+              <hr className="hs-rule mt-8" />
+
+              <div className="mt-8 grid gap-7 sm:grid-cols-2 md:grid-cols-1 md:gap-6">
+                {SAMPLE_SECTIONS.map((section) => (
+                  <div key={section.title}>
+                    <h3 className="hs-h3">{section.title}</h3>
+                    <p className="hs-body mt-2">{section.body}</p>
+                  </div>
+                ))}
+              </div>
+
+              <hr className="hs-rule mt-8" />
+
+              <div className="mt-8">
+                <p className="hs-label">Ask your house</p>
+                <div className="mt-3 flex items-center justify-between gap-4 border border-hs-rule px-4 py-3">
+                  <p className="font-body text-sm italic text-hs-muted">
+                    Who lived here in 1940?
+                  </p>
+                  <span className="hs-caption shrink-0" aria-hidden="true">
+                    →
+                  </span>
+                </div>
+                <p className="hs-caption mt-3 max-w-[48ch]">
+                  Where no records or model are connected, the page says so
+                  plainly rather than answering from guesswork.
+                </p>
+              </div>
             </div>
           </div>
 
