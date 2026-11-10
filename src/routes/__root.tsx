@@ -3,33 +3,42 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  Link,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
 
 import appCss from "~/styles/app.css?url";
-import { getUIMode, setUIMode } from "~/lib/ui-mode";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Family Hub — Stay close to the people who matter" },
+      { title: "HomeStory — Every home has a story." },
       {
         name: "description",
         content:
-          "A private, AI-powered connection platform that strengthens family relationships — the opposite of social media.",
+          "HomeStory gives a UK home a permanent digital history page, reached by a brass QR plaque beside the front door. Previous owners, records and memories — passed on with the house.",
+      },
+      { name: "theme-color", content: "#F7F4EF" },
+    ],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
   }),
   notFoundComponent: () => (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold text-amber-800">Page not found</h1>
-      <a href="/" className="text-teal-600 underline">
-        Back to Family Hub
-      </a>
+    <div className="hs-wrap flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
+      <p className="hs-label">Page not found</p>
+      <h1 className="hs-h2">This page has no story yet.</h1>
+      <Link to="/" className="hs-link">
+        Back to HomeStory
+      </Link>
     </div>
   ),
   component: RootComponent,
@@ -44,73 +53,36 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<"standard" | "grandparent">("standard");
-
-  useEffect(() => {
-    setMode(getUIMode());
-  }, []);
-
-  function handleToggle() {
-    if (mode === "grandparent") {
-      setUIMode("standard");
-      setMode("standard");
-      window.location.href = "/";
-    } else {
-      setUIMode("grandparent");
-      setMode("grandparent");
-      window.location.href = "/grandparent";
-    }
-  }
-
-  const isGrandparent = mode === "grandparent";
-
   return (
-    <html lang="en" className={isGrandparent ? "gp-mode-active" : ""}>
+    <html lang="en-GB">
       <head>
         <HeadContent />
       </head>
-      <body
-        className={`min-h-dvh antialiased ${
-          isGrandparent ? "gp-body" : "bg-stone-50 text-stone-800"
-        }`}
-      >
-        {/* Mode Toggle Bar */}
-        <div
-          className={`flex items-center justify-end px-4 py-2 ${
-            isGrandparent
-              ? "border-b"
-              : "border-b border-stone-100 bg-white"
-          }`}
-          style={
-            isGrandparent
-              ? {
-                  borderColor: "#e0d8c8",
-                  backgroundColor: "var(--gp-bg, #fffdf7)",
-                }
-              : {}
-          }
-        >
-          <button
-            role="switch"
-            aria-checked={isGrandparent}
-            aria-label={
-              isGrandparent
-                ? "Switch to standard mode"
-                : "Switch to simplified mode"
-            }
-            onClick={handleToggle}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isGrandparent
-                ? "text-[#1a365d] hover:bg-[#f5e6c0]"
-                : "text-stone-500 hover:bg-stone-100 hover:text-stone-700"
-            }`}
-            style={{ minHeight: "44px" }}
-          >
-            {isGrandparent ? "Standard mode" : "Simplified mode"}
-          </button>
-        </div>
+      <body className="min-h-dvh bg-hs-bg font-body text-hs-ink antialiased">
+        <header className="hs-wrap">
+          <div className="flex items-center justify-between border-b border-hs-rule-soft py-5">
+            <Link
+              to="/"
+              className="font-display text-xl tracking-[0.01em] text-hs-ink no-underline"
+            >
+              HomeStory
+            </Link>
+            <span className="hs-label">Every home has a story</span>
+          </div>
+        </header>
 
-        {children}
+        <main>{children}</main>
+
+        <footer className="hs-wrap mt-16">
+          <div className="border-t border-hs-rule-brass py-10">
+            <p className="hs-caption">
+              History narratives powered by Claude AI.
+            </p>
+            <p className="hs-caption mt-2">
+              HomeStory — a permanent history page for every home.
+            </p>
+          </div>
+        </footer>
         <Scripts />
       </body>
     </html>

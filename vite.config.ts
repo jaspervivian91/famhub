@@ -21,4 +21,12 @@ export default defineConfig({
     tanstackStart(),
     viteReact(),
   ],
+  ssr: {
+    external: ["bcryptjs"],
+  },
+  build: {
+    rollupOptions: {
+      external: ["bcryptjs"],
+    },
+  },
 });
