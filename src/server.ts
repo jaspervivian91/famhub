@@ -66,6 +66,7 @@ function cleanGems(value: unknown): string[] {
 
 type HomeRow = {
   id: string;
+  public_id: string | null;
   address: string;
   status: string;
   story: string | null;
@@ -84,6 +85,7 @@ type HomeRow = {
 function toHome(row: HomeRow) {
   return {
     id: String(row.id),
+    publicId: row.public_id ? String(row.public_id) : null,
     address: row.address,
     status: row.status,
     story: row.story ?? "",
@@ -104,7 +106,7 @@ function toHome(row: HomeRow) {
 async function loadHome(id: string) {
   const db = sql();
   const rows = (await db`
-    select id, address, status, story, last_sale_price, last_sale_date, epc_rating,
+    select id, public_id, address, status, story, last_sale_price, last_sale_date, epc_rating,
            build_era, previous_owners, records_source, key_dates, hidden_gems,
            created_at, updated_at
     from homes where id = ${id}
@@ -178,6 +180,139 @@ async function polishStory(draft: string): Promise<{ text: string } | { error: s
   } catch (err) {
     console.error("[story-polish] request failed", err);
     return { error: "Claude could not be reached just now. Your words are unchanged." };
+  }
+}
+
+/** A short, unguessable public id. It is what the plaque at the door encodes. */
+function newPublicId(): string {
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  let id = "";
+  for (const byte of bytes) id += alphabet[byte % alphabet.length];
+  return id;
+}
+
+// ── Rate limiting for Ask Your House ────────────────────────────────────
+// In memory, per server process: enough to stop a page being used as a free
+// model endpoint, and it forgets itself.
+const askHits = new Map<string, number[]>();
+
+function tooManyAsks(key: string, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  const recent = (askHits.get(key) ?? []).filter((at) => now - at < windowMs);
+  if (recent.length >= limit) {
+    askHits.set(key, recent);
+    return true;
+  }
+  recent.push(now);
+  askHits.set(key, recent);
+  if (askHits.size > 5000) {
+    for (const [k, times] of askHits) {
+      if (times.every((at) => now - at >= windowMs)) askHits.delete(k);
+    }
+  }
+  return false;
+}
+
+/** The page's own records, as the model's entire knowledge of the house. */
+function houseContext(row: Record<string, unknown>): string {
+  const lines: string[] = [];
+  const add = (label: string, value: unknown) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+    if (trimmed) lines.push(`${label}: ${trimmed}`);
+  };
+
+  add("Address", row.address);
+  add("Build era", row.build_era);
+  add("EPC rating", row.epc_rating);
+  add("Last sale price", row.last_sale_price);
+  add("Last sale date", row.last_sale_date);
+  add("Previous owners", row.previous_owners);
+  add("The owner's chapter (their own words)", row.story);
+
+  const keyDates = Array.isArray(row.key_dates) ? (row.key_dates as KeyDate[]) : [];
+  const dates = keyDates
+    .map((entry) => {
+      const date = cleanDate(entry?.date) ?? "";
+      const label = cleanText(entry?.label, 160) ?? "";
+      return date || label ? `- ${date || "Undated"}: ${label}` : null;
+    })
+    .filter((line): line is string => line !== null);
+  if (dates.length > 0) lines.push(`Key dates:\n${dates.join("\n")}`);
+
+  const gems = Array.isArray(row.hidden_gems)
+    ? (row.hidden_gems as unknown[]).map((gem) => cleanText(gem, 300)).filter((g): g is string => g !== null)
+    : [];
+  if (gems.length > 0) lines.push(`Hidden gems:\n${gems.map((gem) => `- ${gem}`).join("\n")}`);
+
+  return lines.join("\n");
+}
+
+/** Answer only from the page. Saying "not recorded" is a correct answer. */
+async function askHouse(
+  row: Record<string, unknown>,
+  question: string,
+): Promise<{ answer: string; declined: boolean } | { error: string }> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return { error: "Ask Your House is not connected yet." };
+
+  const context = houseContext(row);
+  const system = [
+    "You are the voice of a HomeStory page — the permanent history page of one British house, read by a visitor standing at its front door.",
+    "Below is everything this page records about the house. It is your entire knowledge of this house, and your only source.",
+    "",
+    "Hard rules:",
+    "- Answer only from the records below. Never use outside knowledge, general history, or assumptions about this address, its street, its period or its kind of building.",
+    "- Never invent, infer or guess an owner, name, date, price, event, room, feature or alteration.",
+    "- If the records do not answer the question, say so plainly and stop. For example: \"This page doesn't record who lived here in 1940.\" Do not soften it into a guess.",
+    "- Never say 'probably', 'likely', 'may have', 'possibly', or offer a possibility instead of an answer.",
+    "- If part of the question is answered and part is not, answer the part that is recorded and say plainly that the rest is not recorded.",
+    "- Write in plain, warm British English, in two or three sentences at most. No headings, no bullet points, no preamble, no mention of 'records below' or 'context'.",
+    "",
+    "This page records:",
+    context || "(nothing beyond the address)",
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 400,
+        system,
+        messages: [{ role: "user", content: question.slice(0, 300) }],
+      }),
+      signal: AbortSignal.timeout(45000),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      console.error("[ask-your-house] Anthropic error", response.status, detail.slice(0, 400));
+      return { error: "Claude could not be reached just now. Please ask again in a moment." };
+    }
+
+    const payload = (await response.json()) as { content?: { type: string; text?: string }[] };
+    const answer = (payload.content ?? [])
+      .filter((part) => part.type === "text" && typeof part.text === "string")
+      .map((part) => part.text as string)
+      .join("\n")
+      .trim();
+
+    if (!answer) return { error: "Claude did not return an answer. Please ask again." };
+
+    const declined = /(doesn[’']?t|does not|do not|is not|isn[’']?t) (record|recorded|note|noted)|not recorded|no record/i.test(
+      answer,
+    );
+    return { answer, declined };
+  } catch (err) {
+    console.error("[ask-your-house] request failed", err);
+    return { error: "Claude could not be reached just now. Please ask again in a moment." };
   }
 }
 
@@ -380,16 +515,67 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   }
 
   // ── Publish ───────────────────────────────────────────────────────────
+  // Publishing assigns the home's public id the first time and keeps it for
+  // ever: the plaque at the door encodes it, so it must never change.
   const publishMatch = pathname.match(/^\/api\/homes\/([0-9a-f-]{36})\/publish$/i);
   if (publishMatch && method === "POST") {
     const db = sql();
     const rows = (await db`
-      update homes set status = 'published', published_at = coalesce(published_at, now()), updated_at = now()
+      update homes set
+        status = 'published',
+        public_id = coalesce(public_id, ${newPublicId()}),
+        published_at = coalesce(published_at, now()),
+        updated_at = now()
       where id = ${publishMatch[1]}
-      returning id, status
-    `) as unknown as { id: string; status: string }[];
+      returning id, status, public_id
+    `) as unknown as { id: string; status: string; public_id: string | null }[];
     if (rows.length === 0) return fail("That home could not be found.", 404);
-    return json({ id: String(rows[0].id), status: rows[0].status });
+    const publicId = rows[0].public_id ? String(rows[0].public_id) : null;
+    return json({
+      id: String(rows[0].id),
+      status: rows[0].status,
+      publicId,
+      url: publicId ? `/h/${publicId}` : null,
+    });
+  }
+
+  // ── Ask Your House ────────────────────────────────────────────────────
+  const askMatch = pathname.match(/^\/api\/public\/([a-z0-9]{6,40})\/ask$/i);
+  if (askMatch && method === "POST") {
+    const publicId = askMatch[1].toLowerCase();
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return fail("The question could not be read.");
+    }
+    const question = cleanText(body.question, 300);
+    if (!question) return fail("Ask a question first.");
+
+    const db = sql();
+    const rows = (await db`
+      select address, story, build_era, epc_rating, last_sale_price, last_sale_date,
+             previous_owners, key_dates, hidden_gems
+      from homes where public_id = ${publicId} and status = 'published' limit 1
+    `) as unknown as Record<string, unknown>[];
+    if (rows.length === 0) return fail("There is no page here to ask.", 404);
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return json({ connected: false, error: "Ask Your House is not connected yet." }, 200);
+    }
+
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      request.headers.get("x-real-ip") ??
+      "unknown";
+    if (tooManyAsks(`ip:${ip}`, 15, 10 * 60 * 1000) || tooManyAsks(`page:${publicId}`, 90, 60 * 60 * 1000)) {
+      return fail("That is a lot of questions at once. Please wait a moment and ask again.", 429);
+    }
+
+    const result = await askHouse(rows[0], question);
+    if ("error" in result) return json({ connected: true, error: result.error }, 200);
+    return json({ connected: true, answer: result.answer, declined: result.declined });
   }
 
   return null;

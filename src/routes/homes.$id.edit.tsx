@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/homes/$id/edit")({
@@ -56,10 +56,12 @@ type RecordKey = (typeof RECORD_ROWS)[number]["key"];
 
 function EditorScreen() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
 
   const [doc, setDoc] = useState<Doc | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [status, setStatus] = useState("draft");
+  const [publicId, setPublicId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -100,8 +102,10 @@ function EditorScreen() {
         const home = (await homeRes.json()) as Doc & {
           photos?: Photo[];
           status?: string;
+          publicId?: string | null;
         };
         if (cancelled) return;
+        setPublicId(home.publicId ?? null);
         setDoc({
           address: home.address ?? "",
           story: home.story ?? "",
@@ -256,17 +260,25 @@ function EditorScreen() {
 
   // ── Publish ────────────────────────────────────────────────────────────
   async function publish() {
+    if (!doc) return;
     setPublishLine(null);
     try {
+      // Flush anything typed in the last moment, so the page a visitor sees is
+      // the page the owner is looking at.
+      await save(doc);
       const response = await fetch(`/api/homes/${id}/publish`, { method: "POST" });
+      const payload = (await response.json().catch(() => ({}))) as { publicId?: string | null };
       if (!response.ok) {
         setPublishLine("That could not be published just now. Please try again.");
         return;
       }
       setStatus("published");
-      setPublishLine(
-        "Saved as published. The public page for your home is the next screen we are building — until it exists, the story is stored but there is no web address for a visitor to reach yet.",
-      );
+      if (payload.publicId) {
+        setPublicId(payload.publicId);
+        navigate({ to: "/h/$publicId", params: { publicId: payload.publicId } });
+        return;
+      }
+      setPublishLine("That could not be published just now. Please try again.");
     } catch {
       setPublishLine("That could not be published just now. Please try again.");
     }
@@ -635,7 +647,8 @@ function EditorScreen() {
         </h2>
         <p className="hs-caption mt-2 max-w-[54ch]">
           Nothing about your home is public until you publish it. Once it is,
-          the story stays with the house when it changes hands.
+          the story stays with the house when it changes hands. Publishing takes
+          you to your home’s page — the address the plaque will point at.
         </p>
 
         <button
@@ -646,6 +659,14 @@ function EditorScreen() {
         >
           {status === "published" ? "Published" : "Publish your HomeStory"}
         </button>
+
+        {status === "published" && publicId && (
+          <p className="mt-5">
+            <Link to="/h/$publicId" params={{ publicId }} className="hs-link">
+              View your home’s page
+            </Link>
+          </p>
+        )}
 
         {publishLine && (
           <p className="hs-caption mt-4 max-w-[54ch] text-hs-ink" role="status">
