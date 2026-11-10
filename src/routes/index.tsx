@@ -90,7 +90,7 @@ function LandingPage() {
               passes with it.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a href="#pricing" className="hs-btn hs-btn-brass">
+              <a href="/start" className="hs-btn hs-btn-brass">
                 Start your home’s page
               </a>
               <a href="#example" className="hs-btn hs-btn-ink">
