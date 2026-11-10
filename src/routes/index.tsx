@@ -1,268 +1,235 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { joinWaitlist } from "~/lib/waitlist-api";
-import { Logo } from "~/components/Logo";
-import { Icon } from "~/components/Icon";
-import {
-  HandDivider,
-  SketchUnderline,
-  Sprig,
-  PageTurn,
-} from "~/components/Warm";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [{ title: "HomeStory — Every home has a story." }],
+  }),
   component: LandingPage,
 });
 
-/* ── The three quiet steps of how Family Core works ─────────────────── */
-const HOW_IT_WORKS = [
+const STEPS = [
   {
-    icon: "reminder" as const,
-    title: "We notice the silence",
-    body: "Thirty days without a word, and we gently flag the relationship — nothing more. Frequency, recency and who reaches out first. Never what you said.",
+    numeral: "One",
+    title: "Find your home",
+    body: "Search your address to begin. Where public records are connected, the details of the building fill themselves in. Where they are not, the page says so and you type what you know. Nothing is invented on your behalf.",
   },
   {
-    icon: "nudge" as const,
-    title: "We nudge, gently",
-    body: "One warm prompt to reach out. No streak counters, no badges, no notification storm — a single note, and then quiet.",
+    numeral: "Two",
+    title: "Write its chapter",
+    body: "Add what you know of the house — the extension, the family who planted the apple tree, the name on the old deeds. Rough notes are enough; Claude AI can help shape them into a narrative you are happy to sign.",
   },
   {
-    icon: "heart" as const,
-    title: "You reconnect for real",
-    body: "You make the call, send the letter, take the walk. The app steps back and the bond grows stronger. That is the whole point.",
+    numeral: "Three",
+    title: "Mount the plaque",
+    body: "A brass plaque, engraved with the home’s QR code, is made to order and posted within five to seven days. Anyone at your door scans it and reads the story on their phone. No app, no account, no download.",
   },
 ];
 
-/* ── The hero drawing — ink and wash, not a photograph ────────────────── */
-function HeroArtwork() {
-  return (
-    <figure className="fh-card-soft m-0 overflow-hidden p-0">
-      <img
-        src="/hero/hand-on-hand.jpg"
-        width={720}
-        height={400}
-        alt="A drawing of an older hand resting on a younger hand."
-        className="block h-auto w-full"
-        decoding="async"
-      />
-      <figcaption className="fh-caption px-6 py-4">
-        Drawn for Family Core — no feeds, no likes. Just the people who matter.
-      </figcaption>
-    </figure>
-  );
-}
+const PRICING = [
+  {
+    name: "Free",
+    price: "£0",
+    note: "Basic page and a standard QR code.",
+  },
+  {
+    name: "Premium",
+    price: "£24.99",
+    note: "One-time. The full history, every Claude AI feature, and a custom web address for your home.",
+  },
+  {
+    name: "Brass plaque",
+    price: "£34.99",
+    note: "Made to order and posted within 5–7 days.",
+  },
+  {
+    name: "Estate agent",
+    price: "£9.99 / month",
+    note: "Per agent. Every listing carries the history of the house.",
+  },
+];
+
+const SAMPLE_SECTIONS = [
+  {
+    title: "The house",
+    body: "The building itself — when it was raised, how it has been altered, what the records say. Shown from Land Registry and census records where a source is connected, and written by the owner where it is not.",
+  },
+  {
+    title: "Previous owners",
+    body: "Each household adds a chapter of its own. When the house is sold, the chapters pass with it to the next owner.",
+  },
+  {
+    title: "Memories",
+    body: "Photographs, letters and recollections, added by the people who live there now.",
+  },
+];
 
 function LandingPage() {
-  const [email, setEmail] = useState("");
-  const [waitlistStatus, setWaitlistStatus] = useState<
-    "idle" | "submitting" | "success" | "error"
-  >("idle");
-  const [waitlistMessage, setWaitlistMessage] = useState("");
-
-  async function handleWaitlistSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) return;
-
-    setWaitlistStatus("submitting");
-    setWaitlistMessage("");
-
-    try {
-      const result = await joinWaitlist({ data: { email: email.trim() } });
-      if (result.success) {
-        setWaitlistStatus("success");
-        setWaitlistMessage(result.message);
-        setEmail("");
-      } else {
-        setWaitlistStatus("error");
-        setWaitlistMessage(result.message);
-      }
-    } catch {
-      setWaitlistStatus("error");
-      setWaitlistMessage("Something went wrong. Please try again.");
-    }
-  }
-
   return (
-    <PageTurn className="min-h-dvh">
-      <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 pt-2 pb-14 md:max-w-[680px] md:px-10">
-        {/* ── Header — wordmark + sign in ─────────────────────────── */}
-        <header className="flex items-center justify-between gap-4">
-          <Logo variant="full" size="md" />
-          <Link
-            to="/sign-in"
-            className="fh-body-sm fh-link"
-            style={{ color: "var(--color-fh-muted)", textDecoration: "none" }}
-          >
-            Sign in
-          </Link>
-        </header>
-        <HandDivider className="mt-3" dot />
+    <>
+      {/* ── Hero ───────────────────────────────────────────────────── */}
+      <section className="hs-wrap pt-14 pb-12 md:pt-24 md:pb-20">
+        <p className="hs-label">A permanent history page for a home</p>
+        <h1 className="hs-display mt-5 max-w-[16ch]">
+          Every home has a story.
+        </h1>
+        <p className="hs-lede mt-6 max-w-[54ch]">
+          A brass plaque beside the front door. A permanent page for the house —
+          the records that exist, the people who have lived in it, and the
+          chapter you add. When the house changes hands, the story passes with
+          it.
+        </p>
+        <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a href="#pricing" className="hs-btn hs-btn-brass">
+            Start your home’s page
+          </a>
+          <a href="#example" className="hs-btn hs-btn-ink">
+            See an example page
+          </a>
+        </div>
+        <p className="hs-caption mt-7 max-w-[48ch]">
+          Most visitors arrive by scanning the plaque at the door, on a phone.
+          There is nothing to install.
+        </p>
+      </section>
 
-        {/* ── Hero ────────────────────────────────────────────────── */}
-        <section className="mt-10 flex flex-col items-center text-center md:mt-14">
-          <Sprig />
-          <h1 className="fh-hero mt-5 max-w-[9.5em]">
-            Stay close to the people who{" "}
-            <span style={{ color: "var(--color-fh-accent)" }}>matter</span>
-          </h1>
-          <SketchUnderline className="mt-3" color="var(--color-fh-highlight)" />
-          <p className="fh-body mt-7 max-w-[34ch] text-left md:text-center">
-            A private little home for your family&apos;s connection. No feeds,
-            no likes — just gentle nudges to stay close, and the joy of real
-            calls, letters and visits.
-          </p>
-        </section>
+      <hr className="hs-rule-brass" />
 
-        {/* ── Warm album card ─────────────────────────────────────── */}
-        <section className="mt-10">
-          <HeroArtwork />
-        </section>
+      {/* ── How it works ───────────────────────────────────────────── */}
+      <section id="how-it-works" className="hs-section hs-wrap">
+        <p className="hs-label">How it works</p>
+        <h2 className="hs-h2 mt-4 max-w-[24ch]">
+          Three steps, and the house keeps its history.
+        </h2>
 
-        {/* ── How it works ────────────────────────────────────────── */}
-        <section className="mt-9">
-          <div className="fh-card-soft">
-            <h2 className="fh-h2">How it works</h2>
-            <SketchUnderline className="mt-1.5" />
-            <ul className="mt-6 flex flex-col gap-6">
-              {HOW_IT_WORKS.map((step) => (
-                <li key={step.title} className="flex items-start gap-4">
-                  <span
-                    className="flex items-center justify-center rounded-full"
-                    style={{
-                      width: 44,
-                      height: 44,
-                      backgroundColor: "var(--color-fh-surface-soft)",
-                      border: "1px solid var(--color-fh-border)",
-                    }}
-                  >
-                    <Icon name={step.icon} size={22} />
-                  </span>
-                  <div>
-                    <h3 className="fh-h4">{step.title}</h3>
-                    <p
-                      className="fh-body-sm mt-1"
-                      style={{ color: "var(--color-fh-muted)" }}
-                    >
-                      {step.body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* ── Calls to action ─────────────────────────────────────── */}
-        <section className="mt-9 flex flex-col items-stretch gap-3">
-          <Link to="/sign-up" className="fh-btn fh-btn-primary w-full">
-            Create your family home
-          </Link>
-          <Link to="/join" className="fh-btn fh-btn-secondary w-full">
-            I have an invite
-          </Link>
-          <p className="fh-caption mt-1 text-center">
-            Free for your whole family — no card needed.
-          </p>
-        </section>
-
-        {/* ── The quiet promise ───────────────────────────────────── */}
-        <section className="mt-10 px-2 text-center">
-          <HandDivider className="mb-6" />
-          <p className="fh-body-sm" style={{ color: "var(--color-fh-body)" }}>
-            No feeds · No likes · No ads · No noise
-          </p>
-          <p className="fh-caption mx-auto mt-2 max-w-[30ch]">
-            Metadata only — frequency, recency, initiation. We never read your
-            messages. Never content.
-          </p>
-        </section>
-
-        {/* ── Waitlist — kept from the previous page, in a quieter tone ── */}
-        <section className="mt-10">
-          <div className="fh-card">
-            <h2 className="fh-h3">Not ready just yet?</h2>
-            <p
-              className="fh-body-sm mt-2"
-              style={{ color: "var(--color-fh-muted)" }}
+        <div className="mt-10 grid gap-0 md:mt-14 md:grid-cols-3 md:gap-10">
+          {STEPS.map((step, i) => (
+            <div
+              key={step.title}
+              className={`py-7 md:py-0 ${
+                i === 0 ? "" : "border-t border-hs-rule md:border-t-0"
+              }`}
             >
-              Leave your email and we&apos;ll write to you once — when Family
-              Core is ready for your family.
+              <p className="hs-numeral">{step.numeral}</p>
+              <h3 className="hs-h3 mt-3">{step.title}</h3>
+              <p className="hs-body mt-3 max-w-[38ch]">{step.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <hr className="hs-rule" />
+
+      {/* ── Example page preview ───────────────────────────────────── */}
+      <section id="example" className="hs-section hs-wrap">
+        <p className="hs-label">The example page</p>
+        <h2 className="hs-h2 mt-4 max-w-[24ch]">
+          What a visitor finds at the door.
+        </h2>
+        <p className="hs-body mt-4 max-w-[52ch]">
+          A specimen of the page — the layout, not a real house. No address,
+          owner or record below is a claim about an actual home.
+        </p>
+
+        <div className="mt-10 border border-hs-rule bg-hs-surface md:mt-12">
+          <div className="flex flex-col gap-1 border-b border-hs-rule-brass px-5 py-4 sm:flex-row sm:items-baseline sm:justify-between">
+            <p className="hs-label">Example page</p>
+            <p className="hs-caption">
+              Specimen layout — not a real home’s history.
             </p>
-            {waitlistStatus === "success" ? (
-              <div className="fh-note mt-4 flex items-start gap-3">
-                <Icon name="check" size={22} />
-                <p className="fh-body-sm">{waitlistMessage}</p>
-              </div>
-            ) : (
-              <form onSubmit={handleWaitlistSubmit} className="mt-4">
-                <label
-                  htmlFor="waitlist-email"
-                  className="fh-label mb-1.5 block"
-                >
-                  Your email
-                </label>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <input
-                    id="waitlist-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="fh-input sm:flex-1"
-                    required
-                    disabled={waitlistStatus === "submitting"}
-                  />
-                  <button
-                    type="submit"
-                    disabled={waitlistStatus === "submitting"}
-                    className="fh-btn fh-btn-sand"
-                  >
-                    {waitlistStatus === "submitting"
-                      ? "Sending…"
-                      : "Join the list"}
-                  </button>
-                </div>
-                {waitlistStatus === "error" && (
-                  <p
-                    className="fh-body-sm mt-2"
-                    style={{ color: "var(--color-fh-status-error)" }}
-                  >
-                    {waitlistMessage}
-                  </p>
-                )}
-              </form>
-            )}
           </div>
-        </section>
 
-        {/* ── Footer ──────────────────────────────────────────────── */}
-        <footer className="mt-12">
-          <HandDivider className="mb-6" dot />
-          <nav className="flex items-center justify-center gap-5">
-            <Link
-              to="/privacy"
-              className="fh-body-sm fh-link"
-              style={{ textDecoration: "none" }}
+          <div className="px-5 py-8 md:px-10 md:py-10">
+            <p className="font-display text-2xl italic text-hs-muted md:text-3xl">
+              Your address, here
+            </p>
+            <p className="hs-caption mt-2">
+              The page lives at a permanent web address that never changes.
+            </p>
+
+            <hr className="hs-rule mt-8" />
+
+            <div className="mt-8 grid gap-7 md:grid-cols-3 md:gap-8">
+              {SAMPLE_SECTIONS.map((section) => (
+                <div key={section.title}>
+                  <h3 className="hs-h3">{section.title}</h3>
+                  <p className="hs-body mt-2">{section.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <hr className="hs-rule mt-8" />
+
+            <div className="mt-8">
+              <p className="hs-label">Ask your house</p>
+              <div className="mt-3 flex items-center justify-between gap-4 border border-hs-rule px-4 py-3">
+                <p className="font-body text-sm italic text-hs-muted">
+                  Who lived here in 1940?
+                </p>
+                <span className="hs-caption shrink-0" aria-hidden="true">
+                  →
+                </span>
+              </div>
+              <p className="hs-caption mt-3 max-w-[48ch]">
+                Where no records or model are connected, the page says so
+                plainly rather than answering from guesswork.
+              </p>
+            </div>
+          </div>
+
+          <div className="border-t border-hs-rule px-5 py-4 md:px-10">
+            <p className="hs-caption">
+              History narratives powered by Claude AI.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <hr className="hs-rule" />
+
+      {/* ── Pricing ────────────────────────────────────────────────── */}
+      <section id="pricing" className="hs-section hs-wrap">
+        <p className="hs-label">Pricing</p>
+        <h2 className="hs-h2 mt-4 max-w-[24ch]">
+          Pay once for the house. Not by the month.
+        </h2>
+
+        <div className="mt-10 md:mt-14">
+          {PRICING.map((item, i) => (
+            <div
+              key={item.name}
+              className={`flex flex-col gap-2 py-6 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8 ${
+                i === 0 ? "border-t border-hs-rule" : ""
+              } border-b border-hs-rule`}
             >
-              Privacy
-            </Link>
-            <span aria-hidden="true" style={{ color: "var(--color-fh-line)" }}>
-              ·
-            </span>
-            <Link
-              to="/terms"
-              className="fh-body-sm fh-link"
-              style={{ textDecoration: "none" }}
-            >
-              Terms
-            </Link>
-          </nav>
-          <p className="fh-caption mt-4 text-center">
-            Family Core © {new Date().getFullYear()} — the app that puts your
-            phone down.
-          </p>
-        </footer>
-      </main>
-    </PageTurn>
+              <div className="sm:max-w-[42ch]">
+                <h3 className="hs-h3">{item.name}</h3>
+                <p className="hs-body mt-1">{item.note}</p>
+              </div>
+              <p className="font-display text-2xl whitespace-nowrap sm:text-right">
+                {item.price}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <p className="hs-caption mt-6 max-w-[54ch]">
+          These are planned prices. HomeStory is not taking payments yet, so
+          nothing has been charged and no plaque has been ordered or posted.
+        </p>
+      </section>
+
+      <hr className="hs-rule-brass" />
+
+      {/* ── Closing ────────────────────────────────────────────────── */}
+      <section className="hs-section hs-wrap">
+        <h2 className="hs-h2 max-w-[26ch]">
+          A house remembers more than its owners do.
+        </h2>
+        <p className="hs-body mt-4 max-w-[50ch]">
+          HomeStory gives that memory somewhere to live — carried by the
+          building itself, from one household to the next.
+        </p>
+      </section>
+    </>
   );
 }
