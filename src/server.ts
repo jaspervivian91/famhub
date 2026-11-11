@@ -183,6 +183,96 @@ async function polishStory(draft: string): Promise<{ text: string } | { error: s
   }
 }
 
+// ── The plaque ──────────────────────────────────────────────────────────
+
+/**
+ * A UK postcode, checked loosely and kindly: the shape is right, the case and
+ * spacing are forgiven. A wrong-looking code is a typo, not a rejection.
+ */
+const UK_POSTCODE = /^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/;
+
+function normalisePostcode(value: string): string {
+  const compact = value.replace(/\s+/g, "").toUpperCase();
+  if (compact.length < 5) return value.trim().toUpperCase();
+  return `${compact.slice(0, -3)} ${compact.slice(-3)}`;
+}
+
+/**
+ * The origin the plaque's QR code points at. A plaque is cut once and lives on
+ * a wall for decades, so this must never be the sandbox or preview host a
+ * request happens to arrive on — it is the public site, overridable with
+ * PUBLIC_SITE_ORIGIN if the site ever moves.
+ */
+const LIVE_ORIGIN = "https://familycore.cto.site";
+
+function publicOrigin(): string {
+  const configured = process.env.PUBLIC_SITE_ORIGIN?.trim();
+  return (configured || LIVE_ORIGIN).replace(/\/+$/, "");
+}
+
+type PlaqueHome = { id: string; publicId: string | null; address: string };
+
+/** A home by its private id or by its public id — the plaque screen accepts both. */
+async function loadHomeForPlaque(ref: string): Promise<PlaqueHome | null> {
+  const db = sql();
+  const rows = (await db`
+    select id, public_id, address from homes
+    where public_id = ${ref} or id::text = ${ref}
+    limit 1
+  `) as unknown as { id: string; public_id: string | null; address: string }[];
+  if (rows.length === 0) return null;
+  return {
+    id: String(rows[0].id),
+    publicId: rows[0].public_id ? String(rows[0].public_id) : null,
+    address: rows[0].address,
+  };
+}
+
+type PlaqueOrder = {
+  id: string;
+  name: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  town: string;
+  postcode: string;
+  note: string | null;
+  status: string;
+  createdAt: string;
+};
+
+/** The most recent reservation for a home, if the owner has made one. */
+async function loadPlaqueOrder(homeId: string): Promise<PlaqueOrder | null> {
+  const db = sql();
+  const rows = (await db`
+    select id, name, address_line1, address_line2, town, postcode, note, status, created_at
+    from plaque_orders where home_id = ${homeId}
+    order by created_at desc limit 1
+  `) as unknown as {
+    id: string;
+    name: string;
+    address_line1: string;
+    address_line2: string | null;
+    town: string;
+    postcode: string;
+    note: string | null;
+    status: string;
+    created_at: unknown;
+  }[];
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: String(row.id),
+    name: row.name,
+    addressLine1: row.address_line1,
+    addressLine2: row.address_line2,
+    town: row.town,
+    postcode: row.postcode,
+    note: row.note,
+    status: row.status,
+    createdAt: String(row.created_at),
+  };
+}
+
 /** A short, unguessable public id. It is what the plaque at the door encodes. */
 function newPublicId(): string {
   const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
@@ -537,6 +627,92 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
       publicId,
       url: publicId ? `/h/${publicId}` : null,
     });
+  }
+
+  // ── The plaque ────────────────────────────────────────────────────────
+  // Two separate truths here. The QR code is real: it encodes the home's
+  // permanent public page, and the same code is what gets engraved. The order
+  // is not a sale — no workshop is connected, so nothing can be made or posted,
+  // and no payment is taken.
+  const plaqueMatch = pathname.match(/^\/api\/homes\/([a-z0-9-]{6,40})\/plaque$/i);
+  const plaqueQrMatch = pathname.match(/^\/api\/homes\/([a-z0-9-]{6,40})\/plaque\/qr\.svg$/i);
+
+  if (plaqueMatch && method === "GET") {
+    const home = await loadHomeForPlaque(plaqueMatch[1]);
+    if (!home) return fail("That home could not be found.", 404);
+    return json({
+      home: { address: home.address, published: Boolean(home.publicId) },
+      publicUrl: home.publicId ? `${publicOrigin()}/h/${home.publicId}` : null,
+      order: await loadPlaqueOrder(home.id),
+    });
+  }
+
+  if (plaqueMatch && method === "POST") {
+    const home = await loadHomeForPlaque(plaqueMatch[1]);
+    if (!home) return fail("That home could not be found.", 404);
+    if (!home.publicId) {
+      return fail("Publish your home’s page first — the plaque carries its QR code.");
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return fail("The form could not be read.");
+    }
+
+    const name = cleanText(body.name, 120);
+    const addressLine1 = cleanText(body.addressLine1, 160);
+    const addressLine2 = cleanText(body.addressLine2, 160);
+    const town = cleanText(body.town, 120);
+    const postcode = cleanText(body.postcode, 16);
+    const note = cleanText(body.note, 600);
+
+    if (!name) return fail("A name is needed on the order.");
+    if (!addressLine1) return fail("The first line of the delivery address is needed.");
+    if (!town) return fail("A town or city is needed on the delivery address.");
+    if (!postcode) return fail("A postcode is needed on the delivery address.");
+    if (!UK_POSTCODE.test(postcode)) {
+      return fail("That postcode doesn’t look quite right — a UK one looks like SW1A 2AA.");
+    }
+
+    const id = crypto.randomUUID();
+    const db = sql();
+    await db`
+      insert into plaque_orders (id, home_id, name, address_line1, address_line2,
+                                 town, postcode, note, status)
+      values (${id}, ${home.id}, ${name}, ${addressLine1}, ${addressLine2},
+              ${town}, ${normalisePostcode(postcode)}, ${note}, 'reserved')
+    `;
+    return json({ order: await loadPlaqueOrder(home.id) }, 201);
+  }
+
+  if (plaqueQrMatch && method === "GET") {
+    const home = await loadHomeForPlaque(plaqueQrMatch[1]);
+    if (!home) return new Response("Not found", { status: 404 });
+    if (!home.publicId) return new Response("This home has no public page yet.", { status: 404 });
+
+    const url = `${publicOrigin()}/h/${home.publicId}`;
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const svg = await QRCode.toString(url, {
+        type: "svg",
+        errorCorrectionLevel: "Q",
+        margin: 2,
+        width: 640,
+        color: { dark: "#1c1c1a", light: "#00000000" },
+      });
+      return new Response(svg, {
+        status: 200,
+        headers: {
+          "Content-Type": "image/svg+xml; charset=utf-8",
+          "Cache-Control": "public, max-age=300",
+        },
+      });
+    } catch (err) {
+      console.error("[plaque] QR generation failed", err);
+      return new Response("The QR code could not be drawn just now.", { status: 500 });
+    }
   }
 
   // ── Ask Your House ────────────────────────────────────────────────────
