@@ -75,6 +75,7 @@ function EditorScreen() {
   const [polishLine, setPolishLine] = useState<string | null>(null);
 
   const [chronological, setChronological] = useState(true);
+  const [plaqueSavedAt, setPlaqueSavedAt] = useState<string | null>(null);
 
   const storyRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -119,6 +120,27 @@ function EditorScreen() {
         });
         setPhotos(Array.isArray(home.photos) ? home.photos : []);
         setStatus(home.status ?? "draft");
+
+        // Does a plaque order already exist for this home? Shown, not sold.
+        if (home.status === "published") {
+          try {
+            const plaqueRes = await fetch(`/api/homes/${id}/plaque`);
+            if (plaqueRes.ok) {
+              const plaque = (await plaqueRes.json()) as { order?: { createdAt?: string } | null };
+              if (!cancelled && plaque.order?.createdAt) {
+                setPlaqueSavedAt(
+                  new Date(plaque.order.createdAt).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  }),
+                );
+              }
+            }
+          } catch {
+            // The plaque line is a nicety; the editor works without it.
+          }
+        }
       } catch {
         if (!cancelled) setLoadError("That home could not be loaded just now.");
       }
@@ -661,10 +683,21 @@ function EditorScreen() {
         </button>
 
         {status === "published" && publicId && (
-          <p className="mt-5">
+          <div className="mt-5 flex flex-wrap items-baseline gap-x-8 gap-y-3">
             <Link to="/h/$publicId" params={{ publicId }} className="hs-link">
               View your home’s page
             </Link>
+            <Link to="/homes/$id/plaque" params={{ id }} className="hs-link">
+              Order the brass plaque
+            </Link>
+          </div>
+        )}
+
+        {status === "published" && (
+          <p className="hs-caption mt-4 max-w-[54ch]">
+            {plaqueSavedAt
+              ? `A brass plaque is reserved for this home — saved ${plaqueSavedAt}, not paid. No workshop is connected yet, so it cannot be made or posted.`
+              : "The plaque carries this page’s QR code. It can be reserved now, but no workshop is connected yet, so it cannot be made or posted."}
           </p>
         )}
 

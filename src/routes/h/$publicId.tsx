@@ -173,6 +173,19 @@ function PublicHomePage() {
         <AskYourHouse publicId={home.publicId} connected={home.aiConnected} />
       </section>
 
+      {/* ── The plaque at the door ──────────────────────────────────── */}
+      <section className="mt-12 border-t border-hs-rule pt-6 md:mt-16">
+        <p className="hs-caption max-w-[52ch]">
+          A brass plaque, engraved with this page’s QR code, can be mounted
+          beside the front door so the story stays with the house.
+        </p>
+        <p className="mt-3">
+          <Link to="/homes/$id/plaque" params={{ id: home.publicId }} className="hs-link">
+            Reserve a plaque for this home
+          </Link>
+        </p>
+      </section>
+
       <p className="hs-caption mt-14 border-t border-hs-rule pt-6">
         History narratives powered by Claude AI.
       </p>

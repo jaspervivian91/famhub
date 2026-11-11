@@ -21,7 +21,7 @@ const STEPS = [
   {
     numeral: "Three",
     title: "Mount the plaque",
-    body: "A brass plaque, engraved with the home’s QR code, is made to order and posted within five to seven days. Anyone at your door scans it and reads the story on their phone. No app, no account, no download.",
+    body: "A brass plaque, engraved with the home’s QR code, is made to order. No workshop is connected yet, so a plaque cannot be made or posted — you can reserve one, and nothing is charged. Anyone at your door scans it and reads the story on their phone. No app, no account, no download.",
   },
 ];
 
@@ -39,7 +39,7 @@ const PRICING = [
   {
     name: "Brass plaque",
     price: "£34.99",
-    note: "Made to order and posted within 5–7 days.",
+    note: "Made to order. No workshop is connected yet, so a plaque cannot be made or posted — you can reserve one.",
   },
   {
     name: "Estate agent",
@@ -250,7 +250,7 @@ function LandingPage() {
 
         <p className="hs-caption mt-6 max-w-[54ch]">
           These are planned prices. HomeStory is not taking payments yet, so
-          nothing has been charged and no plaque has been ordered or posted.
+          nothing has been charged and no plaque has been made or posted.
         </p>
       </section>
 
