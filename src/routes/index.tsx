@@ -162,8 +162,8 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="grid gap-8 px-5 py-8 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] md:items-start md:gap-10 md:px-10 md:py-10">
-            <div className="aspect-[4/3] overflow-hidden sm:aspect-[16/10] md:aspect-[3/4]">
+          <div className="grid gap-8 px-5 py-8 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] md:items-stretch md:gap-10 md:px-10 md:py-10">
+            <div className="aspect-[4/3] overflow-hidden sm:aspect-[16/10] md:aspect-auto md:h-full md:min-h-[26rem]">
               <img
                 src="/images/interior-bay.jpg"
                 alt="A sitting room in a period house: a cushioned window seat in a tall bay window, built-in shelves of clothbound books, and an armchair beside an open fireplace."

@@ -4,6 +4,7 @@ import {
   Scripts,
   createRootRoute,
   Link,
+  useRouterState,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
@@ -53,6 +54,12 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
+  // A published home's page carries its own Claude credit line, at the end of
+  // the story; the footer would only repeat it.
+  const isHomeStoryPage = useRouterState({
+    select: (state) => state.location.pathname.startsWith("/h/"),
+  });
+
   return (
     <html lang="en-GB">
       <head>
@@ -75,9 +82,11 @@ function RootDocument({ children }: { children: ReactNode }) {
 
         <footer className="hs-wrap mt-16">
           <div className="border-t border-hs-rule-brass py-10">
-            <p className="hs-caption">
-              History narratives powered by Claude AI.
-            </p>
+            {!isHomeStoryPage && (
+              <p className="hs-caption">
+                History narratives powered by Claude AI.
+              </p>
+            )}
             <p className="hs-caption mt-2">
               HomeStory — a permanent history page for every home.
             </p>
