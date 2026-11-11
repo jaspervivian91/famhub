@@ -1,5 +1,16 @@
 import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/server";
 import { hasDatabaseURL, checkDatabaseConnection, sql } from "./db";
+import {
+  MIN_PASSWORD_LENGTH,
+  clientAddress,
+  createSession,
+  destroySession,
+  hashPassword,
+  normaliseEmail,
+  readSession,
+  sessionCookie,
+  verifyPassword,
+} from "./lib/agents";
 
 const handler = createStartHandler(defaultStreamHandler);
 
@@ -24,6 +35,40 @@ function json(data: unknown, status = 200): Response {
 function fail(message: string, status = 400): Response {
   return json({ error: message }, status);
 }
+
+function withCookie(response: Response, cookie: string): Response {
+  response.headers.append("Set-Cookie", cookie);
+  return response;
+}
+
+async function readJson(request: Request): Promise<Record<string, unknown> | null> {
+  try {
+    const body = (await request.json()) as unknown;
+    if (!body || typeof body !== "object") return null;
+    return body as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Who may open a home. A home an agent added belongs to that agent alone: any
+ * other agent — or a visitor with no session — gets the same 404 a missing home
+ * gets, so another agent's property is never confirmed to exist. A home with no
+ * agent (an individual owner's page) is reached by its unguessable id, as before.
+ */
+async function mayOpenHome(request: Request, homeId: string): Promise<boolean> {
+  const db = sql();
+  const rows = (await db`
+    select agent_id from homes where id = ${homeId}
+  `) as unknown as { agent_id: string | null }[];
+  if (rows.length === 0) return false;
+  if (!rows[0].agent_id) return true;
+  const agent = await readSession(request);
+  return agent?.id === String(rows[0].agent_id);
+}
+
+const HOME_NOT_FOUND = "That home could not be found.";
 
 /** Trimmed string, or null — an empty field is "not on record", never a value. */
 function cleanText(value: unknown, max = 4000): string | null {
@@ -425,6 +470,166 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     return json({ connected: Boolean(process.env.ANTHROPIC_API_KEY), model: MODEL });
   }
 
+  // ── Agent accounts ────────────────────────────────────────────────────
+  // Email and password, a session cookie, and nothing else. No password-reset
+  // email exists: the sign-up screen says so rather than promising one.
+  if (pathname === "/api/agents/me" && method === "GET") {
+    const agent = await readSession(request);
+    return json({
+      agent: agent ? { email: agent.email, createdAt: agent.createdAt } : null,
+    });
+  }
+
+  if (pathname === "/api/agents/sign-up" && method === "POST") {
+    const body = await readJson(request);
+    if (!body) return fail("The form could not be read.");
+    const email = normaliseEmail(body.email);
+    if (!email) return fail("That doesn’t look like an email address.");
+    const password = typeof body.password === "string" ? body.password : "";
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return fail(`A password of at least ${MIN_PASSWORD_LENGTH} characters is needed.`);
+    }
+    if (password.length > 200) return fail("That password is too long.");
+
+    const db = sql();
+    const existing = (await db`
+      select id from agents where email = ${email}
+    `) as unknown as { id: string }[];
+    if (existing.length > 0) {
+      return fail("An account with that email already exists. Sign in instead.", 409);
+    }
+
+    const id = crypto.randomUUID();
+    const passwordHash = await hashPassword(password);
+    try {
+      await db`
+        insert into agents (id, email, password_hash) values (${id}, ${email}, ${passwordHash})
+      `;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("duplicate key") || message.includes("23505")) {
+        return fail("An account with that email already exists. Sign in instead.", 409);
+      }
+      throw err;
+    }
+
+    const token = await createSession(id);
+    return withCookie(
+      json({ agent: { email, createdAt: new Date().toISOString() } }, 201),
+      sessionCookie(request, token),
+    );
+  }
+
+  if (pathname === "/api/agents/sign-in" && method === "POST") {
+    const body = await readJson(request);
+    if (!body) return fail("The form could not be read.");
+    const email = normaliseEmail(body.email);
+    const password = typeof body.password === "string" ? body.password : "";
+    if (!email || !password) return fail("Enter your email and password.");
+
+    // Ten attempts per ten minutes from one address — a password is not a
+    // guessable thing, and this stops a script treating it as one.
+    if (tooManyAsks(`signin:${clientAddress(request)}`, 10, 10 * 60 * 1000)) {
+      return fail("That is a lot of attempts. Please wait a few minutes and try again.", 429);
+    }
+
+    const db = sql();
+    const rows = (await db`
+      select id, email, password_hash from agents where email = ${email} limit 1
+    `) as unknown as { id: string; email: string; password_hash: string }[];
+    // The same answer whether the email is unknown or the password is wrong.
+    const refusal = "That email and password don’t match an account.";
+    if (rows.length === 0) return fail(refusal, 401);
+
+    const ok = await verifyPassword(password, rows[0].password_hash);
+    if (!ok) return fail(refusal, 401);
+
+    const agentId = String(rows[0].id);
+    await db`update agents set last_signed_in_at = now() where id = ${agentId}`;
+    const token = await createSession(agentId);
+    return withCookie(
+      json({ agent: { email: rows[0].email } }),
+      sessionCookie(request, token),
+    );
+  }
+
+  if (pathname === "/api/agents/sign-out" && method === "POST") {
+    await destroySession(request);
+    return withCookie(json({ ok: true }), sessionCookie(request, null));
+  }
+
+  // ── An agent's ledger of properties ───────────────────────────────────
+  // Every query is scoped to the signed-in agent. There is no route that lists
+  // homes without one, and no route that takes an agent id from the client.
+  if (pathname === "/api/agents/homes" && method === "GET") {
+    const agent = await readSession(request);
+    if (!agent) return fail("Sign in to see your properties.", 401);
+    const db = sql();
+    const rows = (await db`
+      select id, public_id, address, status, created_at, updated_at
+      from homes where agent_id = ${agent.id}
+      order by updated_at desc
+    `) as unknown as {
+      id: string;
+      public_id: string | null;
+      address: string;
+      status: string;
+      created_at: unknown;
+      updated_at: unknown;
+    }[];
+    return json({
+      homes: rows.map((row) => ({
+        id: String(row.id),
+        publicId: row.public_id ? String(row.public_id) : null,
+        address: row.address,
+        status: row.status,
+        createdAt: String(row.created_at),
+        updatedAt: String(row.updated_at),
+      })),
+    });
+  }
+
+  if (pathname === "/api/agents/homes" && method === "POST") {
+    const agent = await readSession(request);
+    if (!agent) return fail("Sign in to add a property.", 401);
+    const body = await readJson(request);
+    if (!body) return fail("The form could not be read.");
+    const address = cleanText(body.address, 300);
+    if (!address) return fail("An address is needed before a property can be added.");
+
+    const id = crypto.randomUUID();
+    const db = sql();
+    await db`
+      insert into homes (id, address, records_source, agent_id)
+      values (${id}, ${address}, 'agent', ${agent.id})
+    `;
+    const rows = (await db`
+      select id, public_id, address, status, created_at, updated_at
+      from homes where id = ${id}
+    `) as unknown as {
+      id: string;
+      public_id: string | null;
+      address: string;
+      status: string;
+      created_at: unknown;
+      updated_at: unknown;
+    }[];
+    const row = rows[0];
+    return json(
+      {
+        home: {
+          id: String(row.id),
+          publicId: row.public_id ? String(row.public_id) : null,
+          address: row.address,
+          status: row.status,
+          createdAt: String(row.created_at),
+          updatedAt: String(row.updated_at),
+        },
+      },
+      201,
+    );
+  }
+
   // ── Serve a photograph ────────────────────────────────────────────────
   const photoMatch = pathname.match(/^\/photos\/([0-9a-f-]{36})$/i);
   if (photoMatch && method === "GET") {
@@ -472,13 +677,15 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   // ── Read a home ───────────────────────────────────────────────────────
   const homeMatch = pathname.match(/^\/api\/homes\/([0-9a-f-]{36})$/i);
   if (homeMatch && method === "GET") {
+    if (!(await mayOpenHome(request, homeMatch[1]))) return fail(HOME_NOT_FOUND, 404);
     const home = await loadHome(homeMatch[1]);
-    if (!home) return fail("That home could not be found.", 404);
+    if (!home) return fail(HOME_NOT_FOUND, 404);
     return json(home);
   }
 
   // ── Autosave the journal ──────────────────────────────────────────────
   if (homeMatch && method === "PATCH") {
+    if (!(await mayOpenHome(request, homeMatch[1]))) return fail(HOME_NOT_FOUND, 404);
     let body: Record<string, unknown>;
     try {
       body = (await request.json()) as Record<string, unknown>;
@@ -488,7 +695,7 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     const id = homeMatch[1];
     const db = sql();
     const existing = (await db`select id from homes where id = ${id}`) as unknown as { id: string }[];
-    if (existing.length === 0) return fail("That home could not be found.", 404);
+    if (existing.length === 0) return fail(HOME_NOT_FOUND, 404);
 
     const address = cleanText(body.address, 300);
     const story = typeof body.story === "string" ? body.story.slice(0, 40000) : "";
@@ -516,6 +723,7 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   // ── Story Polish ──────────────────────────────────────────────────────
   const polishMatch = pathname.match(/^\/api\/homes\/([0-9a-f-]{36})\/polish$/i);
   if (polishMatch && method === "POST") {
+    if (!(await mayOpenHome(request, polishMatch[1]))) return fail(HOME_NOT_FOUND, 404);
     let body: Record<string, unknown>;
     try {
       body = (await request.json()) as Record<string, unknown>;
@@ -540,9 +748,10 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   const photosMatch = pathname.match(/^\/api\/homes\/([0-9a-f-]{36})\/photos$/i);
   if (photosMatch && method === "POST") {
     const homeId = photosMatch[1];
+    if (!(await mayOpenHome(request, homeId))) return fail(HOME_NOT_FOUND, 404);
     const db = sql();
     const home = (await db`select id from homes where id = ${homeId}`) as unknown as { id: string }[];
-    if (home.length === 0) return fail("That home could not be found.", 404);
+    if (home.length === 0) return fail(HOME_NOT_FOUND, 404);
 
     const countRows = (await db`
       select count(*)::int as n from home_photos where home_id = ${homeId}
@@ -597,6 +806,7 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     /^\/api\/homes\/([0-9a-f-]{36})\/photos\/([0-9a-f-]{36})$/i,
   );
   if (photoDeleteMatch && method === "DELETE") {
+    if (!(await mayOpenHome(request, photoDeleteMatch[1]))) return fail(HOME_NOT_FOUND, 404);
     const db = sql();
     await db`
       delete from home_photos where id = ${photoDeleteMatch[2]} and home_id = ${photoDeleteMatch[1]}
@@ -609,6 +819,7 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   // ever: the plaque at the door encodes it, so it must never change.
   const publishMatch = pathname.match(/^\/api\/homes\/([0-9a-f-]{36})\/publish$/i);
   if (publishMatch && method === "POST") {
+    if (!(await mayOpenHome(request, publishMatch[1]))) return fail(HOME_NOT_FOUND, 404);
     const db = sql();
     const rows = (await db`
       update homes set
@@ -639,7 +850,8 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
 
   if (plaqueMatch && method === "GET") {
     const home = await loadHomeForPlaque(plaqueMatch[1]);
-    if (!home) return fail("That home could not be found.", 404);
+    if (!home) return fail(HOME_NOT_FOUND, 404);
+    if (!(await mayOpenHome(request, home.id))) return fail(HOME_NOT_FOUND, 404);
     return json({
       home: { address: home.address, published: Boolean(home.publicId) },
       publicUrl: home.publicId ? `${publicOrigin()}/h/${home.publicId}` : null,
@@ -649,7 +861,8 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
 
   if (plaqueMatch && method === "POST") {
     const home = await loadHomeForPlaque(plaqueMatch[1]);
-    if (!home) return fail("That home could not be found.", 404);
+    if (!home) return fail(HOME_NOT_FOUND, 404);
+    if (!(await mayOpenHome(request, home.id))) return fail(HOME_NOT_FOUND, 404);
     if (!home.publicId) {
       return fail("Publish your home’s page first — the plaque carries its QR code.");
     }

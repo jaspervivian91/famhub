@@ -454,10 +454,6 @@ function PlaqueScreen() {
           </p>
         </section>
       )}
-
-      <p className="hs-caption mt-16 border-t border-hs-rule pt-6">
-        History narratives powered by Claude AI.
-      </p>
     </div>
   );
 }

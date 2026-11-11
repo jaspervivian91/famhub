@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
+import { AddressSearch } from "~/components/address-search";
+
 export const Route = createFileRoute("/start")({
   head: () => ({
     meta: [
@@ -44,18 +46,14 @@ const EMPTY_FIELDS: Fields = {
 
 function StartScreen() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
   const [address, setAddress] = useState<string | null>(null);
   const [fields, setFields] = useState<Fields>(EMPTY_FIELDS);
   const [line, setLine] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const fieldRef = useRef<HTMLInputElement>(null);
-  const optionRef = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const typed = query.trim();
   const filledCount = Object.values(fields).filter((value) => value.trim() !== "").length;
 
   useEffect(() => {
@@ -65,30 +63,13 @@ function StartScreen() {
     }
   }, [address]);
 
-  function acceptTypedAddress() {
-    if (!typed) {
+  function acceptTypedAddress(value: string) {
+    if (!value) {
       setLine("An address is needed before a page can be started.");
-      setOpen(false);
       return;
     }
     setLine(null);
-    setAddress(typed);
-    setOpen(false);
-  }
-
-  function onSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setOpen(true);
-      requestAnimationFrame(() => optionRef.current?.focus());
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      if (open) acceptTypedAddress();
-      else if (address) setOpen(true);
-      else acceptTypedAddress();
-    } else if (event.key === "Escape") {
-      setOpen(false);
-    }
+    setAddress(value);
   }
 
   async function continueToEditor() {
@@ -127,83 +108,18 @@ function StartScreen() {
       </p>
 
       {/* ── Search ─────────────────────────────────────────────────── */}
-      <div className="relative mt-12 max-w-[42rem] md:mt-16">
-        <label htmlFor="hs-address-search" className="hs-label block">
-          Your address
-        </label>
-        <input
-          id="hs-address-search"
-          ref={fieldRef}
-          type="text"
-          value={query}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Start with your postcode or address"
-          className="hs-line-input hs-line-input-brass mt-3 !text-lg md:!text-xl"
-          aria-expanded={open}
-          aria-controls="hs-address-options"
-          aria-autocomplete="list"
-          role="combobox"
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setOpen(event.target.value.trim().length > 0);
-            setLine(null);
-            if (address && event.target.value.trim() !== address) setAddress(null);
-          }}
-          onFocus={() => {
-            if (typed && !address) setOpen(true);
-          }}
-          onKeyDown={onSearchKeyDown}
-        />
-
-        {open && (
-          <div
-            id="hs-address-options"
-            role="listbox"
-            aria-label="Address options"
-            className="absolute left-0 right-0 z-20 mt-3 border border-hs-rule bg-hs-bg"
-          >
-            <div className="border-b border-hs-rule px-4 py-4 md:px-5">
-              <p className="hs-label">Address lookup is not connected</p>
-              <p className="hs-caption mt-2 max-w-[46ch]">
-                HomeStory has no live feed of Land Registry, EPC or census
-                records yet, so there is no list of addresses to suggest. What
-                you type is what is used — and you can correct it at any time.
-              </p>
-            </div>
-            <button
-              ref={optionRef}
-              type="button"
-              role="option"
-              aria-selected="false"
-              className="block w-full px-4 py-4 text-left transition-colors hover:bg-hs-surface focus:bg-hs-surface focus:outline-none md:px-5"
-              onClick={acceptTypedAddress}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setOpen(false);
-                  fieldRef.current?.focus();
-                }
-              }}
-            >
-              <span className="hs-label block">Use the address I typed</span>
-              <span className="mt-1 flex items-baseline justify-between gap-4">
-                <span className="font-body text-base text-hs-ink">
-                  {typed || "Nothing typed yet"}
-                </span>
-                <span className="hs-caption shrink-0" aria-hidden="true">
-                  →
-                </span>
-              </span>
-            </button>
-          </div>
-        )}
-
-        {line && (
-          <p className="hs-caption mt-4 text-hs-ink" role="status">
-            {line}
-          </p>
-        )}
-      </div>
+      <AddressSearch
+        id="hs-address-search"
+        value={typed}
+        onChange={(next) => {
+          setTyped(next);
+          setLine(null);
+          if (address && next.trim() !== address) setAddress(null);
+        }}
+        onAccept={acceptTypedAddress}
+        message={line}
+        className="mt-12 max-w-[42rem] md:mt-16"
+      />
 
       {/* ── Preview card ───────────────────────────────────────────── */}
       {address && (
