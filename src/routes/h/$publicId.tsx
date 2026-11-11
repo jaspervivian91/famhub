@@ -50,12 +50,28 @@ function NoPageHere() {
 function PublicHomePage() {
   const home = Route.useLoaderData();
 
+  /** "23 February 2026" — the certificate date, shown beside the attribution. */
+  function formatEpcDate(iso: string): string {
+    const date = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  }
+
   const record = [
     { label: "Built", value: home.buildEra },
+    { label: "Floor area", value: home.floorArea },
     { label: "EPC rating", value: home.epcRating },
+    { label: "Walls", value: home.wallType },
+    { label: "Roof", value: home.roofType },
+    { label: "Windows", value: home.windowType },
     { label: "Last sale price", value: home.lastSalePrice },
     { label: "Last sold", value: home.lastSaleDate },
   ].filter((row): row is { label: string; value: string } => Boolean(row.value));
+
+  // The licence requires the attribution wherever EPC-derived facts appear, so
+  // it is shown whenever any value is still exactly as the register recorded it.
+  const showEpcAttribution = home.epcFields.length > 0;
+  const epcRecordedOn = home.epcRecordedOn ? formatEpcDate(home.epcRecordedOn) : "";
 
   return (
     <article className="hs-wrap pb-20 pt-10 md:pb-28 md:pt-16">
@@ -81,6 +97,13 @@ function PublicHomePage() {
               </div>
             ))}
           </dl>
+          {showEpcAttribution && (
+            <p className="hs-caption mt-6 max-w-[54ch]">
+              Energy performance data from the EPC register (Open Government
+              Licence v3.0), © Crown copyright
+              {epcRecordedOn ? `. Certificate recorded ${epcRecordedOn}` : ""}.
+            </p>
+          )}
         </section>
       )}
 

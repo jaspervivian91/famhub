@@ -11,6 +11,14 @@ import {
   sessionCookie,
   verifyPassword,
 } from "./lib/agents";
+import {
+  EPC_LICENCE,
+  epcConfigured,
+  fetchCertificate,
+  formatRecordedOn,
+  isCertificateNumber,
+  searchByPostcode,
+} from "./lib/epc";
 
 const handler = createStartHandler(defaultStreamHandler);
 
@@ -119,15 +127,79 @@ type HomeRow = {
   last_sale_date: string | null;
   epc_rating: string | null;
   build_era: string | null;
+  floor_area: string | null;
+  wall_type: string | null;
+  roof_type: string | null;
+  window_type: string | null;
   previous_owners: string | null;
   records_source: string;
+  epc_certificate_number: string | null;
+  epc_certificate_date: string | null;
+  epc_uprn: string | null;
+  epc_sourced: boolean | null;
+  epc_fields: unknown;
   key_dates: unknown;
   hidden_gems: unknown;
   created_at: unknown;
   updated_at: unknown;
 };
 
+/**
+ * The record fields the EPC register can fill. They are ordinary, editable
+ * fields; `epc_fields` remembers which of them are still exactly as the
+ * register recorded them, so an owner's correction is never credited to the
+ * register.
+ */
+const EPC_FIELD_KEYS = [
+  "floorArea",
+  "epcRating",
+  "buildEra",
+  "wallType",
+  "roofType",
+  "windowType",
+] as const;
+
+type EpcFieldKey = (typeof EPC_FIELD_KEYS)[number];
+
+function epcFieldValue(body: Record<string, unknown>, key: EpcFieldKey): string {
+  switch (key) {
+    case "floorArea":
+      return cleanText(body.floorArea, 40) ?? "";
+    case "epcRating":
+      return cleanText(body.epcRating, 20) ?? "";
+    case "buildEra":
+      return cleanText(body.buildEra, 80) ?? "";
+    case "wallType":
+      return cleanText(body.wallType, 300) ?? "";
+    case "roofType":
+      return cleanText(body.roofType, 300) ?? "";
+    case "windowType":
+      return cleanText(body.windowType, 300) ?? "";
+  }
+}
+
+function epcFieldValueFromRow(row: Record<string, unknown>, key: EpcFieldKey): string {
+  const column: Record<EpcFieldKey, string> = {
+    floorArea: "floor_area",
+    epcRating: "epc_rating",
+    buildEra: "build_era",
+    wallType: "wall_type",
+    roofType: "roof_type",
+    windowType: "window_type",
+  };
+  const value = row[column[key]];
+  return typeof value === "string" ? value : "";
+}
+
+function cleanEpcFields(value: unknown): EpcFieldKey[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => (typeof entry === "string" ? entry : ""))
+    .filter((entry): entry is EpcFieldKey => (EPC_FIELD_KEYS as readonly string[]).includes(entry));
+}
+
 function toHome(row: HomeRow) {
+  const epcFields = cleanEpcFields(row.epc_fields);
   return {
     id: String(row.id),
     publicId: row.public_id ? String(row.public_id) : null,
@@ -138,9 +210,16 @@ function toHome(row: HomeRow) {
     lastSaleDate: row.last_sale_date ?? "",
     epcRating: row.epc_rating ?? "",
     buildEra: row.build_era ?? "",
+    floorArea: row.floor_area ?? "",
+    wallType: row.wall_type ?? "",
+    roofType: row.roof_type ?? "",
+    windowType: row.window_type ?? "",
     previousOwners: row.previous_owners ?? "",
-    // Every value above was typed by the owner; no record source is connected.
+    // Where a value came from: the owner typed it, or the EPC register holds it.
     recordsSource: row.records_source,
+    epcSourced: Boolean(row.epc_sourced),
+    epcRecordedOn: row.epc_certificate_date ?? "",
+    epcFields,
     keyDates: Array.isArray(row.key_dates) ? (row.key_dates as KeyDate[]) : [],
     hiddenGems: Array.isArray(row.hidden_gems) ? (row.hidden_gems as string[]) : [],
     createdAt: String(row.created_at),
@@ -152,8 +231,9 @@ async function loadHome(id: string) {
   const db = sql();
   const rows = (await db`
     select id, public_id, address, status, story, last_sale_price, last_sale_date, epc_rating,
-           build_era, previous_owners, records_source, key_dates, hidden_gems,
-           created_at, updated_at
+           build_era, floor_area, wall_type, roof_type, window_type, previous_owners,
+           records_source, epc_certificate_number, epc_certificate_date, epc_uprn,
+           epc_sourced, epc_fields, key_dates, hidden_gems, created_at, updated_at
     from homes where id = ${id}
   `) as unknown as HomeRow[];
   if (rows.length === 0) return null;
@@ -361,6 +441,10 @@ function houseContext(row: Record<string, unknown>): string {
   add("Address", row.address);
   add("Build era", row.build_era);
   add("EPC rating", row.epc_rating);
+  add("Floor area", row.floor_area);
+  add("Walls", row.wall_type);
+  add("Roof", row.roof_type);
+  add("Windows", row.window_type);
   add("Last sale price", row.last_sale_price);
   add("Last sale date", row.last_sale_date);
   add("Previous owners", row.previous_owners);
@@ -468,6 +552,72 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   // ── Whether Claude is configured (the editor asks before offering Polish) ─
   if (pathname === "/api/ai-status" && method === "GET") {
     return json({ connected: Boolean(process.env.ANTHROPIC_API_KEY), model: MODEL });
+  }
+
+  // ── The EPC register ──────────────────────────────────────────────────
+  // Two questions, one route: which certificates does the register hold for
+  // this postcode, and what does this one certificate say about the building.
+  // The token stays here — the browser only ever sees the normalised facts.
+  if (pathname === "/api/epc/lookup" && method === "GET") {
+    if (!epcConfigured()) {
+      return json({
+        connected: false,
+        message:
+          "The EPC register is not connected just now, so nothing could be looked up. What you type is what is used.",
+      });
+    }
+
+    const ip = clientAddress(request);
+    if (tooManyAsks(`epc:${ip}`, 60, 10 * 60 * 1000)) {
+      return json({
+        connected: true,
+        error: "That is a lot of lookups at once. Please wait a moment and try again.",
+      });
+    }
+
+    const certificateNumber = url.searchParams.get("certificateNumber")?.trim() ?? "";
+    if (certificateNumber) {
+      if (!isCertificateNumber(certificateNumber)) {
+        return json({ connected: true, found: false, error: "That is not a certificate number." });
+      }
+      const result = await fetchCertificate(certificateNumber);
+      if ("error" in result) {
+        return json({ connected: true, found: false, error: result.error });
+      }
+      return json({
+        connected: true,
+        found: true,
+        certificate: result.facts,
+        source: {
+          name: "EPC register",
+          licence: EPC_LICENCE,
+          recordedOn: formatRecordedOn(result.facts.registeredOn),
+        },
+      });
+    }
+
+    const postcode = url.searchParams.get("postcode")?.trim() ?? "";
+    if (!postcode) {
+      return json({
+        connected: true,
+        found: false,
+        error: "Type a postcode to look it up in the EPC register.",
+      });
+    }
+
+    const result = await searchByPostcode(postcode);
+    if ("error" in result) {
+      return json({ connected: true, found: false, error: result.error });
+    }
+    if (result.certificates.length === 0) {
+      return json({
+        connected: true,
+        found: false,
+        postcode,
+        message: "Nothing on the EPC register for that postcode.",
+      });
+    }
+    return json({ connected: true, found: true, certificates: result.certificates });
   }
 
   // ── Agent accounts ────────────────────────────────────────────────────
@@ -663,13 +813,30 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
 
     const id = crypto.randomUUID();
     const db = sql();
+    // The EPC facts (and their provenance) are written once, here, from what the
+    // register said at the moment the owner started the page. From then on the
+    // fields are the owner's: their corrections win, and a corrected field
+    // leaves epc_fields so it is no longer shown as the register's.
+    const epcFields = cleanEpcFields(body.epcFields).filter(
+      (key) => epcFieldValue(body, key) !== "",
+    );
+    const epcSourced = Boolean(body.epcSourced) && epcFields.length > 0;
     await db`
       insert into homes (id, address, last_sale_price, last_sale_date, epc_rating,
-                         build_era, previous_owners, records_source)
+                         build_era, floor_area, wall_type, roof_type, window_type,
+                         previous_owners, records_source, epc_certificate_number,
+                         epc_certificate_date, epc_uprn, epc_sourced, epc_fields)
       values (${id}, ${address}, ${cleanText(body.lastSalePrice, 80)},
-              ${cleanDate(body.lastSaleDate)}, ${cleanText(body.epcRating, 20)},
-              ${cleanText(body.buildEra, 80)}, ${cleanText(body.previousOwners, 2000)},
-              'owner')
+              ${cleanDate(body.lastSaleDate)}, ${epcFieldValue(body, "epcRating") || null},
+              ${epcFieldValue(body, "buildEra") || null}, ${epcFieldValue(body, "floorArea") || null},
+              ${epcFieldValue(body, "wallType") || null}, ${epcFieldValue(body, "roofType") || null},
+              ${epcFieldValue(body, "windowType") || null},
+              ${cleanText(body.previousOwners, 2000)},
+              'owner',
+              ${epcSourced ? cleanText(body.epcCertificateNumber, 40) : null},
+              ${epcSourced ? cleanDate(body.epcRecordedOn) : null},
+              ${epcSourced ? cleanText(body.epcUprn, 40) : null},
+              ${epcSourced}, ${JSON.stringify(epcSourced ? epcFields : [])}::jsonb)
     `;
     return json({ id }, 201);
   }
@@ -694,7 +861,10 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     }
     const id = homeMatch[1];
     const db = sql();
-    const existing = (await db`select id from homes where id = ${id}`) as unknown as { id: string }[];
+    const existing = (await db`
+      select id, epc_fields, epc_rating, build_era, floor_area, wall_type, roof_type, window_type
+      from homes where id = ${id}
+    `) as unknown as Record<string, unknown>[];
     if (existing.length === 0) return fail(HOME_NOT_FOUND, 404);
 
     const address = cleanText(body.address, 300);
@@ -702,15 +872,28 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     const keyDates = cleanKeyDates(body.keyDates);
     const hiddenGems = cleanGems(body.hiddenGems);
 
+    // Provenance is worked out here, never taken from the client: a field keeps
+    // its EPC marker only while it still says exactly what the register said.
+    const epcFields = cleanEpcFields(existing[0].epc_fields).filter(
+      (key) =>
+        epcFieldValue(body, key) !== "" &&
+        epcFieldValue(body, key) === epcFieldValueFromRow(existing[0], key),
+    );
+
     await db`
       update homes set
         address = ${address ?? ""},
         story = ${story},
         last_sale_price = ${cleanText(body.lastSalePrice, 80)},
         last_sale_date = ${cleanDate(body.lastSaleDate)},
-        epc_rating = ${cleanText(body.epcRating, 20)},
-        build_era = ${cleanText(body.buildEra, 80)},
+        epc_rating = ${epcFieldValue(body, "epcRating") || null},
+        build_era = ${epcFieldValue(body, "buildEra") || null},
+        floor_area = ${epcFieldValue(body, "floorArea") || null},
+        wall_type = ${epcFieldValue(body, "wallType") || null},
+        roof_type = ${epcFieldValue(body, "roofType") || null},
+        window_type = ${epcFieldValue(body, "windowType") || null},
         previous_owners = ${cleanText(body.previousOwners, 2000)},
+        epc_fields = ${JSON.stringify(epcFields)}::jsonb,
         key_dates = ${JSON.stringify(keyDates)}::jsonb,
         hidden_gems = ${JSON.stringify(hiddenGems)}::jsonb,
         updated_at = now()
@@ -944,7 +1127,8 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
 
     const db = sql();
     const rows = (await db`
-      select address, story, build_era, epc_rating, last_sale_price, last_sale_date,
+      select address, story, build_era, epc_rating, floor_area, wall_type, roof_type,
+             window_type, last_sale_price, last_sale_date,
              previous_owners, key_dates, hidden_gems
       from homes where public_id = ${publicId} and status = 'published' limit 1
     `) as unknown as Record<string, unknown>[];
@@ -976,7 +1160,10 @@ export default {
 
     const isApiRoute = url.pathname.startsWith("/api/") || url.pathname.startsWith("/photos/");
     if (isApiRoute) {
-      if (!hasDatabaseURL() && url.pathname !== "/api/ai-status") {
+      // The EPC register and Claude status need no database, and the address
+      // search asks the register before any home exists.
+      const needsDatabase = url.pathname !== "/api/ai-status" && url.pathname !== "/api/epc/lookup";
+      if (needsDatabase && !hasDatabaseURL()) {
         return fail("The database is not connected yet.", 503);
       }
       try {

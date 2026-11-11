@@ -27,32 +27,41 @@ type Doc = {
   lastSaleDate: string;
   epcRating: string;
   buildEra: string;
+  floorArea: string;
+  wallType: string;
+  roofType: string;
+  windowType: string;
   previousOwners: string;
   keyDates: KeyDate[];
   hiddenGems: string[];
 };
 
-const EMPTY_DOC: Doc = {
-  address: "",
-  story: "",
-  lastSalePrice: "",
-  lastSaleDate: "",
-  epcRating: "",
-  buildEra: "",
-  previousOwners: "",
-  keyDates: [],
-  hiddenGems: [],
-};
+/** The building — the part the EPC register can hold. */
+const EPC_ROWS = [
+  { key: "floorArea", label: "Floor area", hint: "e.g. 153 m²" },
+  { key: "epcRating", label: "EPC rating", hint: "e.g. D" },
+  { key: "wallType", label: "Walls", hint: "e.g. solid brick, no insulation" },
+  { key: "roofType", label: "Roof", hint: "e.g. pitched, insulated" },
+  { key: "windowType", label: "Windows", hint: "e.g. partial double glazing" },
+  { key: "buildEra", label: "Build era", hint: "e.g. 1890s" },
+] as const;
 
-const RECORD_ROWS = [
+/** The people — no record source holds these. */
+const OWNER_ROWS = [
   { key: "lastSalePrice", label: "Last sale price", hint: "e.g. £412,000" },
   { key: "lastSaleDate", label: "Last sale date", hint: "e.g. 2019" },
-  { key: "epcRating", label: "EPC rating", hint: "e.g. D" },
-  { key: "buildEra", label: "Build era", hint: "e.g. 1890s" },
   { key: "previousOwners", label: "Previous owners", hint: "Names and years" },
 ] as const;
 
-type RecordKey = (typeof RECORD_ROWS)[number]["key"];
+type RecordKey = (typeof EPC_ROWS)[number]["key"] | (typeof OWNER_ROWS)[number]["key"];
+
+/** "23 February 2026" — the certificate date, as the page shows it. */
+function formatEpcDate(iso: string): string {
+  if (!iso) return "";
+  const date = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
 
 function EditorScreen() {
   const { id } = Route.useParams();
@@ -63,6 +72,8 @@ function EditorScreen() {
   const [status, setStatus] = useState("draft");
   const [publicId, setPublicId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Which record fields are still exactly as the EPC register recorded them.
+  const [epc, setEpc] = useState<{ fields: string[]; recordedOn: string } | null>(null);
 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [uploading, setUploading] = useState(false);
@@ -104,6 +115,9 @@ function EditorScreen() {
           photos?: Photo[];
           status?: string;
           publicId?: string | null;
+          epcFields?: string[];
+          epcRecordedOn?: string;
+          epcSourced?: boolean;
         };
         if (cancelled) return;
         setPublicId(home.publicId ?? null);
@@ -114,10 +128,17 @@ function EditorScreen() {
           lastSaleDate: home.lastSaleDate ?? "",
           epcRating: home.epcRating ?? "",
           buildEra: home.buildEra ?? "",
+          floorArea: home.floorArea ?? "",
+          wallType: home.wallType ?? "",
+          roofType: home.roofType ?? "",
+          windowType: home.windowType ?? "",
           previousOwners: home.previousOwners ?? "",
           keyDates: Array.isArray(home.keyDates) ? home.keyDates : [],
           hiddenGems: Array.isArray(home.hiddenGems) ? home.hiddenGems : [],
         });
+        if (home.epcSourced && Array.isArray(home.epcFields) && home.epcFields.length > 0) {
+          setEpc({ fields: home.epcFields, recordedOn: home.epcRecordedOn ?? "" });
+        }
         setPhotos(Array.isArray(home.photos) ? home.photos : []);
         setStatus(home.status ?? "draft");
 
@@ -161,6 +182,20 @@ function EditorScreen() {
           body: JSON.stringify(next),
         });
         setSaveState(response.ok ? "saved" : "error");
+        if (response.ok) {
+          // The server works out which fields are still the register's, so a
+          // correction the owner has just made loses its EPC marker here too.
+          const saved = (await response.json().catch(() => null)) as {
+            epcFields?: string[];
+            epcRecordedOn?: string;
+            epcSourced?: boolean;
+          } | null;
+          if (saved?.epcSourced && Array.isArray(saved.epcFields) && saved.epcFields.length > 0) {
+            setEpc({ fields: saved.epcFields, recordedOn: saved.epcRecordedOn ?? "" });
+          } else if (saved) {
+            setEpc(null);
+          }
+        }
       } catch {
         setSaveState("error");
       }
@@ -354,11 +389,34 @@ function EditorScreen() {
       <section className="mt-10 border-t border-hs-rule-brass pt-8">
         <p className="hs-label">The record</p>
         <p className="hs-caption mt-2 max-w-[54ch]">
-          What you know of the building. No record source is connected, so these
-          are your words — correct them whenever you like.
+          {epc
+            ? "The building is from the official EPC register. Correct anything that is wrong — your version wins, and a field you change stops being shown as the register’s."
+            : "The sale price and previous owners come from you: no record source holds them. Correct anything at any time."}
         </p>
+
         <div className="mt-6 grid gap-x-10 gap-y-5 sm:grid-cols-2">
-          {RECORD_ROWS.map((row) => (
+          {EPC_ROWS.map((row) => (
+            <div key={row.key}>
+              <label htmlFor={`edit-${row.key}`} className="hs-caption block">
+                {row.label}
+              </label>
+              <input
+                id={`edit-${row.key}`}
+                type="text"
+                value={doc[row.key as RecordKey]}
+                placeholder={epc ? "Not on the EPC record" : "Not yet on record"}
+                className="hs-line-input"
+                onChange={(event) => update({ [row.key]: event.target.value } as Partial<Doc>)}
+              />
+              <p className="hs-caption mt-1 opacity-75">
+                {epc?.fields.includes(row.key)
+                  ? `From the EPC register${epc.recordedOn ? ` · recorded ${formatEpcDate(epc.recordedOn)}` : ""}`
+                  : row.hint}
+              </p>
+            </div>
+          ))}
+
+          {OWNER_ROWS.map((row) => (
             <div key={row.key}>
               <label htmlFor={`edit-${row.key}`} className="hs-caption block">
                 {row.label}
@@ -375,6 +433,14 @@ function EditorScreen() {
             </div>
           ))}
         </div>
+
+        {epc && (
+          <p className="hs-caption mt-6 max-w-[54ch]">
+            Energy performance data from the EPC register (Open Government Licence
+            v3.0). Previous owners are still not on any register we can reach, so
+            that section is entirely your own.
+          </p>
+        )}
       </section>
 
       {/* ── One: Your story ──────────────────────────────────────────── */}
