@@ -1,10 +1,12 @@
 /**
- * The EPC register — the one record source HomeStory is connected to.
+ * The EPC register — the record source for the *building*.
  *
- * The register holds the *building*: floor area, energy band, walls, roof,
+ * The register holds the building: floor area, energy band, walls, roof,
  * windows, and — on some certificates — the construction age band. It holds no
  * people, so previous owners and their dates are still not available from
- * anywhere, and nothing here invents them.
+ * anywhere, and nothing here invents them. Sale prices and dates are not this
+ * register's either: those come from HM Land Registry Price Paid Data, in
+ * `price-paid.ts`.
  *
  * Two rules run through this file:
  *

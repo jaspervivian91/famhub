@@ -333,7 +333,7 @@ function StartScreen() {
 
             <p className="hs-caption max-w-[52ch]">
               {epc
-                ? "Energy performance data from the EPC register (Open Government Licence v3.0). The sale price and previous owners are still not available from any record source — those are yours to fill in, and nothing is invented to fill the gaps."
+                ? "Energy performance data from the EPC register (Open Government Licence v3.0). Sale prices and dates come from the Land Registry’s Price Paid Data. Previous owners’ names are still on no register we can reach — those are yours to fill in, and nothing is invented to fill the gaps."
                 : filledCount > 0
                   ? "Some of the record is filled in — you can fill in the rest."
                   : "No certificate was found for this address, so every row is yours to fill in. Nothing is guessed to fill the gaps."}
@@ -355,10 +355,11 @@ function StartScreen() {
         <p className="hs-caption">
           The building’s record — floor area, energy rating, walls, roof, windows
           and, where the certificate carries it, build era — comes from the
-          official EPC register. The people are not on any register we can reach:
-          sale prices and previous owners come from you, and nothing is invented
-          to fill the gaps. Anything you enter here can be corrected later, and
-          nothing about your home is public until you publish it.
+          official EPC register. What the address has sold for, and when, comes
+          from the Land Registry’s Price Paid Data. The people are not on any
+          register we can reach: previous owners come from you, and nothing is
+          invented to fill the gaps. Anything you enter here can be corrected
+          later, and nothing about your home is public until you publish it.
         </p>
         <p className="hs-caption mt-4">
           <Link to="/" className="hs-link">

@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { cleanSales, type PricePaidSale } from "./price-paid";
+
 /**
  * What a visitor at the front door sees.
  *
@@ -23,6 +25,10 @@ export type PublicHome = {
   epcFields: string[];
   lastSalePrice: string | null;
   lastSaleDate: string | null;
+  /** What the Land Registry records for this address, newest sale first. */
+  pricePaidSales: PricePaidSale[];
+  /** When the register was asked. Null means this address was never checked. */
+  pricePaidCheckedAt: string | null;
   previousOwners: string | null;
   keyDates: { date: string; label: string }[];
   hiddenGems: string[];
@@ -58,6 +64,7 @@ export const getPublicHome = createServerFn({ method: "GET" })
       select public_id, address, story, build_era, epc_rating, floor_area, wall_type,
              roof_type, window_type, epc_certificate_date, epc_fields,
              last_sale_price, last_sale_date, previous_owners, key_dates, hidden_gems,
+             price_paid_sales, price_paid_checked_at,
              published_at, premium_at
       from homes
       where public_id = ${data.publicId} and status = 'published'
@@ -76,6 +83,8 @@ export const getPublicHome = createServerFn({ method: "GET" })
       epc_fields: unknown;
       last_sale_price: string | null;
       last_sale_date: string | null;
+      price_paid_sales: unknown;
+      price_paid_checked_at: unknown;
       previous_owners: string | null;
       key_dates: unknown;
       hidden_gems: unknown;
@@ -127,6 +136,8 @@ export const getPublicHome = createServerFn({ method: "GET" })
         epcFields,
         lastSalePrice: text(row.last_sale_price),
         lastSaleDate: text(row.last_sale_date),
+        pricePaidSales: cleanSales(row.price_paid_sales),
+        pricePaidCheckedAt: row.price_paid_checked_at ? String(row.price_paid_checked_at) : null,
         previousOwners: text(row.previous_owners),
         keyDates,
         hiddenGems,

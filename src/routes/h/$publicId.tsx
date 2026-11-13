@@ -2,6 +2,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { getPublicHome } from "~/lib/public-home";
+import { PRICE_PAID_LICENCE, formatSaleDate, formatSalePrice } from "~/lib/price-paid";
 
 export const Route = createFileRoute("/h/$publicId")({
   loader: async ({ params }) => {
@@ -103,6 +104,51 @@ function PublicHomePage() {
               Licence v3.0), © Crown copyright
               {epcRecordedOn ? `. Certificate recorded ${epcRecordedOn}` : ""}.
             </p>
+          )}
+        </section>
+      )}
+
+      {/* ── What it has sold for ────────────────────────────────────── */}
+      {/* From HM Land Registry Price Paid Data, stored when the page was
+          started. A home with no record is said plainly — never a neighbour's
+          price, never a guess. */}
+      {home.pricePaidCheckedAt && (
+        <section className="mt-12 border-t border-hs-rule-brass pt-8 md:mt-16">
+          <h2 className="hs-h3">What it has sold for</h2>
+          {home.pricePaidSales.length > 0 ? (
+            <>
+              <dl className="mt-5">
+                {home.pricePaidSales.map((sale, index) => (
+                  <div
+                    key={`${sale.date}-${index}`}
+                    className="flex flex-col gap-1 border-b border-hs-rule py-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
+                  >
+                    <dt className="font-display text-xl text-hs-ink">
+                      {formatSaleDate(sale.date)}
+                    </dt>
+                    <dd className="font-body text-lg text-hs-ink sm:text-right">
+                      {formatSalePrice(sale.price)}
+                      {(sale.tenure || sale.newBuild === true) && (
+                        <span className="hs-caption mt-1 block">
+                          {[sale.tenure, sale.newBuild === true ? "New build" : null]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="hs-caption mt-6 max-w-[54ch]">{PRICE_PAID_LICENCE}.</p>
+            </>
+          ) : (
+            <>
+              <p className="hs-caption mt-3 max-w-[52ch]">
+                No sale recorded in the Land Registry’s Price Paid Data for this
+                address.
+              </p>
+              <p className="hs-caption mt-3 max-w-[52ch]">{PRICE_PAID_LICENCE}.</p>
+            </>
           )}
         </section>
       )}

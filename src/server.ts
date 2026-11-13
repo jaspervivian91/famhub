@@ -20,6 +20,7 @@ import {
   isCertificateNumber,
   searchByPostcode,
 } from "./lib/epc";
+import { cleanSales, lookupPricePaid } from "./lib/price-paid";
 import {
   PREMIUM_AMOUNT_PENCE,
   PREMIUM_CURRENCY,
@@ -153,6 +154,9 @@ type HomeRow = {
   epc_uprn: string | null;
   epc_sourced: boolean | null;
   epc_fields: unknown;
+  price_paid_sales: unknown;
+  price_paid_checked_at: unknown;
+  price_paid_paon: string | null;
   key_dates: unknown;
   hidden_gems: unknown;
   created_at: unknown;
@@ -235,6 +239,11 @@ function toHome(row: HomeRow) {
     epcSourced: Boolean(row.epc_sourced),
     epcRecordedOn: row.epc_certificate_date ?? "",
     epcFields,
+    // What the Land Registry records for this address, and when it was asked.
+    // Read-only everywhere: it is the register's, never the owner's.
+    pricePaidSales: cleanSales(row.price_paid_sales),
+    pricePaidCheckedAt: row.price_paid_checked_at ? String(row.price_paid_checked_at) : null,
+    pricePaidPaon: row.price_paid_paon ?? "",
     keyDates: Array.isArray(row.key_dates) ? (row.key_dates as KeyDate[]) : [],
     hiddenGems: Array.isArray(row.hidden_gems) ? (row.hidden_gems as string[]) : [],
     createdAt: String(row.created_at),
@@ -248,7 +257,8 @@ async function loadHome(id: string) {
     select id, public_id, address, status, story, last_sale_price, last_sale_date, epc_rating,
            build_era, floor_area, wall_type, roof_type, window_type, previous_owners,
            records_source, epc_certificate_number, epc_certificate_date, epc_uprn,
-           epc_sourced, epc_fields, key_dates, hidden_gems, created_at, updated_at
+           epc_sourced, epc_fields, price_paid_sales, price_paid_checked_at, price_paid_paon,
+           key_dates, hidden_gems, created_at, updated_at
     from homes where id = ${id}
   `) as unknown as HomeRow[];
   if (rows.length === 0) return null;
@@ -1008,11 +1018,21 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
       (key) => epcFieldValue(body, key) !== "",
     );
     const epcSourced = Boolean(body.epcSourced) && epcFields.length > 0;
+
+    // What the Land Registry records for this address. Asked once, here, from
+    // the address itself — never taken from the browser, so a sale price on the
+    // page can only ever be the register's. A miss is normal and stored as an
+    // empty list; an unreachable register leaves the columns null so the page
+    // can tell "nothing recorded" from "never asked".
+    const pricePaid = await lookupPricePaid(address);
+
     await db`
       insert into homes (id, address, last_sale_price, last_sale_date, epc_rating,
                          build_era, floor_area, wall_type, roof_type, window_type,
                          previous_owners, records_source, epc_certificate_number,
-                         epc_certificate_date, epc_uprn, epc_sourced, epc_fields)
+                         epc_certificate_date, epc_uprn, epc_sourced, epc_fields,
+                         price_paid_sales, price_paid_checked_at, price_paid_postcode,
+                         price_paid_paon)
       values (${id}, ${address}, ${cleanText(body.lastSalePrice, 80)},
               ${cleanDate(body.lastSaleDate)}, ${epcFieldValue(body, "epcRating") || null},
               ${epcFieldValue(body, "buildEra") || null}, ${epcFieldValue(body, "floorArea") || null},
@@ -1023,7 +1043,11 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
               ${epcSourced ? cleanText(body.epcCertificateNumber, 40) : null},
               ${epcSourced ? cleanDate(body.epcRecordedOn) : null},
               ${epcSourced ? cleanText(body.epcUprn, 40) : null},
-              ${epcSourced}, ${JSON.stringify(epcSourced ? epcFields : [])}::jsonb)
+              ${epcSourced}, ${JSON.stringify(epcSourced ? epcFields : [])}::jsonb,
+              ${JSON.stringify(pricePaid.ok ? pricePaid.sales : [])}::jsonb,
+              ${pricePaid.ok ? new Date().toISOString() : null},
+              ${pricePaid.ok ? pricePaid.postcode : null},
+              ${pricePaid.ok ? pricePaid.paon : null})
     `;
     return json({ id }, 201);
   }

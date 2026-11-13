@@ -1,6 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  PRICE_PAID_LICENCE,
+  formatSaleDate,
+  formatSalePrice,
+  type PricePaidSale,
+} from "~/lib/price-paid";
+
 export const Route = createFileRoute("/homes/$id/edit")({
   head: () => ({
     meta: [
@@ -46,7 +53,8 @@ const EPC_ROWS = [
   { key: "buildEra", label: "Build era", hint: "e.g. 1890s" },
 ] as const;
 
-/** The people — no record source holds these. */
+/** The people — no register we can reach holds them. The owner's own sale
+ * figures stay their own: the register's sales are shown separately, read-only. */
 const OWNER_ROWS = [
   { key: "lastSalePrice", label: "Last sale price", hint: "e.g. £412,000" },
   { key: "lastSaleDate", label: "Last sale date", hint: "e.g. 2019" },
@@ -74,6 +82,11 @@ function EditorScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   // Which record fields are still exactly as the EPC register recorded them.
   const [epc, setEpc] = useState<{ fields: string[]; recordedOn: string } | null>(null);
+  // What HM Land Registry records for this address — read-only, never edited.
+  const [pricePaid, setPricePaid] = useState<{
+    sales: PricePaidSale[];
+    checkedAt: string;
+  } | null>(null);
 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [uploading, setUploading] = useState(false);
@@ -124,6 +137,8 @@ function EditorScreen() {
           epcFields?: string[];
           epcRecordedOn?: string;
           epcSourced?: boolean;
+          pricePaidSales?: PricePaidSale[];
+          pricePaidCheckedAt?: string | null;
         };
         if (cancelled) return;
         setPublicId(home.publicId ?? null);
@@ -144,6 +159,12 @@ function EditorScreen() {
         });
         if (home.epcSourced && Array.isArray(home.epcFields) && home.epcFields.length > 0) {
           setEpc({ fields: home.epcFields, recordedOn: home.epcRecordedOn ?? "" });
+        }
+        if (home.pricePaidCheckedAt) {
+          setPricePaid({
+            sales: Array.isArray(home.pricePaidSales) ? home.pricePaidSales : [],
+            checkedAt: home.pricePaidCheckedAt,
+          });
         }
         setPhotos(Array.isArray(home.photos) ? home.photos : []);
         setStatus(home.status ?? "draft");
@@ -409,7 +430,7 @@ function EditorScreen() {
         <p className="hs-caption mt-2 max-w-[54ch]">
           {epc
             ? "The building is from the official EPC register. Correct anything that is wrong — your version wins, and a field you change stops being shown as the register’s."
-            : "The sale price and previous owners come from you: no record source holds them. Correct anything at any time."}
+            : "Previous owners come from you: no register we can reach holds their names. The sale prices below are the Land Registry’s. Correct anything at any time."}
         </p>
 
         <div className="mt-6 grid gap-x-10 gap-y-5 sm:grid-cols-2">
@@ -458,6 +479,54 @@ function EditorScreen() {
             v3.0). Previous owners are still not on any register we can reach, so
             that section is entirely your own.
           </p>
+        )}
+
+        {/* ── What it has sold for — the register's, read-only ────────── */}
+        {pricePaid && (
+          <div className="mt-8 border-t border-hs-rule pt-6">
+            <p className="hs-label">What it has sold for</p>
+            <p className="hs-caption mt-2 max-w-[54ch]">
+              From HM Land Registry Price Paid Data. This is read-only — it is the
+              register’s record of this address, not yours, and the sale price you
+              type above stays your own.
+            </p>
+
+            {pricePaid.sales.length > 0 ? (
+              <dl className="mt-5 max-w-[34rem]">
+                {pricePaid.sales.map((sale, index) => (
+                  <div
+                    key={`${sale.date}-${index}`}
+                    className="flex items-baseline justify-between gap-6 border-b border-hs-rule py-3"
+                  >
+                    <dt className="font-body text-base text-hs-ink">
+                      {formatSaleDate(sale.date)}
+                    </dt>
+                    <dd className="text-right">
+                      <span className="font-body text-base text-hs-ink">
+                        {formatSalePrice(sale.price)}
+                      </span>
+                      {(sale.tenure || sale.newBuild === true) && (
+                        <span className="hs-caption mt-1 block">
+                          {[sale.tenure, sale.newBuild === true ? "New build" : null]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="hs-caption mt-4 max-w-[54ch]">
+                No sale recorded in the Land Registry’s Price Paid Data for this
+                address. Plenty of homes have none — a house that has not changed
+                hands since 1995, a new build, or an address in Scotland or
+                Northern Ireland.
+              </p>
+            )}
+
+            <p className="hs-caption mt-4 max-w-[54ch]">{PRICE_PAID_LICENCE}.</p>
+          </div>
         )}
       </section>
 
