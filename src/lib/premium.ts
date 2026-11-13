@@ -29,6 +29,25 @@ export function stripeKey(): string | null {
   return key ? key : null;
 }
 
+/**
+ * The live buy path: the hosted Stripe Payment Link for the one Premium price.
+ *
+ * This account is an express account and no secret key is available, so a
+ * server-created Checkout Session cannot run here. A payment link needs no key
+ * — Stripe hosts the page and takes the money. The home is named on the link
+ * with `client_reference_id`, which Stripe records against the payment; the
+ * owner reads it off the Stripe dashboard and unlocks the home by hand on
+ * /admin/premium.
+ */
+export const PREMIUM_PAYMENT_LINK = "https://buy.stripe.com/6oUcN5eZidjBfGg3UU5Ne01";
+
+/** The same link with this home named, so the payment says which house it is for. */
+export function premiumPaymentLink(homeId: string): string {
+  const url = new URL(PREMIUM_PAYMENT_LINK);
+  url.searchParams.set("client_reference_id", homeId);
+  return url.toString();
+}
+
 export type SellerDetails = {
   name: string | null;
   address: string | null;
@@ -66,11 +85,13 @@ export function missingSellerDetails(): string[] {
 }
 
 /**
- * Premium is on sale only when there is a Stripe key to create the checkout
- * with and the seller details a distance sale must show. Both, or nothing.
+ * Premium is on sale when there is a page to pay on. That is the hosted payment
+ * link, which needs no secret key. The seller details are still shown on the
+ * Premium page, and any that are unset read "Not yet set" — but they no longer
+ * hold the button back, because the live path is a link rather than a session.
  */
 export function premiumOnSale(): boolean {
-  return Boolean(stripeKey()) && missingSellerDetails().length === 0;
+  return Boolean(PREMIUM_PAYMENT_LINK);
 }
 
 // ── Deciding whether a payment really is a payment for this home ─────────

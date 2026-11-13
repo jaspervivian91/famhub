@@ -30,6 +30,8 @@ type PremiumState = {
   premium: boolean;
   premiumAt: string | null;
   onSale: boolean;
+  /** The hosted Stripe payment link, with this home named on it. */
+  payUrl: string | null;
   paymentsConnected: boolean;
   missing: string[];
   price: { label: string; amount: number; currency: string };
@@ -51,7 +53,6 @@ function PremiumScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [line, setLine] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
-  const [opening, setOpening] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,27 +122,6 @@ function PremiumScreen() {
     };
   }, [id]);
 
-  async function buy() {
-    setOpening(true);
-    setLine(null);
-    try {
-      const response = await fetch(`/api/homes/${id}/premium/checkout`, { method: "POST" });
-      const payload = (await response.json().catch(() => ({}))) as {
-        url?: string;
-        error?: string;
-      };
-      if (payload.url) {
-        window.location.href = payload.url;
-        return;
-      }
-      setLine(payload.error ?? "The payment page could not be opened just now.");
-    } catch {
-      setLine("The payment page could not be opened just now.");
-    } finally {
-      setOpening(false);
-    }
-  }
-
   if (loadError) {
     return (
       <main className="mx-auto max-w-[46rem] px-6 py-24">
@@ -205,28 +185,31 @@ function PremiumScreen() {
             {data.premiumAt ? ` — paid ${formatDate(data.premiumAt)}` : ""}. It stays
             with the house when the page passes to its next owner.
           </p>
-        ) : data.onSale ? (
+        ) : data.onSale && data.payUrl ? (
           <>
-            <button
-              type="button"
+            <a
+              href={data.payUrl}
               className="hs-btn hs-btn-brass mt-6"
-              onClick={buy}
-              disabled={opening || checking}
+              rel="noreferrer noopener"
             >
-              {opening ? "Opening the payment page…" : `Add Premium — ${data.price.label}`}
-            </button>
+              {`Add Premium — ${data.price.label}`}
+            </a>
             <p className="hs-caption mt-4 max-w-[52ch]">
               Payment is taken on Stripe’s own secure page. We never see your card
               details, and nothing is charged until you have paid there.
+            </p>
+            <p className="hs-caption mt-3 max-w-[52ch]">
+              Your payment arrives with this page’s reference on it, and it is
+              matched to this home by hand — usually within a few hours. Story
+              Polish and Ask Your House open once it has been matched; nothing else
+              on the page waits for it.
             </p>
           </>
         ) : (
           <div className="mt-6 max-w-[52ch]">
             <p className="hs-caption text-hs-ink">
-              HomeStory Premium is not on sale yet. The price is agreed at{" "}
-              {data.price.label}, but a distance sale has to show who is selling and
-              how to cancel before it can take money — and those details are still
-              being set. Nothing has been charged.
+              HomeStory Premium is not on sale yet — there is no payment page to
+              send you to. Nothing has been charged.
             </p>
             {data.missing.length > 0 && (
               <p className="hs-caption mt-3 opacity-75">
@@ -234,6 +217,10 @@ function PremiumScreen() {
               </p>
             )}
           </div>
+        )}
+
+        {checking && (
+          <p className="hs-caption mt-6 max-w-[52ch]">Checking that payment…</p>
         )}
 
         {line && (
