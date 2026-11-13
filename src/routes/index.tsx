@@ -11,7 +11,7 @@ const STEPS = [
   {
     numeral: "One",
     title: "Find your home",
-    body: "Search your address to begin. Where public records are connected, the details of the building fill themselves in. Where they are not, the page says so and you type what you know. Nothing is invented on your behalf.",
+    body: "Search your address and the building fills itself in from the official EPC register — floor area, energy rating, walls, roof, windows, and the build era where the certificate carries one. What no register holds, you type yourself. Nothing is invented on your behalf.",
   },
   {
     numeral: "Two",
@@ -34,7 +34,7 @@ const PRICING = [
   {
     name: "Premium",
     price: "£24.99",
-    note: "One-time. The full history, every Claude AI feature, and a custom web address for your home.",
+    note: "One-time, for the house. Adds Story Polish and Ask Your House — the two Claude AI features — and stays with the home when it changes hands.",
   },
   {
     name: "Brass plaque",
@@ -51,15 +51,15 @@ const PRICING = [
 const SAMPLE_SECTIONS = [
   {
     title: "The house",
-    body: "The building itself — when it was raised, how it has been altered, what the records say. Shown from Land Registry and census records where a source is connected, and written by the owner where it is not.",
+    body: "Floor area, energy rating, walls, roof and windows, taken from the official EPC register and dated to its certificate. Where the register is wrong, the owner corrects it and the correction is theirs.",
   },
   {
-    title: "Previous owners",
-    body: "Each household adds a chapter of its own. When the house is sold, the chapters pass with it to the next owner.",
+    title: "The two AI tools",
+    body: "Ask Your House answers a visitor’s question from what the page records. Story Polish shapes your rough notes into a chapter you are happy to sign. Both are Claude AI, and both are Premium.",
   },
   {
-    title: "Memories",
-    body: "Photographs, letters and recollections, added by the people who live there now.",
+    title: "The owner’s chapter",
+    body: "The part no register holds: the extension, the tree by the gate, the family who lived here before. Written by the people in the house, and passed on with it.",
   },
 ];
 
@@ -85,9 +85,9 @@ function LandingPage() {
             </h1>
             <p className="hs-lede mt-6 max-w-[54ch]">
               A brass plaque beside the front door. A permanent page for the
-              house — the records that exist, the people who have lived in it,
-              and the chapter you add. When the house changes hands, the story
-              passes with it.
+              house — the official building record, the chapter you write
+              yourself, and two Claude AI tools for the parts in between. When
+              the house changes hands, the story passes with it.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <a href="/start" className="hs-btn hs-btn-brass">
@@ -198,15 +198,15 @@ function LandingPage() {
                 <p className="hs-label">Ask your house</p>
                 <div className="mt-3 flex items-center justify-between gap-4 border border-hs-rule px-4 py-3">
                   <p className="font-body text-sm italic text-hs-muted">
-                    Who lived here in 1940?
+                    When was the kitchen extended?
                   </p>
                   <span className="hs-caption shrink-0" aria-hidden="true">
                     →
                   </span>
                 </div>
                 <p className="hs-caption mt-3 max-w-[48ch]">
-                  Where no records or model are connected, the page says so
-                  plainly rather than answering from guesswork.
+                  It answers only from what the page records, and says so
+                  plainly when the page does not record something.
                 </p>
               </div>
             </div>

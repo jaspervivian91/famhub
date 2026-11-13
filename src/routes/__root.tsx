@@ -19,7 +19,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "HomeStory gives a UK home a permanent digital history page, reached by a brass QR plaque beside the front door. Previous owners, records and memories — passed on with the house.",
+          "HomeStory gives a UK home a permanent digital history page, reached by a brass QR plaque beside the front door. The official EPC building record and the owner’s own chapter — passed on with the house.",
       },
       { name: "theme-color", content: "#F7F4EF" },
     ],
