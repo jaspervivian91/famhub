@@ -1,4 +1,5 @@
 import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/server";
+import { timingSafeEqual } from "node:crypto";
 import { hasDatabaseURL, checkDatabaseConnection, sql } from "./db";
 import {
   MIN_PASSWORD_LENGTH,
@@ -27,6 +28,7 @@ import {
   PREMIUM_TERMS_LINE,
   missingSellerDetails,
   premiumOnSale,
+  premiumPaymentLink,
   sellerDetails,
   sessionConfirmsHome,
   stripeKey,
@@ -461,6 +463,34 @@ async function isPremiumHome(homeId: string): Promise<boolean> {
     select premium_at from homes where id = ${homeId}
   `) as unknown as { premium_at: unknown }[];
   return rows.length > 0 && Boolean(rows[0].premium_at);
+}
+
+// ── The owner's Premium admin screen ────────────────────────────────────
+// Payments arrive on the hosted Stripe link, which records each home's id as
+// client_reference_id. The owner reads that off Stripe and matches it to the
+// home by hand; this screen is the other half of that — a list of homes and one
+// button that turns Premium on. It is closed entirely, with a plain 404 rather
+// than a sign-in prompt, unless PREMIUM_ADMIN_TOKEN is set in the environment.
+
+function premiumAdminToken(): string | null {
+  const token = process.env.PREMIUM_ADMIN_TOKEN?.trim();
+  return token ? token : null;
+}
+
+/** Constant-time comparison, so the token cannot be guessed a character at a time. */
+function tokensMatch(given: string, expected: string): boolean {
+  const a = Buffer.from(given, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
+function premiumAdminAuthorised(request: Request, url: URL): boolean {
+  const expected = premiumAdminToken();
+  if (!expected) return false;
+  const given = (request.headers.get("x-admin-token") ?? url.searchParams.get("token") ?? "").trim();
+  if (!given) return false;
+  return tokensMatch(given, expected);
 }
 
 /**
@@ -1229,9 +1259,10 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
       address: home.address,
       premium: Boolean(home.premiumAt),
       premiumAt: home.premiumAt,
-      // Premium is only offered when there is a payment key and the seller
-      // details a distance sale must show before payment.
+      // The live buy path: a hosted Stripe payment link, which needs no key and
+      // carries this home's id as client_reference_id.
       onSale: premiumOnSale(),
+      payUrl: premiumOnSale() ? premiumPaymentLink(home.id) : null,
       paymentsConnected: Boolean(stripeKey()),
       missing: missingSellerDetails(),
       price: { label: PREMIUM_PRICE_LABEL, amount: PREMIUM_AMOUNT_PENCE, currency: PREMIUM_CURRENCY },
@@ -1259,8 +1290,15 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     if (!premiumOnSale()) {
       return json({
         onSale: false,
-        error: `HomeStory Premium is not on sale yet — ${PREMIUM_PRICE_LABEL} has been agreed, but the seller details and refund policy are still being set. Nothing has been charged.`,
+        error: `HomeStory Premium is not on sale yet — ${PREMIUM_PRICE_LABEL} has been agreed, but there is no payment page to send you to. Nothing has been charged.`,
       });
+    }
+
+    // No secret key on this account, so no session can be created. The hosted
+    // payment link is the live path: Stripe takes the payment and records this
+    // home's id with it, and the owner unlocks the home by hand afterwards.
+    if (!stripeKey()) {
+      return json({ url: premiumPaymentLink(home.id), hosted: true });
     }
 
     const session = await createPremiumSession(home.id, requestOrigin(request));
@@ -1312,6 +1350,66 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     `;
 
     return json({ premium: true });
+  }
+
+  // ── The owner's Premium admin screen ──────────────────────────────────
+  // 404 — not 401, not a sign-in — when PREMIUM_ADMIN_TOKEN is unset, so an
+  // unconfigured site does not even admit this screen exists.
+  if (pathname === "/api/admin/premium" || pathname === "/api/admin/premium/unlock") {
+    if (!premiumAdminToken()) return json({ error: "Not found" }, 404);
+    if (!premiumAdminAuthorised(request, url)) {
+      return json({ error: "That token is not right." }, 401);
+    }
+
+    if (pathname === "/api/admin/premium" && method === "GET") {
+      const rows = (await sql()`
+        select id, address, public_id, premium_at, status, created_at
+        from homes
+        order by created_at desc
+        limit 200
+      `) as unknown as {
+        id: string;
+        address: string;
+        public_id: string | null;
+        premium_at: unknown;
+        status: string;
+        created_at: unknown;
+      }[];
+      return json({
+        homes: rows.map((row) => ({
+          id: String(row.id),
+          address: row.address,
+          publicId: row.public_id ? String(row.public_id) : null,
+          premium: Boolean(row.premium_at),
+          premiumAt: row.premium_at ? String(row.premium_at) : null,
+          status: row.status,
+          createdAt: String(row.created_at),
+        })),
+      });
+    }
+
+    if (pathname === "/api/admin/premium/unlock" && method === "POST") {
+      const body = await readJson(request);
+      const homeId = typeof body?.homeId === "string" ? body.homeId.trim() : "";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(homeId)) {
+        return fail("That is not a home this screen can open.");
+      }
+      // Idempotent: unlocking a home that has already paid changes nothing and
+      // does not move the date it paid on.
+      const rows = (await sql()`
+        update homes set premium_at = coalesce(premium_at, now()), updated_at = now()
+        where id = ${homeId}
+        returning id, premium_at
+      `) as unknown as { id: string; premium_at: unknown }[];
+      if (rows.length === 0) return fail("That home could not be found.", 404);
+      return json({
+        id: String(rows[0].id),
+        premium: true,
+        premiumAt: String(rows[0].premium_at),
+      });
+    }
+
+    return null;
   }
 
   // ── The plaque ────────────────────────────────────────────────────────
@@ -1460,6 +1558,14 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
 export default {
   async fetch(request: Request, ...args: any[]) {
     const url = new URL(request.url);
+
+    // The Premium admin screen does not exist on a site with no admin token.
+    if (url.pathname === "/admin/premium" && !premiumAdminToken()) {
+      return new Response("Not found", {
+        status: 404,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
 
     const isApiRoute = url.pathname.startsWith("/api/") || url.pathname.startsWith("/photos/");
     if (isApiRoute) {
