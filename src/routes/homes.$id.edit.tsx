@@ -81,6 +81,7 @@ function EditorScreen() {
   const [publishLine, setPublishLine] = useState<string | null>(null);
 
   const [aiConnected, setAiConnected] = useState<boolean | null>(null);
+  const [premium, setPremium] = useState<boolean | null>(null);
   const [polishing, setPolishing] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [polishLine, setPolishLine] = useState<string | null>(null);
@@ -98,13 +99,18 @@ function EditorScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const [homeRes, aiRes] = await Promise.all([
+        const [homeRes, aiRes, premiumRes] = await Promise.all([
           fetch(`/api/homes/${id}`),
           fetch("/api/ai-status"),
+          fetch(`/api/homes/${id}/premium`),
         ]);
         if (!cancelled && aiRes.ok) {
           const ai = (await aiRes.json()) as { connected?: boolean };
           setAiConnected(Boolean(ai.connected));
+        }
+        if (!cancelled && premiumRes.ok) {
+          const state = (await premiumRes.json()) as { premium?: boolean };
+          setPremium(Boolean(state.premium));
         }
         if (!homeRes.ok) {
           const payload = (await homeRes.json().catch(() => ({}))) as { error?: string };
@@ -233,6 +239,14 @@ function EditorScreen() {
     if (!doc) return;
     setPolishLine(null);
     setSuggestion(null);
+    // Before Premium is paid, the button explains once and stops. Nothing is
+    // sent, and the owner's words are untouched.
+    if (premium === false) {
+      setPolishLine(
+        "Story Polish is part of HomeStory Premium — £24.99 once for this house, not a subscription. Nothing is charged until you pay for it.",
+      );
+      return;
+    }
     setPolishing(true);
     try {
       const response = await fetch(`/api/homes/${id}/polish`, {
@@ -242,10 +256,14 @@ function EditorScreen() {
       });
       const payload = (await response.json().catch(() => ({}))) as {
         connected?: boolean;
+        premiumRequired?: boolean;
         text?: string;
         error?: string;
       };
-      if (payload.connected === false) {
+      if (payload.premiumRequired) {
+        setPremium(false);
+        setPolishLine(payload.error ?? "Story Polish is part of HomeStory Premium.");
+      } else if (payload.connected === false) {
         setAiConnected(false);
       } else if (payload.error) {
         setPolishLine(payload.error);
@@ -466,7 +484,31 @@ function EditorScreen() {
         />
 
         <div className="mt-6">
-          {aiConnected === false ? (
+          {premium === null ? (
+            <p className="hs-caption">Checking whether Story Polish is available…</p>
+          ) : premium === false ? (
+            // Part of Premium, said once and plainly — never hidden, never nagged.
+            <div className="max-w-[54ch]">
+              <p className="hs-caption">
+                <span className="text-hs-ink">Story Polish</span> is part of HomeStory
+                Premium — £24.99 once for this house, not a subscription. Your page,
+                your building record and your photographs stay free either way.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <button
+                  type="button"
+                  className="hs-link bg-transparent"
+                  onClick={polish}
+                  disabled={polishing}
+                >
+                  Polish with Claude AI
+                </button>
+                <Link to="/homes/$id/premium" params={{ id }} className="hs-btn hs-btn-brass">
+                  Add Premium — £24.99
+                </Link>
+              </div>
+            </div>
+          ) : aiConnected === false ? (
             <p className="hs-caption max-w-[54ch]">
               <span className="text-hs-ink">Story Polish</span> — Claude is not
               connected yet, so nothing will be rewritten. When it is connected,

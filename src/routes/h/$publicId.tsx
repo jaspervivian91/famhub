@@ -189,11 +189,29 @@ function PublicHomePage() {
       {/* ── Ask your house ──────────────────────────────────────────── */}
       <section className="mt-12 border-t border-hs-rule-brass pt-8 md:mt-16">
         <h2 className="hs-h3">Ask your house</h2>
-        <p className="hs-caption mt-3 max-w-[50ch]">
-          Ask about this house and it will answer from what this page records —
-          and only from that.
-        </p>
-        <AskYourHouse publicId={home.publicId} connected={home.aiConnected} />
+        {home.premium ? (
+          <>
+            <p className="hs-caption mt-3 max-w-[50ch]">
+              Ask about this house and it will answer from what this page records —
+              and only from that.
+            </p>
+            <AskYourHouse publicId={home.publicId} connected={home.aiConnected} />
+          </>
+        ) : (
+          <p className="hs-caption mt-3 max-w-[52ch]">
+            This page is on the free tier. Ask Your House — where Claude answers a
+            visitor’s questions from what this page records — is part of HomeStory
+            Premium, a one-off £24.99 for the house, not a subscription.{" "}
+            <Link
+              to="/homes/$id/premium"
+              params={{ id: home.publicId }}
+              className="hs-link"
+            >
+              Add Premium to this house
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
       {/* ── The plaque at the door ──────────────────────────────────── */}

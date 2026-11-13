@@ -29,6 +29,8 @@ export type PublicHome = {
   photos: { id: string; url: string; width: number | null; height: number | null }[];
   publishedAt: string | null;
   aiConnected: boolean;
+  /** Premium is bought once for the house; it passes on with the page. */
+  premium: boolean;
 };
 
 export type PublicHomeResult =
@@ -56,7 +58,7 @@ export const getPublicHome = createServerFn({ method: "GET" })
       select public_id, address, story, build_era, epc_rating, floor_area, wall_type,
              roof_type, window_type, epc_certificate_date, epc_fields,
              last_sale_price, last_sale_date, previous_owners, key_dates, hidden_gems,
-             published_at
+             published_at, premium_at
       from homes
       where public_id = ${data.publicId} and status = 'published'
       limit 1
@@ -78,6 +80,7 @@ export const getPublicHome = createServerFn({ method: "GET" })
       key_dates: unknown;
       hidden_gems: unknown;
       published_at: unknown;
+      premium_at: unknown;
     }[];
 
     if (rows.length === 0) return { found: false };
@@ -135,6 +138,7 @@ export const getPublicHome = createServerFn({ method: "GET" })
         })),
         publishedAt: row.published_at ? String(row.published_at) : null,
         aiConnected: Boolean(process.env.ANTHROPIC_API_KEY),
+        premium: Boolean(row.premium_at),
       },
     };
   });

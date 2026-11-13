@@ -19,6 +19,19 @@ import {
   isCertificateNumber,
   searchByPostcode,
 } from "./lib/epc";
+import {
+  PREMIUM_AMOUNT_PENCE,
+  PREMIUM_CURRENCY,
+  PREMIUM_PRICE_ID,
+  PREMIUM_PRICE_LABEL,
+  PREMIUM_TERMS_LINE,
+  missingSellerDetails,
+  premiumOnSale,
+  sellerDetails,
+  sessionConfirmsHome,
+  stripeKey,
+  type CheckoutSession,
+} from "./lib/premium";
 
 const handler = createStartHandler(defaultStreamHandler);
 
@@ -405,6 +418,150 @@ function newPublicId(): string {
   let id = "";
   for (const byte of bytes) id += alphabet[byte % alphabet.length];
   return id;
+}
+
+// ── HomeStory Premium ───────────────────────────────────────────────────
+// One £24.99 payment, for one house, made once. The two Claude features with a
+// real running cost sit behind it; everything a free owner already has does not.
+// No card data passes through here — Stripe hosts the payment page and tells us
+// only whether a session was paid, for how much, and for which home.
+
+type PremiumHome = {
+  id: string;
+  publicId: string | null;
+  address: string;
+  premiumAt: string | null;
+};
+
+/** A home by its private id or its public id — the premium screen accepts both. */
+async function loadHomeByRef(ref: string): Promise<PremiumHome | null> {
+  const db = sql();
+  const rows = (await db`
+    select id, public_id, address, premium_at from homes
+    where id::text = ${ref} or public_id = ${ref.toLowerCase()}
+    limit 1
+  `) as unknown as {
+    id: string;
+    public_id: string | null;
+    address: string;
+    premium_at: unknown;
+  }[];
+  if (rows.length === 0) return null;
+  return {
+    id: String(rows[0].id),
+    publicId: rows[0].public_id ? String(rows[0].public_id) : null,
+    address: rows[0].address,
+    premiumAt: rows[0].premium_at ? String(rows[0].premium_at) : null,
+  };
+}
+
+async function isPremiumHome(homeId: string): Promise<boolean> {
+  const db = sql();
+  const rows = (await db`
+    select premium_at from homes where id = ${homeId}
+  `) as unknown as { premium_at: unknown }[];
+  return rows.length > 0 && Boolean(rows[0].premium_at);
+}
+
+/**
+ * The origin a checkout should return to. The owner's own browser origin when
+ * it sends one, so the return lands where they were; the public site otherwise.
+ */
+function requestOrigin(request: Request): string {
+  const header = request.headers.get("origin");
+  if (header) {
+    try {
+      const origin = new URL(header).origin;
+      if (origin.startsWith("http://") || origin.startsWith("https://")) return origin;
+    } catch {
+      // Fall through to the public origin.
+    }
+  }
+  return publicOrigin();
+}
+
+const STRIPE_API = "https://api.stripe.com/v1";
+
+/**
+ * Stripe takes form-encoded bodies. `{CHECKOUT_SESSION_ID}` must reach Stripe
+ * as braces — it is a placeholder it substitutes on the way back — so that one
+ * token is left unencoded.
+ */
+function stripeForm(params: Record<string, string>): string {
+  return Object.entries(params)
+    .map(
+      ([key, value]) =>
+        `${encodeURIComponent(key)}=${encodeURIComponent(value).replace(
+          /%7BCHECKOUT_SESSION_ID%7D/gi,
+          "{CHECKOUT_SESSION_ID}",
+        )}`,
+    )
+    .join("&");
+}
+
+type StripeResult<T> = { ok: true; data: T } | { ok: false; message: string };
+
+async function stripeRequest<T>(
+  path: string,
+  init: { method: "GET" | "POST"; body?: string },
+): Promise<StripeResult<T>> {
+  const key = stripeKey();
+  if (!key) return { ok: false, message: "Payments are not connected yet." };
+  try {
+    const response = await fetch(`${STRIPE_API}${path}`, {
+      method: init.method,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        ...(init.body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+      },
+      body: init.body,
+      signal: AbortSignal.timeout(20000),
+    });
+    const payload = (await response.json().catch(() => null)) as unknown;
+    if (!response.ok) {
+      const detail = payload as { error?: { message?: string } } | null;
+      console.error("[premium] Stripe error", response.status, detail?.error?.message ?? "");
+      return { ok: false, message: "Stripe could not be reached just now." };
+    }
+    return { ok: true, data: payload as T };
+  } catch (err) {
+    console.error("[premium] Stripe request failed", err);
+    return { ok: false, message: "Stripe could not be reached just now." };
+  }
+}
+
+/** A checkout session for this home at the one Premium price. Nothing is charged until it is paid. */
+async function createPremiumSession(
+  homeId: string,
+  origin: string,
+): Promise<StripeResult<{ id: string; url: string }>> {
+  const back = `${origin}/homes/${homeId}/premium`;
+  const result = await stripeRequest<{ id?: string; url?: string }>("/checkout/sessions", {
+    method: "POST",
+    body: stripeForm({
+      mode: "payment",
+      "line_items[0][price]": PREMIUM_PRICE_ID,
+      "line_items[0][quantity]": "1",
+      client_reference_id: homeId,
+      "metadata[homeId]": homeId,
+      "payment_intent_data[metadata][homeId]": homeId,
+      success_url: `${back}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${back}?cancelled=1`,
+    }),
+  });
+  if (!result.ok) return result;
+  const { id, url } = result.data;
+  if (!id || !url) return { ok: false, message: "Stripe did not return a checkout to open." };
+  return { ok: true, data: { id: String(id), url: String(url) } };
+}
+
+/** A checkout session id, as Stripe writes them. Anything else is not asked about. */
+const STRIPE_SESSION_ID = /^cs_[A-Za-z0-9_]{8,200}$/;
+
+async function retrieveCheckoutSession(sessionId: string): Promise<StripeResult<CheckoutSession>> {
+  return stripeRequest<CheckoutSession>(`/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "GET",
+  });
 }
 
 // ── Rate limiting for Ask Your House ────────────────────────────────────
@@ -904,9 +1061,20 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
   }
 
   // ── Story Polish ──────────────────────────────────────────────────────
+  // Part of Premium: the door is shut here, on the server, not only in the
+  // editor. A free owner gets a plain explanation and their words untouched.
   const polishMatch = pathname.match(/^\/api\/homes\/([0-9a-f-]{36})\/polish$/i);
   if (polishMatch && method === "POST") {
     if (!(await mayOpenHome(request, polishMatch[1]))) return fail(HOME_NOT_FOUND, 404);
+    if (!(await isPremiumHome(polishMatch[1]))) {
+      return json(
+        {
+          premiumRequired: true,
+          error: `Story Polish is part of HomeStory Premium — ${PREMIUM_PRICE_LABEL} once for this house. Your words are unchanged.`,
+        },
+        402,
+      );
+    }
     let body: Record<string, unknown>;
     try {
       body = (await request.json()) as Record<string, unknown>;
@@ -1023,6 +1191,129 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     });
   }
 
+  // ── HomeStory Premium ─────────────────────────────────────────────────
+  // Three steps, and only the last one changes anything: what the screen needs
+  // to know, start a checkout, and — on the way back — believe Stripe rather
+  // than the query string.
+  const premiumMatch = pathname.match(/^\/api\/homes\/([a-z0-9-]{6,40})\/premium$/i);
+  const premiumCheckoutMatch = pathname.match(
+    /^\/api\/homes\/([a-z0-9-]{6,40})\/premium\/checkout$/i,
+  );
+  const premiumVerifyMatch = pathname.match(
+    /^\/api\/homes\/([a-z0-9-]{6,40})\/premium\/verify$/i,
+  );
+
+  if (premiumMatch && method === "GET") {
+    const home = await loadHomeByRef(premiumMatch[1]);
+    if (!home) return fail(HOME_NOT_FOUND, 404);
+    if (!(await mayOpenHome(request, home.id))) return fail(HOME_NOT_FOUND, 404);
+
+    const purchase = home.premiumAt
+      ? (
+          (await sql()`
+            select stripe_session_id, amount_total, currency, paid_at
+            from premium_purchases where home_id = ${home.id}
+            order by paid_at desc limit 1
+          `) as unknown as {
+            stripe_session_id: string;
+            amount_total: number;
+            currency: string;
+            paid_at: unknown;
+          }[]
+        )[0]
+      : null;
+
+    return json({
+      homeId: home.id,
+      publicId: home.publicId,
+      address: home.address,
+      premium: Boolean(home.premiumAt),
+      premiumAt: home.premiumAt,
+      // Premium is only offered when there is a payment key and the seller
+      // details a distance sale must show before payment.
+      onSale: premiumOnSale(),
+      paymentsConnected: Boolean(stripeKey()),
+      missing: missingSellerDetails(),
+      price: { label: PREMIUM_PRICE_LABEL, amount: PREMIUM_AMOUNT_PENCE, currency: PREMIUM_CURRENCY },
+      terms: PREMIUM_TERMS_LINE,
+      seller: sellerDetails(),
+      purchase: purchase
+        ? {
+            // The Stripe reference is ours to keep, not the buyer's card: no card
+            // detail ever reaches this server.
+            sessionId: String(purchase.stripe_session_id),
+            amountTotal: Number(purchase.amount_total),
+            currency: String(purchase.currency),
+            paidAt: String(purchase.paid_at),
+          }
+        : null,
+    });
+  }
+
+  if (premiumCheckoutMatch && method === "POST") {
+    const home = await loadHomeByRef(premiumCheckoutMatch[1]);
+    if (!home) return fail(HOME_NOT_FOUND, 404);
+    if (!(await mayOpenHome(request, home.id))) return fail(HOME_NOT_FOUND, 404);
+
+    if (home.premiumAt) return json({ premium: true, alreadyPremium: true });
+    if (!premiumOnSale()) {
+      return json({
+        onSale: false,
+        error: `HomeStory Premium is not on sale yet — ${PREMIUM_PRICE_LABEL} has been agreed, but the seller details and refund policy are still being set. Nothing has been charged.`,
+      });
+    }
+
+    const session = await createPremiumSession(home.id, requestOrigin(request));
+    if (!session.ok) return fail(session.message, 502);
+    return json({ url: session.data.url, sessionId: session.data.id });
+  }
+
+  if (premiumVerifyMatch && method === "POST") {
+    const home = await loadHomeByRef(premiumVerifyMatch[1]);
+    if (!home) return fail(HOME_NOT_FOUND, 404);
+    if (!(await mayOpenHome(request, home.id))) return fail(HOME_NOT_FOUND, 404);
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return fail("That return from the payment page could not be read.");
+    }
+    const sessionId = typeof body.sessionId === "string" ? body.sessionId.trim() : "";
+    if (!STRIPE_SESSION_ID.test(sessionId)) {
+      return fail("That is not a payment that can be checked.", 400);
+    }
+
+    // Ask Stripe. The query string says only which session to ask about; it is
+    // never the evidence that anything was paid.
+    const found = await retrieveCheckoutSession(sessionId);
+    if (!found.ok) {
+      return json({ premium: Boolean(home.premiumAt), error: found.message }, 502);
+    }
+
+    const verdict = sessionConfirmsHome(found.data, home.id);
+    if (!verdict.ok) {
+      return json({ premium: Boolean(home.premiumAt), error: verdict.reason }, 400);
+    }
+
+    // Paid, in full, for this home. Record it once, then mark the home — both
+    // idempotent, so reloading the return page changes nothing.
+    const db = sql();
+    await db`
+      insert into premium_purchases (id, home_id, stripe_session_id, amount_total, currency)
+      values (${crypto.randomUUID()}, ${home.id}, ${sessionId},
+              ${Number(found.data.amount_total ?? PREMIUM_AMOUNT_PENCE)},
+              ${String(found.data.currency ?? PREMIUM_CURRENCY).toLowerCase()})
+      on conflict (stripe_session_id) do nothing
+    `;
+    await db`
+      update homes set premium_at = coalesce(premium_at, now()), updated_at = now()
+      where id = ${home.id}
+    `;
+
+    return json({ premium: true });
+  }
+
   // ── The plaque ────────────────────────────────────────────────────────
   // Two separate truths here. The QR code is real: it encodes the home's
   // permanent public page, and the same code is what gets engraved. The order
@@ -1129,10 +1420,22 @@ async function handleApi(request: Request, url: URL): Promise<Response | null> {
     const rows = (await db`
       select address, story, build_era, epc_rating, floor_area, wall_type, roof_type,
              window_type, last_sale_price, last_sale_date,
-             previous_owners, key_dates, hidden_gems
+             previous_owners, key_dates, hidden_gems, premium_at
       from homes where public_id = ${publicId} and status = 'published' limit 1
     `) as unknown as Record<string, unknown>[];
     if (rows.length === 0) return fail("There is no page here to ask.", 404);
+
+    // Ask Your House is part of Premium. The page says so where the question
+    // box would be, so a visitor is told plainly rather than met by a refusal.
+    if (!rows[0].premium_at) {
+      return json(
+        {
+          premiumRequired: true,
+          error: `Ask Your House is part of HomeStory Premium — ${PREMIUM_PRICE_LABEL} once for this house.`,
+        },
+        402,
+      );
+    }
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return json({ connected: false, error: "Ask Your House is not connected yet." }, 200);
